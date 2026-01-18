@@ -1,0 +1,36 @@
+@reference "tailwindcss";
+.c_2c61 {
+  @apply p-6;
+}
+
+.c_frz6p5 {
+  @apply text-2xl font-bold;
+}
+
+.c_200pc {
+  @apply mt-6;
+}
+
+.sidebar {
+  @apply bg-gray-900 text-white transition-all duration-300;
+}
+
+.sidebarOpen {
+  @apply w-64;
+}
+
+.sidebarClosed {
+  @apply w-0 overflow-hidden;
+}
+
+.menuButton {
+  @apply w-full flex items-center gap-3 px-6 py-3 transition-colors;
+}
+
+.menuButtonActive {
+  @apply bg-blue-600 text-white;
+}
+
+.menuButtonInactive {
+  @apply text-gray-300 hover:bg-gray-800;
+}

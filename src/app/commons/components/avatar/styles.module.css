@@ -1,0 +1,12 @@
+@reference "tailwindcss";
+.c_1ry4qiu {
+  @apply relative flex size-10 shrink-0 overflow-hidden rounded-full;
+}
+
+.c_18qfyi5 {
+  @apply aspect-square size-full;
+}
+
+.c_1ferrn2 {
+  @apply bg-muted flex size-full items-center justify-center rounded-full;
+}

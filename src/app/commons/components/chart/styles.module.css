@@ -1,0 +1,80 @@
+@reference "tailwindcss";
+.c_w3x17r {
+  @apply grid gap-1.5;
+}
+
+.c_1v9p6rp {
+  @apply text-muted-foreground;
+}
+
+.c_1szfb1i {
+  @apply text-foreground font-mono font-medium tabular-nums;
+}
+
+.c_1g9kvmp {
+  @apply h-2 w-2 shrink-0 rounded-[2px];
+}
+
+.c_m5nbye {
+  @apply [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden;
+}
+
+.c_55z0kz {
+  @apply font-medium;
+}
+
+.c_1qd9ly9 {
+  @apply border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl;
+}
+
+.c_13ejarz {
+  @apply [&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5;
+}
+
+.c_b0rryo {
+  @apply shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg);
+}
+
+.c_hcsi3b {
+  @apply h-2.5 w-2.5;
+}
+
+.indicatorLine {
+  @apply w-1;
+}
+
+.indicatorDashed {
+  @apply w-0 border-[1.5px] border-dashed bg-transparent;
+}
+
+.indicatorDashedNest {
+  @apply my-0.5;
+}
+
+.c_tz9wcw {
+  @apply flex flex-1 justify-between leading-none;
+}
+
+.c_zw22j2 {
+  @apply items-end;
+}
+
+.c_1j70mwy {
+  @apply items-center;
+}
+
+.c_1541ifa {
+  @apply flex items-center justify-center gap-4;
+}
+
+.legendTop {
+  @apply pb-3;
+}
+
+.legendBottom {
+  @apply pt-3;
+}
+
+.c_3669e8 {
+  @apply [&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3;
+}

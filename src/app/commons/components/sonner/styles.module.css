@@ -1,0 +1,10 @@
+@reference "tailwindcss";
+.toaster {
+  --normal-bg: var(--popover);
+  --normal-text: var(--popover-foreground);
+  --normal-border: var(--border);
+}
+
+.c_1mpytb {
+  @apply group;
+}

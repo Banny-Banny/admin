@@ -1,0 +1,36 @@
+@reference "tailwindcss";
+.c_x0n7jc {
+  @apply relative w-full overflow-x-auto;
+}
+
+.c_1hzwduv {
+  @apply w-full caption-bottom text-sm;
+}
+
+.c_15zf2ts {
+  @apply [&_tr]:border-b;
+}
+
+.c_1ra3x5l {
+  @apply [&_tr:last-child]:border-0;
+}
+
+.c_1xblshn {
+  @apply bg-muted/50 border-t font-medium [&>tr]:last:border-b-0;
+}
+
+.c_a24i5v {
+  @apply hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors;
+}
+
+.c_qrjrdx {
+  @apply text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
+}
+
+.c_1lw1iwg {
+  @apply p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px];
+}
+
+.c_t1jl7n {
+  @apply text-muted-foreground mt-4 text-sm;
+}

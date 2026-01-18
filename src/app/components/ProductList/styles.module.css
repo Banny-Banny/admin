@@ -1,0 +1,156 @@
+@reference "tailwindcss";
+.c_4rnbt2 {
+  @apply bg-white rounded-lg shadow;
+}
+
+.c_65x7hk {
+  @apply p-6 border-b;
+}
+
+.c_1l693jk {
+  @apply text-lg font-semibold mb-4;
+}
+
+.c_8s05pk {
+  @apply flex flex-wrap items-center gap-4;
+}
+
+.c_14sfe4c {
+  @apply flex-1 relative min-w-[200px];
+}
+
+.c_1y94mk {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.c_lwq1hq {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_2ca09w {
+  @apply flex items-center gap-2;
+}
+
+.c_1cnlnvv {
+  @apply text-gray-500;
+}
+
+.c_1fl6ab8 {
+  @apply px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1bb8j67 {
+  @apply overflow-x-auto;
+}
+
+.c_1l2zdph {
+  @apply w-full;
+}
+
+.c_z838al {
+  @apply bg-gray-50;
+}
+
+.c_wiarv4 {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase;
+}
+
+.c_947h7t {
+  @apply px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase;
+}
+
+.c_fyf4x {
+  @apply divide-y divide-gray-200;
+}
+
+.c_x2lcqj {
+  @apply hover:bg-gray-50;
+}
+
+.c_g43mv3 {
+  @apply px-6 py-4;
+}
+
+.c_2ca09x {
+  @apply flex items-center gap-3;
+}
+
+.c_1ci45al {
+  @apply w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center;
+}
+
+.c_1cnln56 {
+  @apply text-gray-400;
+}
+
+.c_1my21gc {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.c_3t1c8w {
+  @apply text-xs text-gray-500 line-clamp-1;
+}
+
+.c_146yb2l {
+  @apply px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800;
+}
+
+.c_12lnfqe {
+  @apply text-xs text-gray-500 line-through;
+}
+
+.c_1sdudap {
+  @apply flex flex-wrap gap-1;
+}
+
+.c_13einte {
+  @apply px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs;
+}
+
+.c_tp84h0 {
+  @apply px-6 py-4 text-sm text-gray-500;
+}
+
+.tagBase {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.statusActive {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusSoldOut {
+  @apply bg-red-100 text-red-800;
+}
+
+.statusInactive {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.statusDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.stockText {
+  @apply text-sm;
+}
+
+.stockEmpty {
+  @apply text-red-600 font-medium;
+}
+
+.stockNormal {
+  @apply text-gray-700;
+}
+
+.c_1ouo88t {
+  @apply px-6 py-4 text-right;
+}
+
+.c_1us4dfh {
+  @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.c_13nmcpi {
+  @apply px-6 py-12 text-center text-gray-500;
+}

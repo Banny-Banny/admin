@@ -1,0 +1,52 @@
+@reference "tailwindcss";
+.c_6422n {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_ibg2me {
+  @apply text-sm text-gray-600;
+}
+
+.c_fsil5v {
+  @apply text-2xl font-bold mt-2;
+}
+
+.c_coba15 {
+  @apply text-white;
+}
+
+.changeText {
+  @apply text-sm mt-2;
+}
+
+.changeIncrease {
+  @apply text-green-600;
+}
+
+.changeDecrease {
+  @apply text-red-600;
+}
+
+.iconWrapper {
+  @apply w-12 h-12 rounded-full flex items-center justify-center;
+}
+
+.iconBlue {
+  @apply bg-blue-500;
+}
+
+.iconGreen {
+  @apply bg-green-500;
+}
+
+.iconPurple {
+  @apply bg-purple-500;
+}
+
+.iconOrange {
+  @apply bg-orange-500;
+}

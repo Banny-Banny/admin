@@ -1,0 +1,8 @@
+@reference "tailwindcss";
+.c_z0ojx1 {
+  @apply col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight;
+}
+
+.c_1tdppeq {
+  @apply text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed;
+}

@@ -1,0 +1,32 @@
+@reference "tailwindcss";
+.c_1k44y20 {
+  @apply size-4;
+}
+
+.c_11wu7oa {
+  @apply sr-only;
+}
+
+.c_xyfqe4 {
+  @apply text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5;
+}
+
+.c_bafet2 {
+  @apply inline-flex items-center gap-1.5;
+}
+
+.c_hxbwa5 {
+  @apply hover:text-foreground transition-colors;
+}
+
+.c_rzq3xk {
+  @apply text-foreground font-normal;
+}
+
+.c_p3v070 {
+  @apply [&>svg]:size-3.5;
+}
+
+.c_1c195d0 {
+  @apply flex size-9 items-center justify-center;
+}

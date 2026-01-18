@@ -1,0 +1,16 @@
+@reference "tailwindcss";
+.c_1m7bk4h {
+  @apply grid gap-2;
+}
+
+.c_pvvzkq {
+  @apply data-[error=true]:text-destructive;
+}
+
+.c_19wgbbz {
+  @apply text-muted-foreground text-sm;
+}
+
+.c_4xdcjg {
+  @apply text-destructive text-sm;
+}

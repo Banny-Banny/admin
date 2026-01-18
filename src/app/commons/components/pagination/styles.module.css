@@ -1,0 +1,33 @@
+@reference "tailwindcss";
+.c_bb7eoz {
+  @apply hidden sm:block;
+}
+
+.c_1k44y20 {
+  @apply size-4;
+}
+
+.c_11wu7oa {
+  @apply sr-only;
+}
+
+.c_162og45 {
+  @apply mx-auto flex w-full justify-center;
+}
+
+.c_1wqxfyn {
+  @apply flex flex-row items-center gap-1;
+}
+
+.c_119eqiq {
+  @apply gap-1 px-2.5 sm:pl-2.5;
+}
+
+.c_11cpi2w {
+  @apply gap-1 px-2.5 sm:pr-2.5;
+}
+
+.c_1c195d0 {
+  @apply flex size-9 items-center justify-center;
+}
+

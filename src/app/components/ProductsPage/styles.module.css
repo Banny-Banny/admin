@@ -1,0 +1,84 @@
+@reference "tailwindcss";
+.c_1j8i8bf {
+  @apply space-y-6;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_1dlkxbt {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.c_9ngaqo {
+  @apply text-gray-500 mt-1;
+}
+
+.c_1kx26xi {
+  @apply flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.c_6422n {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.c_5znanu {
+  @apply flex items-center gap-2 mb-6;
+}
+
+.c_12qcbxf {
+  @apply text-blue-600;
+}
+
+.c_y1t0l {
+  @apply text-xl font-semibold;
+}
+
+.c_45f187 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.c_a41skz {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.c_uurwux {
+  @apply text-red-500;
+}
+
+.c_mbvevs {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1amsm21 {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none;
+}
+
+.c_d8pr7p {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+.c_yj6fgb {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer;
+}
+
+.c_ftrzdr {
+  @apply mx-auto text-gray-400 mb-2;
+}
+
+.c_ibg2me {
+  @apply text-sm text-gray-600;
+}
+
+.c_sm9r4r {
+  @apply flex justify-end gap-3 pt-4 border-t;
+}
+
+.c_8zbzmp {
+  @apply px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors;
+}
+
+.c_b151g0 {
+  @apply px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}

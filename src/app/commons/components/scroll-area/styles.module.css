@@ -1,0 +1,24 @@
+@reference "tailwindcss";
+.c_16vr2sk {
+  @apply focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1;
+}
+
+.c_uy0bhm {
+  @apply bg-border relative flex-1 rounded-full;
+}
+
+.c_1pbvxah {
+  @apply flex touch-none p-px transition-colors select-none;
+}
+
+.c_1pv0ki4 {
+  @apply relative;
+}
+
+.scrollbarVertical {
+  @apply h-full w-2.5 border-l border-l-transparent;
+}
+
+.scrollbarHorizontal {
+  @apply h-2.5 flex-col border-t border-t-transparent;
+}

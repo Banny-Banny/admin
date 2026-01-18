@@ -1,0 +1,188 @@
+@reference "tailwindcss";
+.c_1j8i8bf {
+  @apply space-y-6;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_1dlkxbt {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.c_9ngaqo {
+  @apply text-gray-500 mt-1;
+}
+
+.c_1kx26xi {
+  @apply flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.c_4rnbt2 {
+  @apply bg-white rounded-lg shadow;
+}
+
+.c_65x7hk {
+  @apply p-6 border-b;
+}
+
+.c_1pv0ki4 {
+  @apply relative;
+}
+
+.c_1y94mk {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.c_lwq1hq {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_fyf4x {
+  @apply divide-y divide-gray-200;
+}
+
+.c_oi2yba {
+  @apply flex items-start justify-between gap-4;
+}
+
+.c_1dzu82l {
+  @apply flex-1;
+}
+
+.c_5znanq {
+  @apply flex items-center gap-2 mb-2;
+}
+
+.c_zxbkcz {
+  @apply px-2 py-1 bg-red-500 text-white text-xs font-medium rounded;
+}
+
+.c_1riaao0 {
+  @apply text-lg font-semibold text-gray-900 hover:text-blue-600;
+}
+
+.c_16wgd3u {
+  @apply text-sm text-gray-600 line-clamp-2 mb-3;
+}
+
+.c_kso4az {
+  @apply flex items-center gap-4 text-sm text-gray-500;
+}
+
+.c_2ca09v {
+  @apply flex items-center gap-1;
+}
+
+.c_g9tmm {
+  @apply p-12 text-center text-gray-500;
+}
+
+.noticeItem {
+  @apply p-6 hover:bg-gray-50 cursor-pointer transition-colors;
+}
+
+.noticePinned {
+  @apply bg-blue-50;
+}
+
+.c_1repdhl {
+  @apply flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors;
+}
+
+.c_1yp1bvq {
+  @apply p-8 border-b;
+}
+
+.c_9rc2p2 {
+  @apply flex items-start justify-between gap-4 mb-4;
+}
+
+.c_1wuo00e {
+  @apply inline-block px-2 py-1 bg-red-500 text-white text-xs font-medium rounded mb-2;
+}
+
+.c_1wgto1v {
+  @apply text-3xl font-bold text-gray-900 mb-4;
+}
+
+.c_jiqtbf {
+  @apply flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors;
+}
+
+.c_1pyvd59 {
+  @apply flex items-center gap-6 text-sm text-gray-500;
+}
+
+.c_2ca09w {
+  @apply flex items-center gap-2;
+}
+
+.c_2c63 {
+  @apply p-8;
+}
+
+.c_tgp36g {
+  @apply max-w-none;
+}
+
+.c_gz1eh {
+  @apply text-gray-700 whitespace-pre-wrap leading-relaxed;
+}
+
+.c_xeice1 {
+  @apply flex justify-center;
+}
+
+.c_1v6b9ss {
+  @apply px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors;
+}
+
+.c_6422p {
+  @apply bg-white rounded-lg shadow p-8;
+}
+
+.c_uoh44m {
+  @apply text-2xl font-bold text-gray-900 mb-6;
+}
+
+.c_5znans {
+  @apply flex items-center gap-2 mb-4;
+}
+
+.c_sk3ga5 {
+  @apply w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1my1zyy {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.c_a41skz {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.c_uurwux {
+  @apply text-red-500;
+}
+
+.c_1gzwh21 {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1j5q06i {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none;
+}
+
+.c_sm9r4r {
+  @apply flex justify-end gap-3 pt-4 border-t;
+}
+
+.c_8zbzmp {
+  @apply px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors;
+}
+
+.c_b151g0 {
+  @apply px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}

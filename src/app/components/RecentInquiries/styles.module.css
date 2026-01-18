@@ -1,0 +1,164 @@
+@reference "tailwindcss";
+.c_1uwkqdn {
+  @apply text-green-500;
+}
+
+.c_12qcb6q {
+  @apply text-blue-500;
+}
+
+.c_2i067q {
+  @apply text-orange-500;
+}
+
+.c_1cnlnvv {
+  @apply text-gray-500;
+}
+
+.c_4rnbt2 {
+  @apply bg-white rounded-lg shadow;
+}
+
+.c_65x7hk {
+  @apply p-6 border-b;
+}
+
+.c_1mytzjc {
+  @apply flex items-center justify-between mb-4;
+}
+
+.c_1cmvr70 {
+  @apply text-lg font-semibold;
+}
+
+.c_10byyx2 {
+  @apply text-sm text-gray-500 mt-1;
+}
+
+.c_8s05pk {
+  @apply flex flex-wrap items-center gap-4;
+}
+
+.c_14sfe4c {
+  @apply flex-1 relative min-w-[200px];
+}
+
+.c_1y94mk {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.c_lwq1hq {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_2ca09w {
+  @apply flex items-center gap-2;
+}
+
+.c_1fl6ab8 {
+  @apply px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_fyf4x {
+  @apply divide-y divide-gray-200;
+}
+
+.c_1h3v33w {
+  @apply p-6 hover:bg-gray-50 transition-colors cursor-pointer;
+}
+
+.c_oi2yba {
+  @apply flex items-start justify-between gap-4;
+}
+
+.c_1dzu82l {
+  @apply flex-1;
+}
+
+.c_6gox1x {
+  @apply flex items-center gap-3 mb-2;
+}
+
+.c_we5pmo {
+  @apply font-semibold text-gray-900;
+}
+
+.c_z9fcgj {
+  @apply text-sm text-gray-600 mb-2 line-clamp-2;
+}
+
+.c_1l53ve4 {
+  @apply flex items-center gap-4 text-xs text-gray-500;
+}
+
+.c_2ca09v {
+  @apply flex items-center gap-1;
+}
+
+.c_g9tmm {
+  @apply p-12 text-center text-gray-500;
+}
+
+.c_cnx530 {
+  @apply p-4 border-t;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_ibg2me {
+  @apply text-sm text-gray-600;
+}
+
+.c_12e7rfd {
+  @apply p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+}
+
+.tagBase {
+  @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.statusDone {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusProcessing {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.statusWaiting {
+  @apply bg-orange-100 text-orange-800;
+}
+
+.statusDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.priorityHigh {
+  @apply bg-red-100 text-red-800;
+}
+
+.priorityMedium {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.priorityLow {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.priorityDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.pageButton {
+  @apply px-3 py-1 rounded-lg transition-colors;
+}
+
+.pageButtonActive {
+  @apply bg-blue-600 text-white;
+}
+
+.pageButtonInactive {
+  @apply hover:bg-gray-100 text-gray-700;
+}

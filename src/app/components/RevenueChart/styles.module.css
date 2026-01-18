@@ -1,0 +1,8 @@
+@reference "tailwindcss";
+.c_6422n {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.c_1l693jk {
+  @apply text-lg font-semibold mb-4;
+}

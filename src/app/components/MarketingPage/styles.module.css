@@ -1,0 +1,696 @@
+@reference "tailwindcss";
+.c_1j8i8bf {
+  @apply space-y-6;
+}
+
+.c_1dlkxbt {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.c_9ngaqo {
+  @apply text-gray-500 mt-1;
+}
+
+.c_ittbg8 {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.c_6422n {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_ibg1vp {
+  @apply text-sm text-gray-500;
+}
+
+.c_1wgu1eb {
+  @apply text-3xl font-bold text-gray-900 mt-2;
+}
+
+.c_1azj537 {
+  @apply w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center;
+}
+
+.c_12qcbxf {
+  @apply text-blue-600;
+}
+
+.c_qn9cgu {
+  @apply w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center;
+}
+
+.c_1uwkr4c {
+  @apply text-green-600;
+}
+
+.c_1m3bfad {
+  @apply w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center;
+}
+
+.c_53mked {
+  @apply text-purple-600;
+}
+
+.c_gg5z1m {
+  @apply border-b border-gray-200;
+}
+
+.c_1rwv5zq {
+  @apply flex gap-4;
+}
+
+.c_2ca09w {
+  @apply flex items-center gap-2;
+}
+
+.c_5znanu {
+  @apply flex items-center gap-2 mb-6;
+}
+
+.c_y1t0l {
+  @apply text-xl font-semibold;
+}
+
+.c_45f187 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.c_a41skz {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.c_uurwux {
+  @apply text-red-500;
+}
+
+.c_mbvevs {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1amsm21 {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none;
+}
+
+.c_d8pr7p {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+.c_vhsfy5 {
+  @apply border border-gray-200 rounded-lg p-4;
+}
+
+.c_5znans {
+  @apply flex items-center gap-2 mb-4;
+}
+
+.c_qc79hs {
+  @apply w-4 h-4 text-blue-600;
+}
+
+.c_1my1zyy {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.c_u9ymhy {
+  @apply grid grid-cols-2 gap-4 ml-6;
+}
+
+.c_1w6vdon {
+  @apply block text-sm text-gray-600 mb-2;
+}
+
+.c_mkcud5 {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_sm9r4r {
+  @apply flex justify-end gap-3 pt-4 border-t;
+}
+
+.c_8zbzmp {
+  @apply px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors;
+}
+
+.c_mk9nis {
+  @apply flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.c_4rnbt2 {
+  @apply bg-white rounded-lg shadow;
+}
+
+.c_65x7hk {
+  @apply p-6 border-b;
+}
+
+.c_1l693jk {
+  @apply text-lg font-semibold mb-4;
+}
+
+.c_8s05pk {
+  @apply flex flex-wrap items-center gap-4;
+}
+
+.c_14sfe4c {
+  @apply flex-1 relative min-w-[200px];
+}
+
+.c_1y94mk {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.c_lwq1hq {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1cnlnvv {
+  @apply text-gray-500;
+}
+
+.c_1fl6ab8 {
+  @apply px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_1bb8j67 {
+  @apply overflow-x-auto;
+}
+
+.c_1l2zdph {
+  @apply w-full;
+}
+
+.c_z838al {
+  @apply bg-gray-50;
+}
+
+.c_wiarv4 {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase;
+}
+
+.c_fyf4x {
+  @apply divide-y divide-gray-200;
+}
+
+.c_x2lcqj {
+  @apply hover:bg-gray-50;
+}
+
+.c_g43mv3 {
+  @apply px-6 py-4;
+}
+
+.c_1my21gc {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.c_3t1c8w {
+  @apply text-xs text-gray-500 line-clamp-1;
+}
+
+.c_tp85ye {
+  @apply px-6 py-4 text-sm text-gray-700;
+}
+
+.c_1uu0h2q {
+  @apply flex-1 bg-gray-200 rounded-full h-2 max-w-[80px];
+}
+
+.c_1qdtcev {
+  @apply bg-blue-600 h-2 rounded-full;
+}
+
+.c_ibg3d3 {
+  @apply text-sm text-gray-700;
+}
+
+.c_ibg150 {
+  @apply text-sm text-gray-400;
+}
+
+.c_tp84h0 {
+  @apply px-6 py-4 text-sm text-gray-500;
+}
+
+.c_13nmcpi {
+  @apply px-6 py-12 text-center text-gray-500;
+}
+
+.tabButton {
+  @apply px-4 py-2 border-b-2 transition-colors;
+}
+
+.tabButtonActive {
+  @apply border-blue-600 text-blue-600 font-medium;
+}
+
+.tabButtonInactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700;
+}
+
+.tagBase {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.typeAd {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.typeInfo {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.typeEvent {
+  @apply bg-pink-100 text-pink-800;
+}
+
+.typeUpdate {
+  @apply bg-green-100 text-green-800;
+}
+
+.typeDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.statusSent {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusPending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.statusScheduled {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.statusDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.barWidth0 {
+  width: 0%;
+}
+
+.barWidth1 {
+  width: 1%;
+}
+
+.barWidth2 {
+  width: 2%;
+}
+
+.barWidth3 {
+  width: 3%;
+}
+
+.barWidth4 {
+  width: 4%;
+}
+
+.barWidth5 {
+  width: 5%;
+}
+
+.barWidth6 {
+  width: 6%;
+}
+
+.barWidth7 {
+  width: 7%;
+}
+
+.barWidth8 {
+  width: 8%;
+}
+
+.barWidth9 {
+  width: 9%;
+}
+
+.barWidth10 {
+  width: 10%;
+}
+
+.barWidth11 {
+  width: 11%;
+}
+
+.barWidth12 {
+  width: 12%;
+}
+
+.barWidth13 {
+  width: 13%;
+}
+
+.barWidth14 {
+  width: 14%;
+}
+
+.barWidth15 {
+  width: 15%;
+}
+
+.barWidth16 {
+  width: 16%;
+}
+
+.barWidth17 {
+  width: 17%;
+}
+
+.barWidth18 {
+  width: 18%;
+}
+
+.barWidth19 {
+  width: 19%;
+}
+
+.barWidth20 {
+  width: 20%;
+}
+
+.barWidth21 {
+  width: 21%;
+}
+
+.barWidth22 {
+  width: 22%;
+}
+
+.barWidth23 {
+  width: 23%;
+}
+
+.barWidth24 {
+  width: 24%;
+}
+
+.barWidth25 {
+  width: 25%;
+}
+
+.barWidth26 {
+  width: 26%;
+}
+
+.barWidth27 {
+  width: 27%;
+}
+
+.barWidth28 {
+  width: 28%;
+}
+
+.barWidth29 {
+  width: 29%;
+}
+
+.barWidth30 {
+  width: 30%;
+}
+
+.barWidth31 {
+  width: 31%;
+}
+
+.barWidth32 {
+  width: 32%;
+}
+
+.barWidth33 {
+  width: 33%;
+}
+
+.barWidth34 {
+  width: 34%;
+}
+
+.barWidth35 {
+  width: 35%;
+}
+
+.barWidth36 {
+  width: 36%;
+}
+
+.barWidth37 {
+  width: 37%;
+}
+
+.barWidth38 {
+  width: 38%;
+}
+
+.barWidth39 {
+  width: 39%;
+}
+
+.barWidth40 {
+  width: 40%;
+}
+
+.barWidth41 {
+  width: 41%;
+}
+
+.barWidth42 {
+  width: 42%;
+}
+
+.barWidth43 {
+  width: 43%;
+}
+
+.barWidth44 {
+  width: 44%;
+}
+
+.barWidth45 {
+  width: 45%;
+}
+
+.barWidth46 {
+  width: 46%;
+}
+
+.barWidth47 {
+  width: 47%;
+}
+
+.barWidth48 {
+  width: 48%;
+}
+
+.barWidth49 {
+  width: 49%;
+}
+
+.barWidth50 {
+  width: 50%;
+}
+
+.barWidth51 {
+  width: 51%;
+}
+
+.barWidth52 {
+  width: 52%;
+}
+
+.barWidth53 {
+  width: 53%;
+}
+
+.barWidth54 {
+  width: 54%;
+}
+
+.barWidth55 {
+  width: 55%;
+}
+
+.barWidth56 {
+  width: 56%;
+}
+
+.barWidth57 {
+  width: 57%;
+}
+
+.barWidth58 {
+  width: 58%;
+}
+
+.barWidth59 {
+  width: 59%;
+}
+
+.barWidth60 {
+  width: 60%;
+}
+
+.barWidth61 {
+  width: 61%;
+}
+
+.barWidth62 {
+  width: 62%;
+}
+
+.barWidth63 {
+  width: 63%;
+}
+
+.barWidth64 {
+  width: 64%;
+}
+
+.barWidth65 {
+  width: 65%;
+}
+
+.barWidth66 {
+  width: 66%;
+}
+
+.barWidth67 {
+  width: 67%;
+}
+
+.barWidth68 {
+  width: 68%;
+}
+
+.barWidth69 {
+  width: 69%;
+}
+
+.barWidth70 {
+  width: 70%;
+}
+
+.barWidth71 {
+  width: 71%;
+}
+
+.barWidth72 {
+  width: 72%;
+}
+
+.barWidth73 {
+  width: 73%;
+}
+
+.barWidth74 {
+  width: 74%;
+}
+
+.barWidth75 {
+  width: 75%;
+}
+
+.barWidth76 {
+  width: 76%;
+}
+
+.barWidth77 {
+  width: 77%;
+}
+
+.barWidth78 {
+  width: 78%;
+}
+
+.barWidth79 {
+  width: 79%;
+}
+
+.barWidth80 {
+  width: 80%;
+}
+
+.barWidth81 {
+  width: 81%;
+}
+
+.barWidth82 {
+  width: 82%;
+}
+
+.barWidth83 {
+  width: 83%;
+}
+
+.barWidth84 {
+  width: 84%;
+}
+
+.barWidth85 {
+  width: 85%;
+}
+
+.barWidth86 {
+  width: 86%;
+}
+
+.barWidth87 {
+  width: 87%;
+}
+
+.barWidth88 {
+  width: 88%;
+}
+
+.barWidth89 {
+  width: 89%;
+}
+
+.barWidth90 {
+  width: 90%;
+}
+
+.barWidth91 {
+  width: 91%;
+}
+
+.barWidth92 {
+  width: 92%;
+}
+
+.barWidth93 {
+  width: 93%;
+}
+
+.barWidth94 {
+  width: 94%;
+}
+
+.barWidth95 {
+  width: 95%;
+}
+
+.barWidth96 {
+  width: 96%;
+}
+
+.barWidth97 {
+  width: 97%;
+}
+
+.barWidth98 {
+  width: 98%;
+}
+
+.barWidth99 {
+  width: 99%;
+}
+
+.barWidth100 {
+  width: 100%;
+}

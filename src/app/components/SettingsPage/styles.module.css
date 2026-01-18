@@ -1,0 +1,143 @@
+@reference "tailwindcss";
+.c_1xnukmc {
+  @apply space-y-6 max-w-4xl;
+}
+
+.c_1dlkxbt {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.c_9ngaqo {
+  @apply text-gray-500 mt-1;
+}
+
+.c_4rnbt2 {
+  @apply bg-white rounded-lg shadow;
+}
+
+.c_65x7hk {
+  @apply p-6 border-b;
+}
+
+.c_2ca09x {
+  @apply flex items-center gap-3;
+}
+
+.c_1cnlomk {
+  @apply text-gray-600;
+}
+
+.c_1cmvr70 {
+  @apply text-lg font-semibold;
+}
+
+.c_tz90eq {
+  @apply p-6 space-y-4;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_55z0kz {
+  @apply font-medium;
+}
+
+.c_ibg1vp {
+  @apply text-sm text-gray-500;
+}
+
+.c_kkicf1 {
+  @apply relative inline-flex items-center cursor-pointer;
+}
+
+.c_1hpd10o {
+  @apply sr-only;
+}
+
+.c_16279px {
+  @apply relative inline-flex h-6 w-11 rounded-full bg-gray-200 transition-colors;
+}
+
+.c_16279px::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 20px;
+  width: 20px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  transition: transform 150ms ease;
+}
+
+.c_1hpd10o:focus-visible + .c_16279px {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+.c_1hpd10o:checked + .c_16279px {
+  background: #2563eb;
+}
+
+.c_1hpd10o:checked + .c_16279px::after {
+  transform: translateX(100%);
+  border-color: #ffffff;
+}
+
+.c_eftqsg {
+  @apply block text-sm font-medium mb-2;
+}
+
+.c_mbvevs {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_2c61 {
+  @apply p-6;
+}
+
+.c_eftqsh {
+  @apply block text-sm font-medium mb-3;
+}
+
+.c_1kh40jn {
+  @apply grid grid-cols-3 gap-4;
+}
+
+.c_1bi9tfo {
+  @apply p-4 border-2 border-blue-600 rounded-lg bg-white;
+}
+
+.c_t50orh {
+  @apply w-full h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded mb-2;
+}
+
+.c_17n5pcd {
+  @apply text-sm font-medium;
+}
+
+.c_mahtic {
+  @apply p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300;
+}
+
+.c_x57gpc {
+  @apply w-full h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded mb-2;
+}
+
+.c_po4zvg {
+  @apply w-full h-20 bg-gradient-to-br from-gray-100 via-gray-800 to-gray-100 rounded mb-2;
+}
+
+.c_1f6wbgz {
+  @apply flex justify-end gap-3;
+}
+
+.c_8zbzmp {
+  @apply px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors;
+}
+
+.c_mk9nis {
+  @apply flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}

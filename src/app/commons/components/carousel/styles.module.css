@@ -1,0 +1,56 @@
+@reference "tailwindcss";
+.c_1pv0ki4 {
+  @apply relative;
+}
+
+.viewport {
+  @apply overflow-hidden;
+}
+
+.content {
+  @apply flex;
+}
+
+.contentHorizontal {
+  @apply -ml-4;
+}
+
+.contentVertical {
+  @apply -mt-4 flex-col;
+}
+
+.item {
+  @apply min-w-0 shrink-0 grow-0 basis-full;
+}
+
+.itemHorizontal {
+  @apply pl-4;
+}
+
+.itemVertical {
+  @apply pt-4;
+}
+
+.control {
+  @apply absolute size-8 rounded-full;
+}
+
+.prevHorizontal {
+  @apply top-1/2 -left-12 -translate-y-1/2;
+}
+
+.prevVertical {
+  @apply -top-12 left-1/2 -translate-x-1/2 rotate-90;
+}
+
+.nextHorizontal {
+  @apply top-1/2 -right-12 -translate-y-1/2;
+}
+
+.nextVertical {
+  @apply -bottom-12 left-1/2 -translate-x-1/2 rotate-90;
+}
+
+.c_11wu7oa {
+  @apply sr-only;
+}

@@ -1,0 +1,105 @@
+@reference "tailwindcss";
+
+.c_2c5y {
+  @apply p-3;
+}
+
+.c_1k44y20 {
+  @apply size-4;
+}
+
+.months {
+  @apply flex flex-col sm:flex-row gap-2;
+}
+
+.month {
+  @apply flex flex-col gap-4;
+}
+
+.caption {
+  @apply flex justify-center pt-1 relative items-center w-full;
+}
+
+.captionLabel {
+  @apply text-sm font-medium;
+}
+
+.nav {
+  @apply flex items-center gap-1;
+}
+
+.navButton {
+  @apply size-7 bg-transparent p-0 opacity-50 hover:opacity-100;
+}
+
+.navButtonPrevious {
+  @apply absolute left-1;
+}
+
+.navButtonNext {
+  @apply absolute right-1;
+}
+
+.table {
+  @apply w-full border-collapse space-x-1;
+}
+
+.headRow {
+  @apply flex;
+}
+
+.headCell {
+  @apply text-muted-foreground rounded-md w-8 font-normal text-[0.8rem];
+}
+
+.row {
+  @apply flex w-full mt-2;
+}
+
+.cell {
+  @apply relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-range-end)]:rounded-r-md;
+}
+
+.cellRange {
+  @apply [&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md;
+}
+
+.cellSingle {
+  @apply [&:has([aria-selected])]:rounded-md;
+}
+
+.day {
+  @apply size-8 p-0 font-normal aria-selected:opacity-100;
+}
+
+.dayRangeStart {
+  @apply day-range-start aria-selected:bg-primary aria-selected:text-primary-foreground;
+}
+
+.dayRangeEnd {
+  @apply day-range-end aria-selected:bg-primary aria-selected:text-primary-foreground;
+}
+
+.daySelected {
+  @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground;
+}
+
+.dayToday {
+  @apply bg-accent text-accent-foreground;
+}
+
+.dayOutside {
+  @apply day-outside text-muted-foreground aria-selected:text-muted-foreground;
+}
+
+.dayDisabled {
+  @apply text-muted-foreground opacity-50;
+}
+
+.dayRangeMiddle {
+  @apply aria-selected:bg-accent aria-selected:text-accent-foreground;
+}
+
+.dayHidden {
+  @apply invisible;
+}

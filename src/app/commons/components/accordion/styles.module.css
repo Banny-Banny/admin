@@ -1,0 +1,24 @@
+@reference "tailwindcss";
+.c_1oje53i {
+  @apply text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200;
+}
+
+.c_i9twl0 {
+  @apply data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm;
+}
+
+.c_ok2gmh {
+  @apply border-b last:border-b-0;
+}
+
+.c_1255eg6 {
+  @apply focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180;
+}
+
+.c_141jn5e {
+  @apply pt-0 pb-4;
+}
+
+.c_1vf95 {
+  @apply flex;
+}

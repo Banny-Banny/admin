@@ -1,0 +1,12 @@
+@reference "tailwindcss";
+.c_1j8i8bf {
+  @apply space-y-6;
+}
+
+.c_1dlkxbt {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.c_9ngaqo {
+  @apply text-gray-500 mt-1;
+}

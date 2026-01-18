@@ -1,0 +1,4 @@
+@reference "tailwindcss";
+.c_11dx6vs {
+  @apply bg-accent animate-pulse rounded-md;
+}

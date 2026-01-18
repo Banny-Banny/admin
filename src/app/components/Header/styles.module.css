@@ -1,0 +1,56 @@
+@reference "tailwindcss";
+.c_dd0ei0 {
+  @apply bg-white border-b border-gray-200 px-6 py-4;
+}
+
+.c_xc8ak4 {
+  @apply flex items-center justify-between;
+}
+
+.c_2ca09y {
+  @apply flex items-center gap-4;
+}
+
+.c_1us4dfh {
+  @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.c_1pv0ki4 {
+  @apply relative;
+}
+
+.c_1y94mk {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.c_1alpe0z {
+  @apply pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.c_pf1hox {
+  @apply relative p-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.c_th8xx3 {
+  @apply absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full;
+}
+
+.c_2ca09x {
+  @apply flex items-center gap-3;
+}
+
+.c_ex8703 {
+  @apply w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center;
+}
+
+.c_coba15 {
+  @apply text-white;
+}
+
+.c_17n5pcd {
+  @apply text-sm font-medium;
+}
+
+.c_1invsyu {
+  @apply text-xs text-gray-500;
+}
