@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_1tygxq8 {
   @apply flex items-center justify-center text-current transition-none;
 }

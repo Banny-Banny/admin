@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_1ks5agm {
   @apply pointer-events-none absolute left-2 flex size-3.5 items-center justify-center;
 }

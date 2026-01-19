@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_49da32 {
   @apply pointer-events-none absolute inset-0 flex items-center justify-center;
 }

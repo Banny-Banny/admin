@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_x0n7jc {
   @apply relative w-full overflow-x-auto;
 }

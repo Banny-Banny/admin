@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../globals.css";
 .c_4rnbt2 {
   @apply bg-white rounded-lg shadow;
 }

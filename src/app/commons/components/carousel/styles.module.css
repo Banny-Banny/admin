@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_1pv0ki4 {
   @apply relative;
 }

@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../globals.css";
 .c_2c61 {
   @apply p-6;
 }

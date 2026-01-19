@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../globals.css";
 .c_1j8i8bf {
   @apply space-y-6;
 }
