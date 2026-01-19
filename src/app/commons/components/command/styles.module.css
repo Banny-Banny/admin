@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_11wu7oa {
   @apply sr-only;
 }

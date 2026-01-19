@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_i121i5 {
   @apply ml-auto;
 }

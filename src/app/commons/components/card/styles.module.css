@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_y6iys2 {
   @apply bg-card text-card-foreground flex flex-col gap-6 rounded-xl border;
 }

@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_7m5yyl {
   @apply relative flex items-center justify-center;
 }

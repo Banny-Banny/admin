@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../globals.css";
 .c_1uwkqdn {
   @apply text-green-500;
 }

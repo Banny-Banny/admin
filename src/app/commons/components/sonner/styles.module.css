@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .toaster {
   --normal-bg: var(--popover);
   --normal-text: var(--popover-foreground);

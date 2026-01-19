@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_16t0que {
   @apply group/toggle-group flex w-fit items-center rounded-md data-[variant=outline]:shadow-xs;
 }

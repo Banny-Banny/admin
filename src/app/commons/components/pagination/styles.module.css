@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../../globals.css";
 .c_bb7eoz {
   @apply hidden sm:block;
 }

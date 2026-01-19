@@ -1,4 +1,5 @@
 @reference "tailwindcss";
+@reference "../../globals.css";
 .c_1xnukmc {
   @apply space-y-6 max-w-4xl;
 }
