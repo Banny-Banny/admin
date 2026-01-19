@@ -5,8 +5,8 @@ import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "lucide-react";
 
 import { cn } from "../utils";
-import {
 import styles from "./styles.module.css";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
