@@ -1,4 +1,8 @@
-import { Menu, Search, Bell, User } from 'lucide-react';
+'use client';
+import { Menu, Search, Bell, User, LogOut } from 'lucide-react';
+import { useAuth } from '../../commons/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import styles from "./styles.module.css";
 
 interface HeaderProps {
@@ -6,6 +10,20 @@ interface HeaderProps {
 }
 
 export function Header({ toggleSidebar }: HeaderProps) {
+  const { admin, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('로그아웃되었습니다');
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      toast.error('로그아웃에 실패했습니다');
+    }
+  };
+
   return (
     <header className={styles.c_dd0ei0}>
       <div className={styles.c_xc8ak4}>
@@ -35,10 +53,17 @@ export function Header({ toggleSidebar }: HeaderProps) {
               <User size={20} className={styles.c_coba15} />
             </div>
             <div>
-              <p className={styles.c_17n5pcd}>관리자</p>
-              <p className={styles.c_1invsyu}>admin@example.com</p>
+              <p className={styles.c_17n5pcd}>{admin?.name || '관리자'}</p>
+              <p className={styles.c_1invsyu}>{admin?.email || 'admin@example.com'}</p>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className={styles.c_pf1hox}
+            title="로그아웃"
+          >
+            <LogOut size={20} />
+          </button>
         </div>
       </div>
     </header>
