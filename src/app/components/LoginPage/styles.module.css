@@ -135,6 +135,17 @@
   box-shadow: 0 0 0 3px rgba(3, 2, 19, 0.2);
 }
 
+.login_button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error_message {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 640px) {
   .login_card {
     padding: 1.5rem;
