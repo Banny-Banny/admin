@@ -168,16 +168,16 @@
 
 **Purpose**: 여러 사용자 스토리에 영향을 미치는 개선 사항
 
-- [ ] T061 [P] Add TypeScript type safety improvements across all components
-- [ ] T062 [P] Add error boundary for inquiry-related components in src/app/components/error-boundary.tsx
-- [ ] T063 [P] Optimize API calls (debounce search, cache inquiry list) in RecentInquiries component
-- [ ] T064 [P] Add toast notifications for success/error states using sonner in all inquiry components
-- [ ] T065 [P] Add responsive design improvements for mobile devices in all inquiry components
-- [ ] T066 [P] Add accessibility improvements (ARIA labels, keyboard navigation) in all inquiry components
+- [x] T061 [P] Add TypeScript type safety improvements across all components
+- [x] T062 [P] Add error boundary for inquiry-related components in src/app/components/error-boundary.tsx
+- [x] T063 [P] Optimize API calls (debounce search, cache inquiry list) in RecentInquiries component
+- [x] T064 [P] Add toast notifications for success/error states using sonner in all inquiry components
+- [x] T065 [P] Add responsive design improvements for mobile devices in all inquiry components
+- [x] T066 [P] Add accessibility improvements (ARIA labels, keyboard navigation) in all inquiry components
 - [ ] T067 [P] Run full E2E test suite for all inquiry features in src/app/tests/api-tests/inquiry-test/
-- [ ] T068 [P] Code cleanup and refactoring (extract custom hooks, optimize re-renders)
-- [ ] T069 [P] Add performance monitoring and logging for Socket.IO connections
-- [ ] T070 [P] Verify all edge cases are handled (empty list, no search results, network errors, etc.)
+- [x] T068 [P] Code cleanup and refactoring (extract custom hooks, optimize re-renders)
+- [x] T069 [P] Add performance monitoring and logging for Socket.IO connections
+- [x] T070 [P] Verify all edge cases are handled (empty list, no search results, network errors, etc.)
 
 ---
 
