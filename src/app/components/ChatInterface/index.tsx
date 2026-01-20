@@ -13,9 +13,6 @@ import {
   updateMessage,
   deleteMessage,
   updateInquiryStatus,
-  type Message as ApiMessage,
-  type Inquiry as ApiInquiry,
-  type InquiryStatus,
 } from '../../commons/apis/inquiry';
 import {
   Select,
@@ -24,22 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../commons/components/select';
+import { type Inquiry, type InquiryStatus } from '../../commons/types/inquiry';
 import styles from './styles.module.css';
-
-interface Inquiry {
-  id: string;
-  roomId: string;
-  customer: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  subject: string;
-  message: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface ChatMessage {
   id: string;
@@ -541,6 +524,7 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
               rows={2}
               maxLength={1500}
               disabled={isSending}
+              aria-label="메시지 입력"
             />
             {newMessage.length > 0 && (
               <p className={styles.charCount}>

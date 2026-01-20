@@ -3,6 +3,8 @@
 import { MessageSquare, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Search, Filter, Trash2 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { getInquiries, deleteInquiry, updateInquiryStatus, type InquiryStatus } from '../../commons/apis/inquiry';
+import { useDebounce } from '../../commons/hooks/use-debounce';
+import { type Inquiry } from '../../commons/types/inquiry';
 import { toast } from 'sonner';
 import {
   Select,
@@ -12,21 +14,6 @@ import {
   SelectValue,
 } from '../../commons/components/select';
 import styles from "./styles.module.css";
-
-interface Inquiry {
-  id: string;
-  roomId: string;
-  customer: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  subject: string;
-  message: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface RecentInquiriesProps {
   onSelectInquiry: (inquiry: Inquiry) => void;
@@ -41,6 +28,7 @@ export function RecentInquiries({
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -80,13 +68,13 @@ export function RecentInquiries({
     fetchInquiries();
   }, [currentPage, statusFilter]);
 
-  // 클라이언트 사이드 검색 필터링
+  // 클라이언트 사이드 검색 필터링 (debounce 적용)
   const filteredInquiries = useMemo(() => {
-    if (!searchTerm.trim()) {
+    if (!debouncedSearchTerm.trim()) {
       return inquiries;
     }
 
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = debouncedSearchTerm.toLowerCase();
     return inquiries.filter((inquiry) => {
       const matchesCustomer = inquiry.customer.name.toLowerCase().includes(searchLower) ||
                             inquiry.customer.email.toLowerCase().includes(searchLower);
@@ -95,7 +83,7 @@ export function RecentInquiries({
       
       return matchesCustomer || matchesSubject || matchesContent;
     });
-  }, [inquiries, searchTerm]);
+  }, [inquiries, debouncedSearchTerm]);
 
   // 페이지네이션 (서버 사이드 페이지네이션 사용)
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -254,6 +242,7 @@ export function RecentInquiries({
                 setCurrentPage(1);
               }}
               className={styles.c_lwq1hq}
+              aria-label="문의 검색"
             />
           </div>
 
@@ -266,6 +255,7 @@ export function RecentInquiries({
                 setCurrentPage(1);
               }}
               className={styles.c_1fl6ab8}
+              aria-label="상태 필터"
             >
               <option value="all">모든 상태</option>
               <option value="PENDING">대기중</option>
