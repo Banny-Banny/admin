@@ -107,3 +107,59 @@
 .c_ybeyki {
   @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed h-fit;
 }
+
+.loadingContainer {
+  @apply flex flex-col items-center justify-center h-full text-gray-500;
+}
+
+.loader {
+  @apply animate-spin mb-2;
+}
+
+.emptyContainer {
+  @apply flex items-center justify-center h-full text-gray-500;
+}
+
+.messageFooter {
+  @apply flex items-center gap-2 mt-1;
+}
+
+.messageActions {
+  @apply flex items-center gap-1 ml-2;
+}
+
+.messageActionButton {
+  @apply p-1 hover:bg-black/10 rounded transition-colors;
+}
+
+.messageActionButton:hover {
+  @apply bg-black/20;
+}
+
+.editContainer {
+  @apply w-full;
+}
+
+.editTextarea {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
+}
+
+.editActions {
+  @apply flex gap-2 mt-2;
+}
+
+.editSaveButton {
+  @apply px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors;
+}
+
+.editCancelButton {
+  @apply px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400 transition-colors;
+}
+
+.charCount {
+  @apply text-xs text-gray-500 mt-1 text-right;
+}
+
+.spinner {
+  @apply animate-spin;
+}
