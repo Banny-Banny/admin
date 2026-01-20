@@ -185,7 +185,7 @@ const apiClient = new ApiClient(API_BASE_URL);
 // 타입 정의
 // ============================================================================
 
-export type InquiryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED';
+export type InquiryStatus = 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
 
 export interface GetInquiriesParams {
   status?: InquiryStatus;

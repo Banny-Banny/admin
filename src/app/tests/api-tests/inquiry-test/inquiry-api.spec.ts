@@ -179,7 +179,7 @@ test.describe('문의하기 API E2E 테스트', () => {
           'Content-Type': 'application/json',
         },
         data: {
-          status: 'PROCESSING',
+          status: 'IN_PROGRESS',
         },
       }
     );
@@ -187,7 +187,7 @@ test.describe('문의하기 API E2E 테스트', () => {
     expect(updateResponse.ok()).toBeTruthy();
     const updateData = await updateResponse.json();
     // 응답 구조에 따라 수정 필요할 수 있음
-    expect(updateData.data?.status || updateData.status).toBe('PROCESSING');
+    expect(updateData.data?.status || updateData.status).toBe('IN_PROGRESS');
   });
 
   test('문의방 삭제 API 테스트', async ({ request }) => {

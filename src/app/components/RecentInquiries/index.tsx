@@ -16,7 +16,7 @@ interface Inquiry {
   };
   subject: string;
   message: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
   createdAt: string;
   updatedAt: string;
 }
@@ -131,8 +131,10 @@ export function RecentInquiries({
     switch (status) {
       case 'COMPLETED':
         return <CheckCircle className={styles.c_1uwkqdn} size={16} />;
-      case 'PROCESSING':
+      case 'IN_PROGRESS':
         return <Clock className={styles.c_12qcb6q} size={16} />;
+      case 'ON_HOLD':
+        return <AlertCircle className={styles.c_2i067q} size={16} />;
       case 'PENDING':
         return <AlertCircle className={styles.c_2i067q} size={16} />;
       default:
@@ -144,8 +146,10 @@ export function RecentInquiries({
     switch (status) {
       case 'COMPLETED':
         return styles.statusDone;
-      case 'PROCESSING':
+      case 'IN_PROGRESS':
         return styles.statusProcessing;
+      case 'ON_HOLD':
+        return styles.statusWaiting;
       case 'PENDING':
         return styles.statusWaiting;
       default:
@@ -157,8 +161,10 @@ export function RecentInquiries({
     switch (status) {
       case 'COMPLETED':
         return '완료';
-      case 'PROCESSING':
+      case 'IN_PROGRESS':
         return '처리중';
+      case 'ON_HOLD':
+        return '보류';
       case 'PENDING':
         return '대기중';
       default:
@@ -225,7 +231,8 @@ export function RecentInquiries({
             >
               <option value="all">모든 상태</option>
               <option value="PENDING">대기중</option>
-              <option value="PROCESSING">처리중</option>
+              <option value="IN_PROGRESS">처리중</option>
+              <option value="ON_HOLD">보류</option>
               <option value="COMPLETED">완료</option>
             </select>
           </div>

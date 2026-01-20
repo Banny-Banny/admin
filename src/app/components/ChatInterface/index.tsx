@@ -19,7 +19,7 @@ interface Inquiry {
   };
   subject: string;
   message: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
   createdAt: string;
   updatedAt: string;
 }
