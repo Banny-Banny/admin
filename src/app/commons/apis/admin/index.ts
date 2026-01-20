@@ -32,6 +32,7 @@ export interface LoginResponse {
     id: string;
     email: string;
     name: string;
+    role: AdminRole;
   };
   user?: {
     id: string;

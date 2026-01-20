@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -10,23 +10,36 @@ import { ProductsPage } from './components/ProductsPage';
 import { ReportsPage } from './components/ReportsPage';
 import { MarketingPage } from './components/MarketingPage';
 import { LoginPage } from './components/LoginPage';
+import { useAuth } from './commons/hooks/use-auth';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('login');
+  const { isAuthenticated, isLoading } = useAuth();
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // 로딩 중일 때는 로딩 표시
+  if (isLoading) {
+    return (
+      <div className="h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 인증되지 않은 경우 로그인 페이지 표시
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen bg-gray-50">
+        <LoginPage />
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'login':
-        return (
-          <LoginPage
-            onLogin={(email, password) => {
-              console.log('Login attempt:', { email, password });
-              // 로그인 성공 시 대시보드로 이동
-              setCurrentPage('dashboard');
-            }}
-          />
-        );
       case 'dashboard':
         return <DashboardOverview />;
       case 'users':
@@ -45,15 +58,6 @@ export default function App() {
         return <DashboardOverview />;
     }
   };
-
-  // 로그인 페이지일 때는 Sidebar와 Header를 숨김
-  if (currentPage === 'login') {
-    return (
-      <div className="h-screen bg-gray-50">
-        {renderPage()}
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">

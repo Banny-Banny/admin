@@ -1,0 +1,272 @@
+openapi: 3.0.3
+info:
+  title: 관리자 인증 API
+  description: 관리자 로그인, 토큰 갱신, 로그아웃 API 스펙
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: 로컬 개발 서버
+  - url: ${API_BASE_URL}
+    description: 프로덕션 서버
+
+paths:
+  /api/admin/auth/login:
+    post:
+      summary: 관리자 로그인
+      description: 이메일과 비밀번호로 관리자 로그인
+      operationId: adminLogin
+      tags:
+        - Admin Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              valid:
+                value:
+                  email: admin@example.com
+                  password: password123
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  value:
+                    accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    admin:
+                      id: admin-123
+                      email: admin@example.com
+                      name: 관리자
+                      role: ADMIN
+        '400':
+          description: 잘못된 요청 (필수 필드 누락, 형식 오류)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingField:
+                  value:
+                    message: 이메일과 비밀번호를 입력해주세요
+                invalidFormat:
+                  value:
+                    message: 유효하지 않은 이메일 형식입니다
+        '401':
+          description: 인증 실패 (잘못된 이메일 또는 비밀번호)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  value:
+                    message: 이메일 또는 비밀번호가 올바르지 않습니다
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  value:
+                    message: 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요
+
+  /api/admin/auth/refresh:
+    post:
+      summary: 토큰 갱신
+      description: refreshToken을 사용하여 accessToken 갱신
+      operationId: refreshToken
+      tags:
+        - Admin Auth
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: 토큰 갱신 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+              examples:
+                success:
+                  value:
+                    accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          description: 인증 실패 (유효하지 않은 refreshToken)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/auth/logout:
+    post:
+      summary: 관리자 로그아웃
+      description: 현재 세션 로그아웃
+      operationId: adminLogout
+      tags:
+        - Admin Auth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 로그아웃 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              examples:
+                success:
+                  value:
+                    message: 로그아웃되었습니다
+        '401':
+          description: 인증되지 않은 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰을 Bearer 스킴으로 전송
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: 관리자 이메일 주소
+          example: admin@example.com
+        password:
+          type: string
+          format: password
+          description: 관리자 비밀번호
+          example: password123
+          minLength: 1
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: 액세스 토큰 (JWT)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: 리프레시 토큰 (JWT)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        admin:
+          $ref: '#/components/schemas/AdminInfo'
+        message:
+          type: string
+          description: 응답 메시지
+          example: 로그인 성공
+
+    AdminInfo:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          description: 관리자 고유 식별자
+          example: admin-123
+        email:
+          type: string
+          format: email
+          description: 관리자 이메일
+          example: admin@example.com
+        name:
+          type: string
+          description: 관리자 이름
+          example: 관리자
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+          description: 관리자 역할
+          example: ADMIN
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: 리프레시 토큰
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: 새로운 액세스 토큰 (JWT)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: 새로운 리프레시 토큰 (JWT, 선택적)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 로그아웃 메시지
+          example: 로그아웃되었습니다
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 에러 메시지
+          example: 이메일 또는 비밀번호가 올바르지 않습니다
+        error:
+          type: string
+          description: 에러 코드 (선택적)
+          example: INVALID_CREDENTIALS
+        details:
+          type: object
+          description: 추가 에러 정보 (선택적)
