@@ -11,3 +11,7 @@
 .c_9ngaqo {
   @apply text-gray-500 mt-1;
 }
+
+.c_dashboard_content {
+  @apply p-8 bg-white rounded-lg shadow-sm;
+}

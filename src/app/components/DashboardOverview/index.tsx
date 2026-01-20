@@ -1,23 +1,6 @@
-import { useState } from 'react';
-import { RecentInquiries } from '../RecentInquiries';
-import { ChatInterface } from '../ChatInterface';
 import styles from "./styles.module.css";
 
-interface Inquiry {
-  id: number;
-  customer: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: string;
-  priority: string;
-  time: string;
-  date: string;
-}
-
 export function DashboardOverview() {
-  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-
   return (
     <div className={styles.c_1j8i8bf}>
       <div>
@@ -25,14 +8,10 @@ export function DashboardOverview() {
         <p className={styles.c_9ngaqo}>전체 통계 및 최근 활동을 확인하세요</p>
       </div>
 
-      {selectedInquiry ? (
-        <ChatInterface 
-          inquiry={selectedInquiry} 
-          onClose={() => setSelectedInquiry(null)} 
-        />
-      ) : (
-        <RecentInquiries onSelectInquiry={setSelectedInquiry} />
-      )}
+      {/* 대시보드 내용은 추후 추가 예정 */}
+      <div className={styles.c_dashboard_content}>
+        <p>대시보드 내용이 여기에 표시됩니다.</p>
+      </div>
     </div>
   );
 }
