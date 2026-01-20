@@ -151,14 +151,14 @@
 
 > **NOTE: E2E 테스트가 모두 통과한 후에만 이 작업들을 시작합니다.**
 
-- [ ] T053 [US3] Add status change dropdown/button in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T054 [US3] Integrate updateInquiryStatus API call in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T055 [US3] Add status change dropdown/button in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T056 [US3] Integrate updateInquiryStatus API call in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T057 [US3] Update inquiry list to reflect status changes in real-time in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T058 [US3] Add visual status indicators (PENDING, PROCESSING, COMPLETED) in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T059 [US3] Add visual status indicator in ChatInterface component header in src/app/components/ChatInterface/index.tsx
-- [ ] T060 [US3] Handle concurrent status changes ("처리 중입니다" message or use first change) in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T053 [US3] Add status change dropdown/button in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T054 [US3] Integrate updateInquiryStatus API call in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T055 [US3] Add status change dropdown/button in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T056 [US3] Integrate updateInquiryStatus API call in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T057 [US3] Update inquiry list to reflect status changes in real-time in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T058 [US3] Add visual status indicators (PENDING, PROCESSING, COMPLETED) in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T059 [US3] Add visual status indicator in ChatInterface component header in src/app/components/ChatInterface/index.tsx
+- [x] T060 [US3] Handle concurrent status changes ("처리 중입니다" message or use first change) in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
 
 **Checkpoint**: All user stories should now be independently functional
 
