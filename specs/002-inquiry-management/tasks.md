@@ -116,26 +116,26 @@
 
 > **NOTE: E2E 테스트가 모두 통과한 후에만 이 작업들을 시작합니다.**
 
-- [ ] T033 [US2] Update ChatInterface component to connect Socket.IO on mount in src/app/components/ChatInterface/index.tsx
-- [ ] T034 [US2] Implement Socket.IO connection to /admin-chat namespace with admin token in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T035 [US2] Implement join_room event handler when inquiry is selected in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T036 [US2] Integrate getInquiryDetail API call to fetch previous chat history in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T037 [P] [US2] Display previous chat messages in chronological order in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T038 [P] [US2] Distinguish between USER and ADMIN messages visually in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T039 [US2] Implement send_message event handler for message input in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T040 [US2] Implement Enter key handler to send message (Shift+Enter for newline) in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T041 [US2] Disable send button when message is empty in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T042 [US2] Implement message length validation (max 1500 characters) in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T043 [US2] Implement receive_message event listener to display new messages in real-time in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T044 [US2] Implement auto-scroll to latest message when new message arrives in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T045 [US2] Implement read_alert event handler (send and receive) in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T046 [US2] Implement leave_room event handler when closing ChatInterface in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T047 [US2] Implement disconnect Socket.IO when closing ChatInterface in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T048 [US2] Integrate updateMessage API call for editing own messages in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T049 [US2] Integrate deleteMessage API call for deleting own messages in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T050 [US2] Add error handling for network errors during message send ("네트워크 오류가 발생했습니다") in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T051 [US2] Add loading state while fetching inquiry detail in ChatInterface component in src/app/components/ChatInterface/index.tsx
-- [ ] T052 [US2] Display inquiry subject, customer info, and initial message in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T033 [US2] Update ChatInterface component to connect Socket.IO on mount in src/app/components/ChatInterface/index.tsx
+- [x] T034 [US2] Implement Socket.IO connection to /admin-chat namespace with admin token in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T035 [US2] Implement join_room event handler when inquiry is selected in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T036 [US2] Integrate getInquiryDetail API call to fetch previous chat history in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T037 [P] [US2] Display previous chat messages in chronological order in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T038 [P] [US2] Distinguish between USER and ADMIN messages visually in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T039 [US2] Implement send_message event handler for message input in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T040 [US2] Implement Enter key handler to send message (Shift+Enter for newline) in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T041 [US2] Disable send button when message is empty in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T042 [US2] Implement message length validation (max 1500 characters) in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T043 [US2] Implement receive_message event listener to display new messages in real-time in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T044 [US2] Implement auto-scroll to latest message when new message arrives in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T045 [US2] Implement read_alert event handler (send and receive) in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T046 [US2] Implement leave_room event handler when closing ChatInterface in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T047 [US2] Implement disconnect Socket.IO when closing ChatInterface in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T048 [US2] Integrate updateMessage API call for editing own messages in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T049 [US2] Integrate deleteMessage API call for deleting own messages in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T050 [US2] Add error handling for network errors during message send ("네트워크 오류가 발생했습니다") in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T051 [US2] Add loading state while fetching inquiry detail in ChatInterface component in src/app/components/ChatInterface/index.tsx
+- [x] T052 [US2] Display inquiry subject, customer info, and initial message in ChatInterface component in src/app/components/ChatInterface/index.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
