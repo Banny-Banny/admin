@@ -27,9 +27,9 @@
 
 **Note**: API 및 Socket 파일(`http.ts`, `socket.ts`, `index.ts`)과 테스트 파일은 이미 생성되어 있습니다.
 
-- [ ] T001 [P] Verify API files exist in src/app/commons/apis/inquiry/http.ts, socket.ts, index.ts
-- [ ] T002 [P] Verify test files exist in src/app/tests/api-tests/inquiry-test/inquiry-api.spec.ts, inquiry-socket.spec.ts
-- [ ] T003 [P] Verify component files exist: InquiryPage, RecentInquiries, ChatInterface
+- [x] T001 [P] Verify API files exist in src/app/commons/apis/inquiry/http.ts, socket.ts, index.ts
+- [x] T002 [P] Verify test files exist in src/app/tests/api-tests/inquiry-test/inquiry-api.spec.ts, inquiry-socket.spec.ts
+- [x] T003 [P] Verify component files exist: InquiryPage, RecentInquiries, ChatInterface
 
 ---
 
