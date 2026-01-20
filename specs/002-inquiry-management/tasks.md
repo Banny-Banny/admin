@@ -39,10 +39,10 @@
 
 **⚠️ CRITICAL**: 이 단계가 완료되지 않으면 사용자 스토리 작업을 시작할 수 없습니다
 
-- [ ] T004 [P] Verify HTTP API client implementation in src/app/commons/apis/inquiry/http.ts (getInquiries, getInquiryDetail, deleteInquiry, updateInquiryStatus, updateMessage, deleteMessage)
-- [ ] T005 [P] Verify Socket.IO client implementation in src/app/commons/apis/inquiry/socket.ts (InquirySocketClient class with connect, disconnect, joinRoom, leaveRoom, sendMessage, receiveMessage handlers)
-- [ ] T006 [P] Verify API client token interceptor and error handling in src/app/commons/apis/inquiry/http.ts
-- [ ] T007 [P] Verify Socket.IO authentication and connection management in src/app/commons/apis/inquiry/socket.ts
+- [x] T004 [P] Verify HTTP API client implementation in src/app/commons/apis/inquiry/http.ts (getInquiries, getInquiryDetail, deleteInquiry, updateInquiryStatus, updateMessage, deleteMessage)
+- [x] T005 [P] Verify Socket.IO client implementation in src/app/commons/apis/inquiry/socket.ts (InquirySocketClient class with connect, disconnect, joinRoom, leaveRoom, sendMessage, receiveMessage handlers)
+- [x] T006 [P] Verify API client token interceptor and error handling in src/app/commons/apis/inquiry/http.ts
+- [x] T007 [P] Verify Socket.IO authentication and connection management in src/app/commons/apis/inquiry/socket.ts
 
 **Checkpoint**: Foundation ready - E2E 테스트를 먼저 실행합니다
 
