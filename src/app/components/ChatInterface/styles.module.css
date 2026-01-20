@@ -4,6 +4,52 @@
   @apply bg-white rounded-lg shadow flex flex-col h-[calc(100vh-12rem)];
 }
 
+@media (max-width: 768px) {
+  .c_1er3iqn {
+    @apply rounded-none shadow-none h-[calc(100vh-8rem)];
+  }
+  
+  .c_1hlwyim {
+    @apply p-3;
+  }
+  
+  .c_2ca09x {
+    @apply gap-2;
+  }
+  
+  .c_1oa1gq1 {
+    @apply w-8 h-8 text-sm;
+  }
+  
+  .c_we5pmo {
+    @apply text-base;
+  }
+  
+  .c_ibg1vp {
+    @apply text-xs;
+  }
+  
+  .headerActions {
+    @apply flex-col gap-1;
+  }
+  
+  .c_1g2rryz {
+    @apply p-2;
+  }
+  
+  .messageBubble {
+    @apply max-w-[85%];
+  }
+  
+  .c_cnx530 {
+    @apply p-2;
+  }
+  
+  .c_3pq6bm {
+    @apply gap-1;
+  }
+}
+
 .c_1hlwyim {
   @apply p-4 border-b flex items-center justify-between;
 }
