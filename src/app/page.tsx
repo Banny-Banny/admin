@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardOverview } from './components/DashboardOverview';
+import { InquiryPage } from './components/InquiryPage';
 import { UsersPage } from './components/UsersPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { SettingsPage } from './components/SettingsPage';
@@ -42,6 +43,8 @@ export default function App() {
     switch (currentPage) {
       case 'dashboard':
         return <DashboardOverview />;
+      case 'inquiries':
+        return <InquiryPage />;
       case 'users':
         return <UsersPage />;
       case 'analytics':
