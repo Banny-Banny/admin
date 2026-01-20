@@ -215,6 +215,17 @@ export interface GetInquiriesResponse {
   offset: number;
 }
 
+// 실제 API 응답 구조
+export interface GetInquiriesApiResponse {
+  data: {
+    items: Inquiry[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  success: boolean;
+}
+
 export interface GetInquiryDetailParams {
   limit?: number;
   offset?: number;
@@ -287,7 +298,20 @@ export async function getInquiries(
   const queryString = queryParams.toString();
   const endpoint = `/api/admin/inquiries${queryString ? `?${queryString}` : ''}`;
 
-  return apiClient.get<GetInquiriesResponse>(endpoint);
+  const response = await apiClient.get<GetInquiriesApiResponse | GetInquiriesResponse>(endpoint);
+  
+  // 실제 API 응답 구조에 맞게 변환
+  if ('data' in response && response.data?.items) {
+    return {
+      inquiries: response.data.items,
+      total: response.data.total,
+      limit: response.data.limit,
+      offset: response.data.offset,
+    };
+  }
+  
+  // 기존 구조도 지원
+  return response as GetInquiriesResponse;
 }
 
 /**

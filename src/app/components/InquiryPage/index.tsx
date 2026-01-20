@@ -1,18 +1,25 @@
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { RecentInquiries } from '../RecentInquiries';
 import { ChatInterface } from '../ChatInterface';
+import { getInquiries, type Inquiry as ApiInquiry } from '../../commons/apis/inquiry';
 import styles from "./styles.module.css";
 
+// API 응답 구조에 맞는 타입
 interface Inquiry {
-  id: number;
-  customer: string;
-  email: string;
+  id: string;
+  roomId: string;
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+  };
   subject: string;
   message: string;
-  status: string;
-  priority: string;
-  time: string;
-  date: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function InquiryPage() {
@@ -31,7 +38,9 @@ export function InquiryPage() {
           onClose={() => setSelectedInquiry(null)} 
         />
       ) : (
-        <RecentInquiries onSelectInquiry={setSelectedInquiry} />
+        <RecentInquiries 
+          onSelectInquiry={setSelectedInquiry}
+        />
       )}
     </div>
   );

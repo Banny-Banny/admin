@@ -89,18 +89,18 @@
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Update InquiryPage component to fetch inquiry list on mount in src/app/components/InquiryPage/index.tsx
-- [ ] T022 [US1] Integrate getInquiries API call in InquiryPage component in src/app/components/InquiryPage/index.tsx
-- [ ] T023 [P] [US1] Update RecentInquiries component to display inquiry list with customer info, status, and timestamps in src/app/components/RecentInquiries/index.tsx
-- [ ] T024 [P] [US1] Implement search functionality in RecentInquiries component (filter by customer name, subject, content) in src/app/components/RecentInquiries/index.tsx
-- [ ] T025 [P] [US1] Implement status filter dropdown in RecentInquiries component (PENDING, PROCESSING, COMPLETED) in src/app/components/RecentInquiries/index.tsx
-- [ ] T026 [US1] Implement pagination controls in RecentInquiries component (limit, offset) in src/app/components/RecentInquiries/index.tsx
-- [ ] T027 [US1] Implement delete inquiry functionality in RecentInquiries component (call deleteInquiry API) in src/app/components/RecentInquiries/index.tsx
-- [ ] T028 [US1] Add empty state message ("문의가 없습니다") in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T029 [US1] Add "검색 결과가 없습니다" message when search returns no results in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T030 [US1] Add loading state while fetching inquiry list in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T031 [US1] Add error handling for API failures in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
-- [ ] T032 [US1] Connect inquiry selection handler to open ChatInterface in InquiryPage component in src/app/components/InquiryPage/index.tsx
+- [x] T021 [US1] Update InquiryPage component to fetch inquiry list on mount in src/app/components/InquiryPage/index.tsx
+- [x] T022 [US1] Integrate getInquiries API call in InquiryPage component in src/app/components/InquiryPage/index.tsx
+- [x] T023 [P] [US1] Update RecentInquiries component to display inquiry list with customer info, status, and timestamps in src/app/components/RecentInquiries/index.tsx
+- [x] T024 [P] [US1] Implement search functionality in RecentInquiries component (filter by customer name, subject, content) in src/app/components/RecentInquiries/index.tsx
+- [x] T025 [P] [US1] Implement status filter dropdown in RecentInquiries component (PENDING, PROCESSING, COMPLETED) in src/app/components/RecentInquiries/index.tsx
+- [x] T026 [US1] Implement pagination controls in RecentInquiries component (limit, offset) in src/app/components/RecentInquiries/index.tsx
+- [x] T027 [US1] Implement delete inquiry functionality in RecentInquiries component (call deleteInquiry API) in src/app/components/RecentInquiries/index.tsx
+- [x] T028 [US1] Add empty state message ("문의가 없습니다") in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T029 [US1] Add "검색 결과가 없습니다" message when search returns no results in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T030 [US1] Add loading state while fetching inquiry list in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T031 [US1] Add error handling for API failures in RecentInquiries component in src/app/components/RecentInquiries/index.tsx
+- [x] T032 [US1] Connect inquiry selection handler to open ChatInterface in InquiryPage component in src/app/components/InquiryPage/index.tsx
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 

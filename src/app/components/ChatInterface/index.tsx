@@ -9,28 +9,45 @@ interface Message {
   time: string;
 }
 
-interface ChatInterfaceProps {
-  inquiry: {
-    id: number;
-    customer: string;
+interface Inquiry {
+  id: string;
+  roomId: string;
+  customer: {
+    id: string;
+    name: string;
     email: string;
-    subject: string;
-    message: string;
-    status: string;
-    priority: string;
-    time: string;
-    date: string;
   };
+  subject: string;
+  message: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ChatInterfaceProps {
+  inquiry: Inquiry;
   onClose: () => void;
 }
 
 export function ChatInterface({ inquiry, onClose }: ChatInterfaceProps) {
+  // 날짜 포맷팅
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       sender: 'customer',
       text: inquiry.message,
-      time: inquiry.date,
+      time: formatDate(inquiry.createdAt),
     },
   ]);
   const [newMessage, setNewMessage] = useState('');
@@ -66,11 +83,11 @@ export function ChatInterface({ inquiry, onClose }: ChatInterfaceProps) {
       <div className={styles.c_1hlwyim}>
         <div className={styles.c_2ca09x}>
           <div className={styles.c_1oa1gq1}>
-            {inquiry.customer.charAt(0)}
+            {inquiry.customer.name.charAt(0)}
           </div>
           <div>
-            <h3 className={styles.c_we5pmo}>{inquiry.customer}</h3>
-            <p className={styles.c_ibg1vp}>{inquiry.email}</p>
+            <h3 className={styles.c_we5pmo}>{inquiry.customer.name}</h3>
+            <p className={styles.c_ibg1vp}>{inquiry.customer.email}</p>
           </div>
         </div>
         <button

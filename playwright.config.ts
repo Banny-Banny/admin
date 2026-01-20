@@ -43,13 +43,6 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
   },
 
-  /* 환경 변수 전달 - 테스트에서 사용할 환경 변수들 */
-  env: {
-    SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || '',
-    SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || '',
-    // API_BASE_URL은 테스트 파일에서 직접 읽도록 함 (절대 URL 필요)
-  },
-
   /* 프로젝트별 브라우저 설정 */
   projects: [
     {
