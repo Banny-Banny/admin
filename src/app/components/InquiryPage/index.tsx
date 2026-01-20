@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RecentInquiries } from '../RecentInquiries';
 import { ChatInterface } from '../ChatInterface';
-import { getInquiries, type Inquiry as ApiInquiry } from '../../commons/apis/inquiry';
+import { getInquiries, type Inquiry as ApiInquiry, type InquiryStatus } from '../../commons/apis/inquiry';
 import styles from "./styles.module.css";
 
 // API 응답 구조에 맞는 타입
@@ -24,6 +24,22 @@ interface Inquiry {
 
 export function InquiryPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
+  // 상태 변경 핸들러
+  const handleStatusChange = (inquiryId: string, newStatus: InquiryStatus) => {
+    // 선택된 문의의 상태 업데이트
+    if (selectedInquiry && selectedInquiry.id === inquiryId) {
+      setSelectedInquiry({ ...selectedInquiry, status: newStatus });
+    }
+    
+    // 목록의 문의 상태도 업데이트
+    setInquiries(prev =>
+      prev.map(inq =>
+        inq.id === inquiryId ? { ...inq, status: newStatus } : inq
+      )
+    );
+  };
 
   return (
     <div className={styles.c_1j8i8bf}>
@@ -35,7 +51,8 @@ export function InquiryPage() {
       {selectedInquiry ? (
         <ChatInterface 
           inquiry={selectedInquiry} 
-          onClose={() => setSelectedInquiry(null)} 
+          onClose={() => setSelectedInquiry(null)}
+          onStatusChange={handleStatusChange}
         />
       ) : (
         <RecentInquiries 
