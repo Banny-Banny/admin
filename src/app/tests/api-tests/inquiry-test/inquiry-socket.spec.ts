@@ -1,12 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { io, Socket } from 'socket.io-client';
+import dotenv from 'dotenv';
+import path from 'path';
 
-const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://be-production-8aa2.up.railway.app';
+// .env 파일 직접 로드 (Playwright 워커 프로세스에서도 동작하도록)
+dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
-// 테스트용 관리자 계정
+// 테스트에서는 프로덕션 서버(NEXT_PUBLIC_API_BASE_URL)를 우선 사용, 없으면 API_BASE_URL, 마지막으로 기본값
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app').replace(/\/$/, '');
+
+// 테스트용 관리자 계정 (.env 파일에서 읽어옴)
 const TEST_ADMIN = {
-  email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
-  password: process.env.TEST_ADMIN_PASSWORD || 'password123',
+  email: process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.SUPER_ADMIN_PASSWORD || 'password123',
 };
 
 let adminAccessToken: string;
@@ -36,8 +42,9 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
 
     if (inquiriesResponse.ok()) {
       const inquiriesData = await inquiriesResponse.json();
-      if (inquiriesData.inquiries.length > 0) {
-        testRoomId = inquiriesData.inquiries[0].roomId;
+      // 실제 API 응답 구조: {"data": {"items": [], ...}, "success": true}
+      if (inquiriesData.data?.items && inquiriesData.data.items.length > 0) {
+        testRoomId = inquiriesData.data.items[0].roomId;
       }
     }
   });
@@ -136,17 +143,14 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
         reject(new Error('메시지 전송 시간 초과'));
       }, 15000);
 
-      let isJoined = false;
-
       socket.on('connect', () => {
-        socket.emit('join_room', { roomId: testRoomId }, (response) => {
+        socket.emit('join_room', { roomId: testRoomId }, (response: { success?: boolean; roomId?: string; error?: string }) => {
           if (response.error) {
             clearTimeout(timeout);
             socket.disconnect();
             reject(new Error(response.error));
             return;
           }
-          isJoined = true;
 
           // 메시지 전송
           socket.emit('send_message', {
@@ -198,7 +202,7 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
       }, 10000);
 
       socket.on('connect', () => {
-        socket.emit('join_room', { roomId: testRoomId }, (response) => {
+        socket.emit('join_room', { roomId: testRoomId }, (response: { success?: boolean; roomId?: string; error?: string }) => {
           if (response.error) {
             clearTimeout(timeout);
             socket.disconnect();
@@ -257,7 +261,7 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
       }, 10000);
 
       socket.on('connect', () => {
-        socket.emit('join_room', { roomId: testRoomId }, (response) => {
+        socket.emit('join_room', { roomId: testRoomId }, (response: { success?: boolean; roomId?: string; error?: string }) => {
           if (response.error) {
             clearTimeout(timeout);
             socket.disconnect();
@@ -311,7 +315,7 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
       }, 10000);
 
       socket.on('connect', () => {
-        socket.emit('join_room', { roomId: testRoomId }, (response) => {
+        socket.emit('join_room', { roomId: testRoomId }, (response: { success?: boolean; roomId?: string; error?: string }) => {
           if (response.error) {
             clearTimeout(timeout);
             socket.disconnect();
@@ -329,7 +333,7 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
           });
 
           // 에러 이벤트 확인 또는 성공 시 실패 처리
-          socket.on('error', (error) => {
+          socket.on('error', () => {
             clearTimeout(timeout);
             socket.disconnect();
             resolve(); // 에러가 발생하면 테스트 통과
