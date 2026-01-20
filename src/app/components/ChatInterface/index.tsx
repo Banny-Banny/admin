@@ -12,9 +12,18 @@ import {
   getInquiryDetail,
   updateMessage,
   deleteMessage,
+  updateInquiryStatus,
   type Message as ApiMessage,
   type Inquiry as ApiInquiry,
+  type InquiryStatus,
 } from '../../commons/apis/inquiry';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../commons/components/select';
 import styles from './styles.module.css';
 
 interface Inquiry {
@@ -43,15 +52,18 @@ interface ChatMessage {
 interface ChatInterfaceProps {
   inquiry: Inquiry;
   onClose: () => void;
+  onStatusChange?: (inquiryId: string, newStatus: InquiryStatus) => void;
 }
 
-export function ChatInterface({ inquiry, onClose }: ChatInterfaceProps) {
+export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [currentStatus, setCurrentStatus] = useState<InquiryStatus>(inquiry.status);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const socketClientRef = useRef(getInquirySocketClient());
@@ -301,6 +313,65 @@ export function ChatInterface({ inquiry, onClose }: ChatInterfaceProps) {
     }
   };
 
+  // 상태 변경 핸들러
+  const handleStatusChange = async (newStatus: InquiryStatus) => {
+    if (isUpdatingStatus || newStatus === currentStatus) {
+      return;
+    }
+
+    try {
+      setIsUpdatingStatus(true);
+      await updateInquiryStatus(inquiry.id, { status: newStatus });
+      setCurrentStatus(newStatus);
+      toast.success('문의 상태가 변경되었습니다.');
+      
+      // 부모 컴포넌트에 상태 변경 알림
+      if (onStatusChange) {
+        onStatusChange(inquiry.id, newStatus);
+      }
+    } catch (err) {
+      console.error('문의 상태 변경 실패:', err);
+      if (err instanceof Error && err.message.includes('처리 중')) {
+        toast.error('다른 관리자가 처리 중입니다.');
+      } else {
+        toast.error('문의 상태 변경에 실패했습니다.');
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // 상태 표시 함수들
+  const getStatusLabel = (status: InquiryStatus) => {
+    switch (status) {
+      case 'COMPLETED':
+        return '완료';
+      case 'IN_PROGRESS':
+        return '처리중';
+      case 'ON_HOLD':
+        return '보류';
+      case 'PENDING':
+        return '대기중';
+      default:
+        return status;
+    }
+  };
+
+  const getStatusColor = (status: InquiryStatus) => {
+    switch (status) {
+      case 'COMPLETED':
+        return styles.statusDone;
+      case 'IN_PROGRESS':
+        return styles.statusProcessing;
+      case 'ON_HOLD':
+        return styles.statusWaiting;
+      case 'PENDING':
+        return styles.statusWaiting;
+      default:
+        return styles.statusDefault;
+    }
+  };
+
   // 닫기 핸들러
   const handleClose = () => {
     const socketClient = socketClientRef.current;
@@ -318,17 +389,39 @@ export function ChatInterface({ inquiry, onClose }: ChatInterfaceProps) {
             {inquiry.customer.name.charAt(0)}
           </div>
           <div>
-            <h3 className={styles.c_we5pmo}>{inquiry.customer.name}</h3>
+            <div className={styles.headerTitleRow}>
+              <h3 className={styles.c_we5pmo}>{inquiry.customer.name}</h3>
+              <span className={`${styles.statusBadge} ${getStatusColor(currentStatus)}`}>
+                {getStatusLabel(currentStatus)}
+              </span>
+            </div>
             <p className={styles.c_ibg1vp}>{inquiry.customer.email}</p>
           </div>
         </div>
-        <button
-          onClick={handleClose}
-          className={styles.c_1us4dfh}
-          aria-label="닫기"
-        >
-          <X size={20} />
-        </button>
+        <div className={styles.headerActions}>
+          <Select
+            value={currentStatus}
+            onValueChange={(value) => handleStatusChange(value as InquiryStatus)}
+            disabled={isUpdatingStatus}
+          >
+            <SelectTrigger className={styles.statusSelectTrigger}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">대기중</SelectItem>
+              <SelectItem value="IN_PROGRESS">처리중</SelectItem>
+              <SelectItem value="ON_HOLD">보류</SelectItem>
+              <SelectItem value="COMPLETED">완료</SelectItem>
+            </SelectContent>
+          </Select>
+          <button
+            onClick={handleClose}
+            className={styles.c_1us4dfh}
+            aria-label="닫기"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Subject */}
