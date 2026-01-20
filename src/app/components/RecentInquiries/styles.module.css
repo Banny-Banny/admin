@@ -163,3 +163,7 @@
 .pageButtonInactive {
   @apply hover:bg-gray-100 text-gray-700;
 }
+
+.statusSelectTrigger {
+  @apply min-w-[100px] h-8 text-xs;
+}

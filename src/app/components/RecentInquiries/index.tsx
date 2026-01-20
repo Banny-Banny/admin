@@ -2,8 +2,15 @@
 
 import { MessageSquare, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Search, Filter, Trash2 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { getInquiries, deleteInquiry, type InquiryStatus } from '../../commons/apis/inquiry';
+import { getInquiries, deleteInquiry, updateInquiryStatus, type InquiryStatus } from '../../commons/apis/inquiry';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../commons/components/select';
 import styles from "./styles.module.css";
 
 interface Inquiry {
@@ -35,6 +42,7 @@ export function RecentInquiries({
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const itemsPerPage = 10;
 
@@ -123,6 +131,36 @@ export function RecentInquiries({
       toast.error('문의 삭제에 실패했습니다.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // 문의 상태 변경
+  const handleStatusChange = async (inquiryId: string, newStatus: InquiryStatus) => {
+    // 이미 업데이트 중이면 무시
+    if (updatingStatusId === inquiryId) {
+      return;
+    }
+
+    try {
+      setUpdatingStatusId(inquiryId);
+      await updateInquiryStatus(inquiryId, { status: newStatus });
+      toast.success('문의 상태가 변경되었습니다.');
+      
+      // 목록에서 상태 업데이트
+      setInquiries(prev =>
+        prev.map(inq =>
+          inq.id === inquiryId ? { ...inq, status: newStatus } : inq
+        )
+      );
+    } catch (err) {
+      console.error('문의 상태 변경 실패:', err);
+      if (err instanceof Error && err.message.includes('처리 중')) {
+        toast.error('다른 관리자가 처리 중입니다.');
+      } else {
+        toast.error('문의 상태 변경에 실패했습니다.');
+      }
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -299,6 +337,23 @@ export function RecentInquiries({
                   </div>
                   <div className={styles.c_2ca09w}>
                     {getStatusIcon(inquiry.status)}
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={inquiry.status}
+                        onValueChange={(value) => handleStatusChange(inquiry.id, value as InquiryStatus)}
+                        disabled={updatingStatusId === inquiry.id}
+                      >
+                        <SelectTrigger className={styles.statusSelectTrigger}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">대기중</SelectItem>
+                          <SelectItem value="IN_PROGRESS">처리중</SelectItem>
+                          <SelectItem value="ON_HOLD">보류</SelectItem>
+                          <SelectItem value="COMPLETED">완료</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <button
                       onClick={(e) => handleDelete(inquiry.id, e)}
                       disabled={deletingId === inquiry.id}
