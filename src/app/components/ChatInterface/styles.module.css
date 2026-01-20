@@ -4,6 +4,52 @@
   @apply bg-white rounded-lg shadow flex flex-col h-[calc(100vh-12rem)];
 }
 
+@media (max-width: 768px) {
+  .c_1er3iqn {
+    @apply rounded-none shadow-none h-[calc(100vh-8rem)];
+  }
+  
+  .c_1hlwyim {
+    @apply p-3;
+  }
+  
+  .c_2ca09x {
+    @apply gap-2;
+  }
+  
+  .c_1oa1gq1 {
+    @apply w-8 h-8 text-sm;
+  }
+  
+  .c_we5pmo {
+    @apply text-base;
+  }
+  
+  .c_ibg1vp {
+    @apply text-xs;
+  }
+  
+  .headerActions {
+    @apply flex-col gap-1;
+  }
+  
+  .c_1g2rryz {
+    @apply p-2;
+  }
+  
+  .messageBubble {
+    @apply max-w-[85%];
+  }
+  
+  .c_cnx530 {
+    @apply p-2;
+  }
+  
+  .c_3pq6bm {
+    @apply gap-1;
+  }
+}
+
 .c_1hlwyim {
   @apply p-4 border-b flex items-center justify-between;
 }
@@ -106,4 +152,92 @@
 
 .c_ybeyki {
   @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed h-fit;
+}
+
+.loadingContainer {
+  @apply flex flex-col items-center justify-center h-full text-gray-500;
+}
+
+.loader {
+  @apply animate-spin mb-2;
+}
+
+.emptyContainer {
+  @apply flex items-center justify-center h-full text-gray-500;
+}
+
+.messageFooter {
+  @apply flex items-center gap-2 mt-1;
+}
+
+.messageActions {
+  @apply flex items-center gap-1 ml-2;
+}
+
+.messageActionButton {
+  @apply p-1 hover:bg-black/10 rounded transition-colors;
+}
+
+.messageActionButton:hover {
+  @apply bg-black/20;
+}
+
+.editContainer {
+  @apply w-full;
+}
+
+.editTextarea {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
+}
+
+.editActions {
+  @apply flex gap-2 mt-2;
+}
+
+.editSaveButton {
+  @apply px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors;
+}
+
+.editCancelButton {
+  @apply px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400 transition-colors;
+}
+
+.charCount {
+  @apply text-xs text-gray-500 mt-1 text-right;
+}
+
+.spinner {
+  @apply animate-spin;
+}
+
+.headerTitleRow {
+  @apply flex items-center gap-2;
+}
+
+.statusBadge {
+  @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.statusDone {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusProcessing {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.statusWaiting {
+  @apply bg-orange-100 text-orange-800;
+}
+
+.statusDefault {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.headerActions {
+  @apply flex items-center gap-2;
+}
+
+.statusSelectTrigger {
+  @apply min-w-[100px] h-8 text-xs;
 }

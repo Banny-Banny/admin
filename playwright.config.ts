@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// .env 파일 로드
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
  * Playwright 설정 파일

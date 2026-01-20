@@ -20,6 +20,36 @@
   @apply bg-white rounded-lg shadow;
 }
 
+@media (max-width: 768px) {
+  .c_4rnbt2 {
+    @apply rounded-none shadow-none;
+  }
+  
+  .c_65x7hk {
+    @apply p-4;
+  }
+  
+  .c_8s05pk {
+    @apply flex-col gap-2;
+  }
+  
+  .c_14sfe4c {
+    @apply min-w-full;
+  }
+  
+  .c_1h3v33w {
+    @apply p-4;
+  }
+  
+  .c_oi2yba {
+    @apply flex-col gap-2;
+  }
+  
+  .c_2ca09w {
+    @apply w-full justify-between;
+  }
+}
+
 .c_65x7hk {
   @apply p-6 border-b;
 }
@@ -162,4 +192,8 @@
 
 .pageButtonInactive {
   @apply hover:bg-gray-100 text-gray-700;
+}
+
+.statusSelectTrigger {
+  @apply min-w-[100px] h-8 text-xs;
 }
