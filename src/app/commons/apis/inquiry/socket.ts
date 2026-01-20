@@ -94,17 +94,42 @@ export class InquirySocketClient {
 
     this.socket.on('connect', () => {
       this.isConnected = true;
-      console.log('Socket.IO connected to /admin-chat');
+      const connectTime = Date.now();
+      console.log(`[Socket.IO] Connected to /admin-chat at ${new Date(connectTime).toISOString()}`);
+      
+      // 성능 모니터링: 연결 시간 기록
+      if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
+        (window as any).__SOCKET_METRICS__.lastConnectTime = connectTime;
+        (window as any).__SOCKET_METRICS__.connectionCount = 
+          ((window as any).__SOCKET_METRICS__.connectionCount || 0) + 1;
+      }
     });
 
-    this.socket.on('disconnect', () => {
+    this.socket.on('disconnect', (reason) => {
       this.isConnected = false;
-      console.log('Socket.IO disconnected from /admin-chat');
+      const disconnectTime = Date.now();
+      console.log(`[Socket.IO] Disconnected from /admin-chat at ${new Date(disconnectTime).toISOString()}, reason: ${reason}`);
+      
+      // 성능 모니터링: 연결 해제 시간 기록
+      if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
+        (window as any).__SOCKET_METRICS__.lastDisconnectTime = disconnectTime;
+        (window as any).__SOCKET_METRICS__.disconnectReason = reason;
+      }
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error);
+      console.error('[Socket.IO] Connection error:', error);
       this.isConnected = false;
+      
+      // 성능 모니터링: 연결 오류 기록
+      if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
+        (window as any).__SOCKET_METRICS__.errorCount = 
+          ((window as any).__SOCKET_METRICS__.errorCount || 0) + 1;
+        (window as any).__SOCKET_METRICS__.lastError = {
+          message: error.message,
+          timestamp: Date.now(),
+        };
+      }
     });
 
     return this.socket;
@@ -171,7 +196,17 @@ export class InquirySocketClient {
       throw new Error('메시지는 최대 1500자까지 입력할 수 있습니다.');
     }
 
+    const sendTime = Date.now();
     this.socket.emit('send_message', { roomId, content });
+    
+    // 성능 모니터링: 메시지 전송 시간 기록
+    console.log(`[Socket.IO] Message sent to room ${roomId} at ${new Date(sendTime).toISOString()}, length: ${content.length}`);
+    
+    if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
+      (window as any).__SOCKET_METRICS__.messagesSent = 
+        ((window as any).__SOCKET_METRICS__.messagesSent || 0) + 1;
+      (window as any).__SOCKET_METRICS__.lastMessageSentTime = sendTime;
+    }
   }
 
   sendReadAlert(roomId: string): void {
