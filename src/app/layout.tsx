@@ -5,6 +5,7 @@ import { ApiProvider } from "./commons/provider/api-provider/api-provider";
 import { AuthProvider } from "./commons/context/auth-context";
 import { ErrorBoundary } from "./commons/components/error-boundary";
 import { QueryProvider } from "./commons/provider/query-provider/query-provider";
+import { Toaster } from "./commons/components/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
             <ApiProvider>
               <AuthProvider>
                 {children}
+                <Toaster />
               </AuthProvider>
             </ApiProvider>
           </QueryProvider>

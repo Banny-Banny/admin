@@ -1,0 +1,118 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.filtersContainer {
+  @apply mb-6 p-4 bg-white rounded-lg shadow;
+}
+
+.filtersGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4;
+}
+
+.filterItem {
+  @apply flex flex-col gap-2;
+}
+
+.filterLabel {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.tableContainer {
+  @apply bg-white rounded-lg shadow overflow-hidden max-h-[calc(100vh-400px)] overflow-y-auto;
+}
+
+.clickableRow {
+  @apply cursor-pointer hover:bg-gray-50 transition-colors;
+}
+
+.secondaryText {
+  @apply text-xs text-gray-500;
+}
+
+.emptyCell {
+  @apply text-center py-8 text-gray-500;
+}
+
+.emptyCell .emptyTitle {
+  @apply text-lg font-semibold text-gray-600 mb-2;
+}
+
+.emptyCell .emptyMessage {
+  @apply text-gray-500;
+}
+
+.paginationContainer {
+  @apply mt-6 flex flex-col sm:flex-row justify-between items-center gap-4;
+}
+
+.paginationInfo {
+  @apply text-sm text-gray-600;
+}
+
+.disabled {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+.loadingContainer {
+  @apply flex items-center justify-center py-12;
+}
+
+.errorContainer {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.errorTitle {
+  @apply text-lg font-semibold text-red-600 mb-2;
+}
+
+.errorMessage {
+  @apply text-gray-600;
+}
+
+.emptyContainer {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.emptyTitle {
+  @apply text-lg font-semibold text-gray-600 mb-2;
+}
+
+.emptyMessage {
+  @apply text-gray-500;
+}
+
+.detailContent {
+  @apply max-w-3xl;
+}
+
+.detailSection {
+  @apply mt-4;
+}
+
+.sectionTitle {
+  @apply text-base font-semibold mb-2;
+}
+
+.detailGrid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-2;
+}
+
+.detailRow {
+  @apply flex justify-between gap-2 py-1 border-b border-gray-100;
+}
+
+.detailLabel {
+  @apply text-sm text-gray-500;
+}
+
+.detailValue {
+  @apply text-sm text-gray-900;
+}
+
+.statusControl {
+  @apply flex gap-2 w-full sm:w-auto items-center justify-end;
+}
+
+.statusSelectTrigger {
+  @apply w-40;
+}
