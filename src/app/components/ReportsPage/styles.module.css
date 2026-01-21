@@ -112,6 +112,10 @@
   @apply flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors;
 }
 
+.editButton {
+  @apply flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed;
+}
+
 .c_1pyvd59 {
   @apply flex items-center gap-6 text-sm text-gray-500;
 }
@@ -186,4 +190,16 @@
 
 .c_b151g0 {
   @apply px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.loadingSpinner {
+  @apply flex flex-col items-center justify-center py-12;
+}
+
+.spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600;
+}
+
+.loadingText {
+  @apply mt-4 text-gray-600;
 }
