@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-01-19
 
 ## Active Technologies
+- TypeScript 5, JavaScript (ES2020+) (003-product-management)
+- N/A (백엔드 API를 통해 데이터 관리) (003-product-management)
 - TypeScript 5 + Next.js 16 (App Router), React 19, Axios (003-admin-dashboard)
 - N/A (프론트엔드 기능, 백엔드 API에 의존) (003-admin-dashboard)
 - TypeScript 5, Next.js 16 (App Router), React 19 + Axios, React Query, Radix UI, Tailwind CSS 4 + CSS Modules (004-admin-order-management)
@@ -28,6 +30,7 @@ TypeScript 5.x, JavaScript (ES2020+): Follow standard conventions
 
 ## Recent Changes
 - 004-admin-order-management: Added TypeScript 5, Next.js 16 (App Router), React 19 + Axios, React Query, Radix UI, Tailwind CSS 4 + CSS Modules
+- 003-product-management: Added TypeScript 5, JavaScript (ES2020+)
 - 003-admin-dashboard: Added TypeScript 5 + Next.js 16 (App Router), React 19, Axios
 
 - 001-admin-auth: Added TypeScript 5.x, JavaScript (ES2020+) + Next.js 16.1.3, React 19.2.3, Axios 1.7.9, React Hook Form 7.71.1
