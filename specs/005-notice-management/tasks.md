@@ -64,13 +64,13 @@
 
 ### E2E 테스트 작성 및 실행
 
-- [ ] T012 [P] Create E2E test file for notice API in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T013 [P] Write E2E test for GET /api/notices (list notices with search, pagination) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T014 [P] Write E2E test for GET /api/notices/{id} (get notice detail) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T015 [P] Write E2E test for POST /api/admin/notices (create notice) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T016 [P] Write E2E test for PATCH /api/admin/notices/{id} (update notice) - only if POST test created data in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T017 [P] Write E2E test for DELETE /api/admin/notices/{id} (delete notice) - only if POST test created data in src/app/tests/api-tests/notice-test/notice-api.spec.ts
-- [ ] T018 Run all E2E tests using `npm run test:e2e` and verify all notice API tests pass
+- [X] T012 [P] Create E2E test file for notice API in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T013 [P] Write E2E test for GET /api/notices (list notices with search, pagination) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T014 [P] Write E2E test for GET /api/notices/{id} (get notice detail) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T015 [P] Write E2E test for POST /api/admin/notices (create notice) in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T016 [P] Write E2E test for PATCH /api/admin/notices/{id} (update notice) - only if POST test created data in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T017 [P] Write E2E test for DELETE /api/admin/notices/{id} (delete notice) - only if POST test created data in src/app/tests/api-tests/notice-test/notice-api.spec.ts
+- [X] T018 Run all E2E tests using `npm run test:e2e` and verify all notice API tests pass
 
 **Checkpoint**: 모든 E2E 테스트 통과 확인 - 이제 데이터 바인딩 작업을 시작할 수 있습니다
 
