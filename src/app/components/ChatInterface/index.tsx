@@ -130,12 +130,40 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
       if (isMounted && payload.roomId === inquiry.id) {
         setMessages((prev) => {
-          // 중복 메시지 방지
+          // 중복 메시지 방지 (실제 ID로 이미 존재하는 경우)
           if (prev.some((msg) => msg.id === payload.id)) {
             console.log('[ChatInterface] 중복 메시지 무시:', payload.id);
             return prev;
           }
           
+          // 임시 메시지가 있는 경우 교체 (내가 보낸 메시지인 경우)
+          // 같은 내용이고 ADMIN이 보낸 메시지면 임시 메시지를 실제 메시지로 교체
+          const tempMessageIndex = prev.findIndex(
+            (msg) => 
+              msg.id.startsWith('temp-') && 
+              msg.senderType === 'ADMIN' &&
+              msg.content === payload.content &&
+              payload.senderType === 'ADMIN'
+          );
+          
+          if (tempMessageIndex !== -1) {
+            console.log('[ChatInterface] 임시 메시지를 실제 메시지로 교체:', {
+              tempId: prev[tempMessageIndex].id,
+              actualId: payload.id,
+            });
+            
+            // 임시 메시지를 실제 메시지로 교체
+            const newMessages = [...prev];
+            newMessages[tempMessageIndex] = {
+              id: payload.id,
+              senderType: payload.senderType,
+              content: payload.content,
+              createdAt: payload.createdAt,
+            };
+            return newMessages;
+          }
+          
+          // 새 메시지 추가
           console.log('[ChatInterface] 새 메시지 추가:', payload);
           return [
             ...prev,
@@ -260,12 +288,34 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
       // 메시지 전송 (Promise 반환)
       console.log('[ChatInterface] sendMessage 호출');
-      await socketClient.sendMessage(inquiry.id, messageContent);
-      console.log('[ChatInterface] sendMessage 완료');
+      
+      // 임시 메시지 ID 생성 (서버 응답으로 실제 ID를 받으면 업데이트됨)
+      const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Optimistic Update: 메시지 전송 성공 후 즉시 로컬 상태에 추가
+      const optimisticMessage: ChatMessage = {
+        id: tempMessageId,
+        senderType: 'ADMIN',
+        content: messageContent,
+        createdAt: new Date().toISOString(),
+      };
+      
+      // 전송 전에 임시 메시지 추가 (즉시 화면에 표시)
+      setMessages((prev) => [...prev, optimisticMessage]);
       setNewMessage('');
       
-      // 서버로부터 receive_message를 받아야 화면에 그려짐
-      console.log('[ChatInterface] 서버로부터 receive_message 이벤트를 기다리는 중...');
+      try {
+        await socketClient.sendMessage(inquiry.id, messageContent);
+        console.log('[ChatInterface] sendMessage 완료');
+        
+        // 서버로부터 receive_message를 받으면 실제 메시지로 교체됨
+        // (중복 체크 로직에서 temp ID는 실제 ID로 교체됨)
+      } catch (sendError) {
+        // 전송 실패 시 임시 메시지 제거
+        console.error('[ChatInterface] 메시지 전송 실패, 임시 메시지 제거');
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempMessageId));
+        throw sendError;
+      }
     } catch (error) {
       console.error('[ChatInterface] 메시지 전송 실패:', error);
       if (error instanceof Error) {
