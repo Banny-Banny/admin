@@ -128,24 +128,24 @@
 
 ### API 데이터 바인딩
 
-- [ ] T035 [US2] Update ReportsPage component to fetch notice detail when notice is clicked in src/app/components/ReportsPage/index.tsx
-- [ ] T036 [US2] Replace hardcoded notice detail with API call using getNoticeById function in src/app/components/ReportsPage/index.tsx
-- [ ] T037 [US2] Map API Notice type to existing Notice interface for detail view in src/app/components/ReportsPage/index.tsx
-- [ ] T038 [US2] Update detail view to handle loading state during API call in src/app/components/ReportsPage/index.tsx
-- [ ] T039 [US2] Update detail view to handle error state when API call fails in src/app/components/ReportsPage/index.tsx
-- [ ] T040 [US2] Display error message when notice not found (404) in src/app/components/ReportsPage/index.tsx
+- [X] T035 [US2] Update ReportsPage component to fetch notice detail when notice is clicked in src/app/components/ReportsPage/index.tsx
+- [X] T036 [US2] Replace hardcoded notice detail with API call using getNoticeById function in src/app/components/ReportsPage/index.tsx
+- [X] T037 [US2] Map API Notice type to existing Notice interface for detail view in src/app/components/ReportsPage/index.tsx
+- [X] T038 [US2] Update detail view to handle loading state during API call in src/app/components/ReportsPage/index.tsx
+- [X] T039 [US2] Update detail view to handle error state when API call fails in src/app/components/ReportsPage/index.tsx
+- [X] T040 [US2] Display error message when notice not found (404) in src/app/components/ReportsPage/index.tsx
 
 ### 네비게이션
 
-- [ ] T041 [US2] Implement "목록으로" button to return to list view in src/app/components/ReportsPage/index.tsx
-- [ ] T042 [US2] Update view state management to handle list/detail transitions in src/app/components/ReportsPage/index.tsx
+- [X] T041 [US2] Implement "목록으로" button to return to list view in src/app/components/ReportsPage/index.tsx
+- [X] T042 [US2] Update view state management to handle list/detail transitions in src/app/components/ReportsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T043 [US2] Verify notice detail displays correctly with API data in src/app/components/ReportsPage/index.tsx
-- [ ] T044 [US2] Verify "목록으로" button navigates back to list view in src/app/components/ReportsPage/index.tsx
-- [ ] T045 [US2] Verify error handling when notice not found in src/app/components/ReportsPage/index.tsx
-- [ ] T046 [US2] Verify loading state displays during detail API call in src/app/components/ReportsPage/index.tsx
+- [X] T043 [US2] Verify notice detail displays correctly with API data in src/app/components/ReportsPage/index.tsx
+- [X] T044 [US2] Verify "목록으로" button navigates back to list view in src/app/components/ReportsPage/index.tsx
+- [X] T045 [US2] Verify error handling when notice not found in src/app/components/ReportsPage/index.tsx
+- [X] T046 [US2] Verify loading state displays during detail API call in src/app/components/ReportsPage/index.tsx
 
 **Checkpoint**: User Story 2 완료 - 공지사항 상세 조회 기능이 독립적으로 작동합니다
 

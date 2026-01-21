@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getNotices } from '../../commons/apis/notice';
-import type { NoticeListItem } from '../../commons/apis/notice';
+import { getNotices, getNoticeById } from '../../commons/apis/notice';
+import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
 import { useDebounce } from '../../commons/hooks/use-debounce';
 import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
 import styles from "./styles.module.css";
@@ -11,6 +11,7 @@ import styles from "./styles.module.css";
 // UI용 Notice 인터페이스 (API 데이터 + UI 전용 필드)
 interface Notice {
   id: number; // API의 string id를 number로 변환 (간단한 해시 사용)
+  originalId: string; // API의 원본 UUID (상세 조회용)
   title: string;
   content: string; // 목록에서는 표시하지 않지만, 상세 뷰를 위해 저장
   author: string; // UI 전용 필드 (API에 없음)
@@ -29,8 +30,29 @@ function mapApiNoticeToUiNotice(apiNotice: NoticeListItem, index: number): Notic
 
   return {
     id: numericId,
+    originalId: apiNotice.id, // 원본 UUID 저장 (상세 조회용)
     title: apiNotice.title,
     content: '', // 목록에서는 content가 없으므로 빈 문자열
+    author: '관리자', // UI 전용 필드
+    createdAt: apiNotice.createdAt.split('T')[0], // ISO 날짜를 YYYY-MM-DD 형식으로 변환
+    views: 0, // UI 전용 필드 (기본값 0)
+    isPinned: apiNotice.isPinned,
+  };
+}
+
+// API Notice를 UI Notice로 변환하는 헬퍼 함수 (상세 조회용)
+function mapApiNoticeDetailToUiNotice(apiNotice: ApiNotice): Notice {
+  // UUID를 간단한 숫자로 변환 (해시 함수 사용)
+  const hashId = apiNotice.id.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc) + char.charCodeAt(0);
+  }, 0);
+  const numericId = Math.abs(hashId) % 1000000; // 0-999999 범위로 제한
+
+  return {
+    id: numericId,
+    originalId: apiNotice.id, // 원본 UUID 저장
+    title: apiNotice.title,
+    content: apiNotice.content, // 상세 조회에서는 content가 있음
     author: '관리자', // UI 전용 필드
     createdAt: apiNotice.createdAt.split('T')[0], // ISO 날짜를 YYYY-MM-DD 형식으로 변환
     views: 0, // UI 전용 필드 (기본값 0)
@@ -46,6 +68,8 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   // Debounce search term to reduce API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -93,22 +117,54 @@ export function ReportsPage() {
     fetchNotices();
   }, [debouncedSearchTerm]);
 
-  const handleNoticeClick = (notice: Notice) => {
+  const handleNoticeClick = async (notice: Notice) => {
     // 조회수 증가 (UI 전용)
     const updatedNotices = notices.map((n) =>
       n.id === notice.id ? { ...n, views: n.views + 1 } : n
     );
     setNotices(updatedNotices);
-    setSelectedNotice({ ...notice, views: notice.views + 1 });
+
+    // 상세 뷰로 전환
     setView('detail');
+    setDetailLoading(true);
+    setDetailError(null);
+    setSelectedNotice({ ...notice, views: notice.views + 1 });
+
+    try {
+      // API에서 상세 정보 조회
+      const response = await getNoticeById(notice.originalId);
+
+      if (response.success && response.data) {
+        // API 데이터를 UI Notice로 변환
+        const detailNotice = mapApiNoticeDetailToUiNotice(response.data);
+        // 조회수는 기존 값 유지
+        detailNotice.views = notice.views + 1;
+        setSelectedNotice(detailNotice);
+      } else {
+        throw new Error('공지사항 상세 정보를 불러오는데 실패했습니다.');
+      }
+    } catch (err: any) {
+      // 404 에러 처리
+      if (err.response?.status === 404) {
+        const errorMessage = '공지사항을 찾을 수 없습니다.';
+        setDetailError(errorMessage);
+        handleApiErrorWithToast(err, errorMessage);
+      } else {
+        const apiError = handleApiErrorWithToast(err, '공지사항 상세 정보를 불러오는데 실패했습니다.');
+        setDetailError(apiError.message);
+      }
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Phase 5에서 API 연동 예정
+    // TODO: Phase 6에서 API 연동 예정
     const newNotice: Notice = {
       id: notices.length + 1,
+      originalId: `temp-${Date.now()}`, // 임시 UUID (Phase 6에서 실제 API 응답으로 교체 예정)
       title: formData.title,
       content: formData.content,
       author: '관리자',
@@ -233,11 +289,15 @@ export function ReportsPage() {
   }
 
   // 상세 뷰
-  if (view === 'detail' && selectedNotice) {
+  if (view === 'detail') {
     return (
       <div className={styles.c_1j8i8bf}>
         <button
-          onClick={() => setView('list')}
+          onClick={() => {
+            setView('list');
+            setDetailError(null);
+            setSelectedNotice(null);
+          }}
           className={styles.c_1repdhl}
         >
           <ArrowLeft size={20} />
@@ -245,54 +305,74 @@ export function ReportsPage() {
         </button>
 
         <div className={styles.c_4rnbt2}>
-          <div className={styles.c_1yp1bvq}>
-            <div className={styles.c_9rc2p2}>
-              <div className={styles.c_1dzu82l}>
-                {selectedNotice.isPinned && (
-                  <span className={styles.c_1wuo00e}>
-                    공지
-                  </span>
-                )}
-                <h1 className={styles.c_1wgto1v}>
-                  {selectedNotice.title}
-                </h1>
-              </div>
-              <button
-                onClick={() => handleDelete(selectedNotice.id)}
-                className={styles.c_jiqtbf}
-              >
-                <Trash2 size={18} />
-                삭제
-              </button>
+          {detailLoading ? (
+            <div className={styles.c_g9tmm}>
+              공지사항을 불러오는 중...
             </div>
-            <div className={styles.c_1pyvd59}>
-              <div className={styles.c_2ca09w}>
-                <User size={16} />
-                <span>{selectedNotice.author}</span>
-              </div>
-              <div className={styles.c_2ca09w}>
-                <Calendar size={16} />
-                <span>{selectedNotice.createdAt}</span>
-              </div>
-              <div className={styles.c_2ca09w}>
-                <Eye size={16} />
-                <span>조회수 {selectedNotice.views.toLocaleString()}</span>
-              </div>
+          ) : detailError ? (
+            <div className={styles.c_g9tmm}>
+              {detailError}
             </div>
-          </div>
+          ) : selectedNotice ? (
+            <>
+              <div className={styles.c_1yp1bvq}>
+                <div className={styles.c_9rc2p2}>
+                  <div className={styles.c_1dzu82l}>
+                    {selectedNotice.isPinned && (
+                      <span className={styles.c_1wuo00e}>
+                        공지
+                      </span>
+                    )}
+                    <h1 className={styles.c_1wgto1v}>
+                      {selectedNotice.title}
+                    </h1>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(selectedNotice.id)}
+                    className={styles.c_jiqtbf}
+                  >
+                    <Trash2 size={18} />
+                    삭제
+                  </button>
+                </div>
+                <div className={styles.c_1pyvd59}>
+                  <div className={styles.c_2ca09w}>
+                    <User size={16} />
+                    <span>{selectedNotice.author}</span>
+                  </div>
+                  <div className={styles.c_2ca09w}>
+                    <Calendar size={16} />
+                    <span>{selectedNotice.createdAt}</span>
+                  </div>
+                  <div className={styles.c_2ca09w}>
+                    <Eye size={16} />
+                    <span>조회수 {selectedNotice.views.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
 
-          <div className={styles.c_2c63}>
-            <div className={styles.c_tgp36g}>
-              <div className={styles.c_gz1eh}>
-                {selectedNotice.content}
+              <div className={styles.c_2c63}>
+                <div className={styles.c_tgp36g}>
+                  <div className={styles.c_gz1eh}>
+                    {selectedNotice.content}
+                  </div>
+                </div>
               </div>
+            </>
+          ) : (
+            <div className={styles.c_g9tmm}>
+              공지사항 정보를 불러올 수 없습니다.
             </div>
-          </div>
+          )}
         </div>
 
         <div className={styles.c_xeice1}>
           <button
-            onClick={() => setView('list')}
+            onClick={() => {
+              setView('list');
+              setDetailError(null);
+              setSelectedNotice(null);
+            }}
             className={styles.c_1v6b9ss}
           >
             목록으로
