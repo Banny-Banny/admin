@@ -4,21 +4,21 @@
 
 export type InquiryStatus = 'PENDING' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED';
 
-export interface Customer {
+export interface User {
   id: string;
-  name: string;
-  email: string;
+  nickname: string;
+  email: string | null;
 }
 
 export interface Inquiry {
   id: string;
-  roomId: string;
-  customer: Customer;
-  subject: string;
-  message: string;
+  user: User;
   status: InquiryStatus;
+  isResolved: boolean;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadCount: number;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface Message {
