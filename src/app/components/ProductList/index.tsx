@@ -1,48 +1,126 @@
-import { Search, Filter, MoreVertical, Package } from 'lucide-react';
-import { useState } from 'react';
+import { Search, Filter, MoreVertical, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo, memo } from 'react';
+import { getProducts, type Product, ProductStatus } from '../../commons/apis/product';
+import { useDebounce } from '../../commons/hooks/use-debounce';
+import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
+import { Skeleton } from '../../commons/components/skeleton';
 import styles from "./styles.module.css";
 
-export interface Product {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  discountPrice: number | null;
-  stock: number;
-  status: string;
-  description: string;
-  image: string | null;
-  tags: string[];
-  createdAt: string;
-}
-
 interface ProductListProps {
-  products: Product[];
+  onProductCountChange?: (count: number) => void;
+  refreshKey?: number; // 상품 생성/수정/삭제 후 목록 새로고침을 위한 키
+  onProductClick?: (productId: string) => void; // 상품 클릭 핸들러
 }
 
-export function ProductList({ products }: ProductListProps) {
+const ITEMS_PER_PAGE = 10;
+
+export const ProductList = memo(function ProductList({ onProductCountChange, refreshKey, onProductClick }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<ProductStatus>(ProductStatus.ALL);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // Debounce search term to reduce API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case '판매중':
-        return styles.statusActive;
-      case '품절':
-        return styles.statusSoldOut;
-      case '판매중지':
-        return styles.statusInactive;
-      default:
-        return styles.statusDefault;
+  // 검색/필터 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, categoryFilter, statusFilter]);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+        
+        const params: {
+          search?: string;
+          categoryId?: string;
+          status?: ProductStatus;
+          limit?: number;
+          offset?: number;
+        } = {
+          limit: ITEMS_PER_PAGE,
+          offset: offset,
+        };
+
+        if (debouncedSearchTerm) {
+          params.search = debouncedSearchTerm;
+        }
+
+        if (categoryFilter) {
+          params.categoryId = categoryFilter;
+        }
+
+        if (statusFilter !== ProductStatus.ALL) {
+          params.status = statusFilter;
+        }
+
+        const response = await getProducts(params);
+        
+        if (response.success) {
+          setProducts(response.data.items);
+          setTotal(response.data.total);
+          onProductCountChange?.(response.data.total);
+        } else {
+          throw new Error('상품 목록을 불러오는데 실패했습니다.');
+        }
+      } catch (err) {
+        const apiError = handleApiErrorWithToast(err, '상품 목록을 불러오는데 실패했습니다.');
+        setError(apiError.message);
+        setProducts([]);
+        setTotal(0);
+        onProductCountChange?.(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm, categoryFilter, statusFilter, refreshKey, currentPage]);
+
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? styles.statusActive : styles.statusInactive;
+  };
+
+  const getStatusText = (isActive: boolean) => {
+    return isActive ? '판매중' : '판매중지';
+  };
+
+  const formatDate = useMemo(() => {
+    return (dateString: string) => {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+      } catch {
+        return dateString;
+      }
+    };
+  }, []);
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, total);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // 페이지 상단으로 스크롤
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -68,113 +146,222 @@ export function ProductList({ products }: ProductListProps) {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className={styles.c_1fl6ab8}
             >
-              <option value="all">모든 카테고리</option>
-              <option value="전자기기">전자기기</option>
-              <option value="패션">패션</option>
-              <option value="식품">식품</option>
-              <option value="도서">도서</option>
-              <option value="생활용품">생활용품</option>
-              <option value="기타">기타</option>
+              <option value="">모든 카테고리</option>
+              {/* TODO: 카테고리 목록을 API에서 가져와서 동적으로 표시 */}
             </select>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value as ProductStatus)}
               className={styles.c_1fl6ab8}
             >
-              <option value="all">모든 상태</option>
-              <option value="판매중">판매중</option>
-              <option value="품절">품절</option>
-              <option value="판매중지">판매중지</option>
+              <option value={ProductStatus.ALL}>모든 상태</option>
+              <option value={ProductStatus.ACTIVE}>판매중</option>
+              <option value={ProductStatus.INACTIVE}>판매중지</option>
+              <option value={ProductStatus.DELETED}>삭제됨</option>
             </select>
           </div>
         </div>
       </div>
 
       <div className={styles.c_1bb8j67}>
-        <table className={styles.c_1l2zdph}>
-          <thead className={styles.c_z838al}>
-            <tr>
-              <th className={styles.c_wiarv4}>상품</th>
-              <th className={styles.c_wiarv4}>카테고리</th>
-              <th className={styles.c_wiarv4}>가격</th>
-              <th className={styles.c_wiarv4}>재고</th>
-              <th className={styles.c_wiarv4}>상태</th>
-              <th className={styles.c_wiarv4}>태그</th>
-              <th className={styles.c_wiarv4}>등록일</th>
-              <th className={styles.c_947h7t}>작업</th>
-            </tr>
-          </thead>
-          <tbody className={styles.c_fyf4x}>
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <tr key={product.id} className={styles.c_x2lcqj}>
-                  <td className={styles.c_g43mv3}>
-                    <div className={styles.c_2ca09x}>
-                      <div className={styles.c_1ci45al}>
-                        <Package className={styles.c_1cnln56} size={24} />
+        {loading ? (
+          <div className={styles.c_13nmcpi}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} style={{ display: 'flex', gap: '16px', padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
+                  <Skeleton style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Skeleton style={{ width: '60%', height: '20px' }} />
+                    <Skeleton style={{ width: '40%', height: '16px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : error ? (
+          <div className={styles.c_13nmcpi}>
+            <p style={{ color: '#dc2626' }}>{error}</p>
+          </div>
+        ) : (
+          <table className={styles.c_1l2zdph}>
+            <thead className={styles.c_z838al}>
+              <tr>
+                <th className={styles.c_wiarv4}>상품</th>
+                <th className={styles.c_wiarv4}>카테고리</th>
+                <th className={styles.c_wiarv4}>가격</th>
+                <th className={styles.c_wiarv4}>상태</th>
+                <th className={styles.c_wiarv4}>타입</th>
+                <th className={styles.c_wiarv4}>미디어 타입</th>
+                <th className={styles.c_wiarv4}>등록일</th>
+                <th className={styles.c_947h7t}>작업</th>
+              </tr>
+            </thead>
+            <tbody className={styles.c_fyf4x}>
+              {products.length > 0 ? (
+                products.map((product) => (
+                  <tr 
+                    key={product.id} 
+                    className={styles.c_x2lcqj}
+                    onClick={() => onProductClick?.(product.id)}
+                    style={{ cursor: onProductClick ? 'pointer' : 'default' }}
+                  >
+                    <td className={styles.c_g43mv3}>
+                      <div className={styles.c_2ca09x}>
+                        <div className={styles.c_1ci45al}>
+                          <Package className={styles.c_1cnln56} size={24} />
+                        </div>
+                        <div>
+                          <p className={styles.c_1my21gc}>{product.name}</p>
+                          <p className={styles.c_3t1c8w}>{product.description || '설명 없음'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className={styles.c_1my21gc}>{product.name}</p>
-                        <p className={styles.c_3t1c8w}>{product.description}</p>
+                    </td>
+                    <td className={styles.c_g43mv3}>
+                      <span className={styles.c_146yb2l}>
+                        {product.categoryId || '카테고리 없음'}
+                      </span>
+                    </td>
+                    <td className={styles.c_g43mv3}>
+                      <p className={styles.c_1my21gc}>₩{product.price.toLocaleString()}</p>
+                    </td>
+                    <td className={styles.c_g43mv3}>
+                      <span className={`${styles.tagBase} ${getStatusColor(product.isActive)}`}>
+                        {getStatusText(product.isActive)}
+                      </span>
+                    </td>
+                    <td className={styles.c_g43mv3}>
+                      <span className={styles.c_146yb2l}>
+                        {product.productType}
+                      </span>
+                    </td>
+                    <td className={styles.c_g43mv3}>
+                      <div className={styles.c_1sdudap}>
+                        {product.mediaTypes && product.mediaTypes.length > 0 ? (
+                          product.mediaTypes.map((type, index) => (
+                            <span key={index} className={styles.c_13einte}>
+                              #{type}
+                            </span>
+                          ))
+                        ) : (
+                          <span className={styles.c_13einte}>없음</span>
+                        )}
                       </div>
-                    </div>
-                  </td>
-                  <td className={styles.c_g43mv3}>
-                    <span className={styles.c_146yb2l}>
-                      {product.category}
-                    </span>
-                  </td>
-                  <td className={styles.c_g43mv3}>
-                    <div>
-                      {product.discountPrice ? (
-                        <>
-                          <p className={styles.c_1my21gc}>₩{product.discountPrice.toLocaleString()}</p>
-                          <p className={styles.c_12lnfqe}>₩{product.price.toLocaleString()}</p>
-                        </>
-                      ) : (
-                        <p className={styles.c_1my21gc}>₩{product.price.toLocaleString()}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td className={styles.c_g43mv3}>
-                    <p className={`${styles.stockText} ${
-                      product.stock === 0 ? styles.stockEmpty : styles.stockNormal
-                    }`}>
-                      {product.stock}개
-                    </p>
-                  </td>
-                  <td className={styles.c_g43mv3}>
-                    <span className={`${styles.tagBase} ${getStatusColor(product.status)}`}>
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className={styles.c_g43mv3}>
-                    <div className={styles.c_1sdudap}>
-                      {product.tags.map((tag, index) => (
-                        <span key={index} className={styles.c_13einte}>
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className={styles.c_tp84h0}>{product.createdAt}</td>
-                  <td className={styles.c_1ouo88t}>
-                    <button className={styles.c_1us4dfh}>
-                      <MoreVertical size={16} />
-                    </button>
+                    </td>
+                    <td className={styles.c_tp84h0}>{formatDate(product.createdAt)}</td>
+                    <td className={styles.c_1ouo88t}>
+                      <button className={styles.c_1us4dfh}>
+                        <MoreVertical size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className={styles.c_13nmcpi}>
+                    {searchTerm || categoryFilter || statusFilter !== ProductStatus.ALL
+                      ? '검색 결과가 없습니다.'
+                      : '등록된 상품이 없습니다.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className={styles.c_13nmcpi}>
-                  등록된 상품이 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {/* 페이지네이션 */}
+      {!loading && !error && totalPages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px',
+          padding: '16px',
+          borderTop: '1px solid #e5e7eb'
+        }}>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            전체 {total}개 중 {startIndex + 1}-{endIndex}개 표시
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                color: currentPage === 1 ? '#9ca3af' : '#374151',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <ChevronLeft size={16} />
+              이전
+            </button>
+            
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // 현재 페이지 주변 2페이지씩만 표시
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: currentPage === page ? '#3b82f6' : 'white',
+                        color: currentPage === page ? 'white' : '#374151',
+                        cursor: 'pointer',
+                        minWidth: '40px',
+                      }}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  page === currentPage - 3 ||
+                  page === currentPage + 3
+                ) {
+                  return (
+                    <span key={page} style={{ padding: '8px 4px', color: '#6b7280' }}>
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              다음
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+});
