@@ -89,49 +89,49 @@
 
 ### API 데이터 바인딩
 
-- [ ] T020 [US1] Update ProductList component to fetch products from API on mount in src/app/components/ProductList/index.tsx
-- [ ] T021 [US1] Replace hardcoded products array with API call using getProducts function in src/app/components/ProductList/index.tsx
-- [ ] T022 [US1] Map API Product type to existing ProductList Product interface (id: string → number, categoryId → category, isActive → status, etc.) in src/app/components/ProductList/index.tsx
-- [ ] T023 [US1] Update ProductList component props to remove products prop and fetch internally in src/app/components/ProductList/index.tsx
+- [X] T020 [US1] Update ProductList component to fetch products from API on mount in src/app/components/ProductList/index.tsx
+- [X] T021 [US1] Replace hardcoded products array with API call using getProducts function in src/app/components/ProductList/index.tsx
+- [X] T022 [US1] Map API Product type to existing ProductList Product interface (id: string → number, categoryId → category, isActive → status, etc.) in src/app/components/ProductList/index.tsx
+- [X] T023 [US1] Update ProductList component props to remove products prop and fetch internally in src/app/components/ProductList/index.tsx
 
 ### 검색 및 필터링 (API 연동)
 
-- [ ] T024 [US1] Replace client-side search filter with API search parameter in src/app/components/ProductList/index.tsx
-- [ ] T025 [US1] Replace client-side category filter with API categoryId parameter in src/app/components/ProductList/index.tsx
-- [ ] T026 [US1] Replace client-side status filter with API status parameter (map '판매중' → 'ACTIVE', '판매중지' → 'INACTIVE', '품절' → 'INACTIVE') in src/app/components/ProductList/index.tsx
-- [ ] T027 [US1] Implement debounced search input to reduce API calls in src/app/components/ProductList/index.tsx
-- [ ] T028 [US1] Update filter handlers to call getProducts API with new parameters in src/app/components/ProductList/index.tsx
+- [X] T024 [US1] Replace client-side search filter with API search parameter in src/app/components/ProductList/index.tsx
+- [X] T025 [US1] Replace client-side category filter with API categoryId parameter in src/app/components/ProductList/index.tsx
+- [X] T026 [US1] Replace client-side status filter with API status parameter (map '판매중' → 'ACTIVE', '판매중지' → 'INACTIVE', '품절' → 'INACTIVE') in src/app/components/ProductList/index.tsx
+- [X] T027 [US1] Implement debounced search input to reduce API calls in src/app/components/ProductList/index.tsx
+- [X] T028 [US1] Update filter handlers to call getProducts API with new parameters in src/app/components/ProductList/index.tsx
 
 ### UI 수정 (API 응답 형식에 맞게)
 
-- [ ] T029 [P] [US1] Update ProductList to display API Product fields (id as string, categoryId instead of category, isActive instead of status, etc.) in src/app/components/ProductList/index.tsx
-- [ ] T030 [P] [US1] Map API status (isActive: true/false) to UI status display ('판매중'/'판매중지') in src/app/components/ProductList/index.tsx
-- [ ] T031 [P] [US1] Remove discountPrice field display (not in API response) or handle null case in src/app/components/ProductList/index.tsx
-- [ ] T032 [P] [US1] Remove stock field display (not in API response) or handle null case in src/app/components/ProductList/index.tsx
-- [ ] T033 [P] [US1] Update tags display to handle mediaTypes array from API in src/app/components/ProductList/index.tsx
-- [ ] T034 [P] [US1] Update createdAt display format to handle ISO 8601 date string from API in src/app/components/ProductList/index.tsx
+- [X] T029 [P] [US1] Update ProductList to display API Product fields (id as string, categoryId instead of category, isActive instead of status, etc.) in src/app/components/ProductList/index.tsx
+- [X] T030 [P] [US1] Map API status (isActive: true/false) to UI status display ('판매중'/'판매중지') in src/app/components/ProductList/index.tsx
+- [X] T031 [P] [US1] Remove discountPrice field display (not in API response) or handle null case in src/app/components/ProductList/index.tsx
+- [X] T032 [P] [US1] Remove stock field display (not in API response) or handle null case in src/app/components/ProductList/index.tsx
+- [X] T033 [P] [US1] Update tags display to handle mediaTypes array from API in src/app/components/ProductList/index.tsx
+- [X] T034 [P] [US1] Update createdAt display format to handle ISO 8601 date string from API in src/app/components/ProductList/index.tsx
 
 ### 로딩 및 에러 처리
 
-- [ ] T035 [US1] Add loading state while fetching products in ProductList component in src/app/components/ProductList/index.tsx
-- [ ] T036 [US1] Add error handling for API failures with toast notification in ProductList component in src/app/components/ProductList/index.tsx
-- [ ] T037 [US1] Add empty state message ("등록된 상품이 없습니다") when products array is empty in ProductList component in src/app/components/ProductList/index.tsx
-- [ ] T038 [US1] Add "검색 결과가 없습니다" message when search/filter returns no results in ProductList component in src/app/components/ProductList/index.tsx
+- [X] T035 [US1] Add loading state while fetching products in ProductList component in src/app/components/ProductList/index.tsx
+- [X] T036 [US1] Add error handling for API failures with toast notification in ProductList component in src/app/components/ProductList/index.tsx
+- [X] T037 [US1] Add empty state message ("등록된 상품이 없습니다") when products array is empty in ProductList component in src/app/components/ProductList/index.tsx
+- [X] T038 [US1] Add "검색 결과가 없습니다" message when search/filter returns no results in ProductList component in src/app/components/ProductList/index.tsx
 
 ### ProductsPage 컴포넌트 업데이트
 
-- [ ] T039 [US1] Update ProductsPage component to remove products state and pass to ProductList in src/app/components/ProductsPage/index.tsx
-- [ ] T040 [US1] Update ProductsPage to display total product count from API response in src/app/components/ProductsPage/index.tsx
+- [X] T039 [US1] Update ProductsPage component to remove products state and pass to ProductList in src/app/components/ProductsPage/index.tsx
+- [X] T040 [US1] Update ProductsPage to display total product count from API response in src/app/components/ProductsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T041 [US1] Run UI tests for product list display and verify all products are rendered correctly
-- [ ] T042 [US1] Run UI tests for search functionality and verify filtered results
-- [ ] T043 [US1] Run UI tests for category filter and verify filtered results
-- [ ] T044 [US1] Run UI tests for status filter and verify filtered results
-- [ ] T045 [US1] Run UI tests for empty state display when no products found
-- [ ] T046 [US1] Run UI tests for loading state display during API calls
-- [ ] T047 [US1] Run UI tests for error handling display on API failures
+- [X] T041 [US1] Run UI tests for product list display and verify all products are rendered correctly
+- [X] T042 [US1] Run UI tests for search functionality and verify filtered results
+- [X] T043 [US1] Run UI tests for category filter and verify filtered results
+- [X] T044 [US1] Run UI tests for status filter and verify filtered results
+- [X] T045 [US1] Run UI tests for empty state display when no products found
+- [X] T046 [US1] Run UI tests for loading state display during API calls
+- [X] T047 [US1] Run UI tests for error handling display on API failures
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. UI tests must pass before proceeding.
 

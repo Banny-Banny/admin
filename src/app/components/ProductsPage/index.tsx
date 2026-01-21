@@ -1,39 +1,11 @@
 import { useState } from 'react';
 import { Plus, Package, Image as ImageIcon, X } from 'lucide-react';
 import { ProductList } from '../ProductList';
-import type { Product } from '../ProductList';
 import styles from "./styles.module.css";
 
 export function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      name: '무선 이어폰',
-      category: '전자기기',
-      price: 89000,
-      discountPrice: 79000,
-      stock: 150,
-      status: '판매중',
-      description: '고품질 무선 이어폰입니다.',
-      image: null,
-      tags: ['인기', '신상'],
-      createdAt: '2026-01-10',
-    },
-    {
-      id: 2,
-      name: '블루투스 스피커',
-      category: '전자기기',
-      price: 120000,
-      discountPrice: null,
-      stock: 0,
-      status: '품절',
-      description: '강력한 사운드의 블루투스 스피커',
-      image: null,
-      tags: ['인기'],
-      createdAt: '2026-01-08',
-    },
-  ]);
+  const [totalProductCount, setTotalProductCount] = useState(0);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -48,22 +20,8 @@ export function ProductsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newProduct = {
-      id: products.length + 1,
-      name: formData.name,
-      category: formData.category,
-      price: Number(formData.price),
-      discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
-      stock: Number(formData.stock),
-      status: formData.status,
-      description: formData.description,
-      image: null,
-      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setProducts([newProduct, ...products]);
+    // TODO: Phase 5에서 API 연동으로 변경 예정
+    // 현재는 폼만 닫음
     setFormData({
       name: '',
       category: '',
@@ -89,7 +47,7 @@ export function ProductsPage() {
       <div className={styles.c_xc8ak4}>
         <div>
           <h2 className={styles.c_1dlkxbt}>상품 관리</h2>
-          <p className={styles.c_9ngaqo}>전체 {products.length}개의 상품</p>
+          <p className={styles.c_9ngaqo}>전체 {totalProductCount}개의 상품</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -280,7 +238,7 @@ export function ProductsPage() {
         </div>
       )}
 
-      <ProductList products={products} />
+      <ProductList onProductCountChange={setTotalProductCount} />
     </div>
   );
 }
