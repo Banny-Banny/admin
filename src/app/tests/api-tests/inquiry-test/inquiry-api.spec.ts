@@ -71,13 +71,29 @@ test.describe('문의하기 API E2E 테스트', () => {
     const data = await response.json();
     
     // 응답 구조 검증 (실제 API 응답 구조에 맞게 수정)
-    // 실제 응답: {"data": {"items": [], "limit": 20, "offset": 0, "total": 0}, "success": true}
+    // 실제 응답: {"success": true, "data": {"items": [...], "limit": 10, "offset": 0, "total": 1}}
+    expect(data).toHaveProperty('success');
     expect(data).toHaveProperty('data');
     expect(data.data).toHaveProperty('items');
     expect(data.data).toHaveProperty('total');
     expect(data.data).toHaveProperty('limit');
     expect(data.data).toHaveProperty('offset');
     expect(Array.isArray(data.data.items)).toBeTruthy();
+    
+    // items의 구조 검증
+    if (data.data.items.length > 0) {
+      const item = data.data.items[0];
+      expect(item).toHaveProperty('id');
+      expect(item).toHaveProperty('user');
+      expect(item.user).toHaveProperty('id');
+      expect(item.user).toHaveProperty('nickname');
+      expect(item).toHaveProperty('status');
+      expect(item).toHaveProperty('isResolved');
+      expect(item).toHaveProperty('lastMessageAt');
+      expect(item).toHaveProperty('lastMessagePreview');
+      expect(item).toHaveProperty('unreadCount');
+      expect(item).toHaveProperty('createdAt');
+    }
   });
 
   test('문의 목록 조회 - 상태 필터 테스트', async ({ request }) => {
@@ -142,6 +158,8 @@ test.describe('문의하기 API E2E 테스트', () => {
     const detailData = await detailResponse.json();
 
     // 응답 구조 검증 (실제 API 응답 구조에 맞게 수정)
+    // 실제 응답 구조: {"success": true, "data": {"inquiry": {...}, "messages": [...], "total": ..., "limit": ..., "offset": ...}}
+    expect(detailData).toHaveProperty('success');
     expect(detailData).toHaveProperty('data');
     expect(detailData.data).toHaveProperty('inquiry');
     expect(detailData.data).toHaveProperty('messages');
