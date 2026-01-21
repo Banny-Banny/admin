@@ -121,12 +121,22 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
     // 메시지 수신 핸들러
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
+      console.log('[ChatInterface] receive_message 이벤트 수신:', {
+        payload,
+        isMounted,
+        currentRoomId: inquiry.id,
+        matchesRoom: payload.roomId === inquiry.id,
+      });
+
       if (isMounted && payload.roomId === inquiry.id) {
         setMessages((prev) => {
           // 중복 메시지 방지
           if (prev.some((msg) => msg.id === payload.id)) {
+            console.log('[ChatInterface] 중복 메시지 무시:', payload.id);
             return prev;
           }
+          
+          console.log('[ChatInterface] 새 메시지 추가:', payload);
           return [
             ...prev,
             {
@@ -138,6 +148,8 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
           ];
         });
         setTimeout(scrollToBottom, 100);
+      } else {
+        console.log('[ChatInterface] 메시지 무시됨 (조건 불일치)');
       }
     };
 
@@ -148,16 +160,38 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       }
     };
 
-    // Socket 이벤트 리스너 등록
-    socketClient.onReceiveMessage(handleReceiveMessage);
-    socketClient.onReadAlert(handleReadAlert);
+    // 연결 해제 핸들러 (재인증 후 방 재입장 처리)
+    const handleReconnect = () => {
+      console.log('[ChatInterface] Socket 재연결 감지');
+      if (isMounted) {
+        // 재연결 후 방에 다시 입장
+        socketClient.joinRoom(inquiry.id)
+          .then(() => {
+            console.log('[ChatInterface] 방 재입장 성공');
+            socketClient.sendReadAlert(inquiry.id);
+          })
+          .catch((error) => {
+            console.error('[ChatInterface] 방 재입장 실패:', error);
+          });
+      }
+    };
 
     // 연결 에러 핸들러
     const handleError = (error: Error) => {
       console.error('Socket.IO connection error:', error);
-      toast.error('연결 오류가 발생했습니다.');
+      
+      // 인증 오류인 경우에는 자동으로 재인증이 시도됨
+      if (error.message.includes('Authentication') || error.message.includes('Unauthorized')) {
+        toast.warning('연결이 끊겼습니다. 재연결을 시도합니다...');
+      } else {
+        toast.error('연결 오류가 발생했습니다.');
+      }
     };
 
+    // Socket 이벤트 리스너 등록
+    socketClient.onReceiveMessage(handleReceiveMessage);
+    socketClient.onReadAlert(handleReadAlert);
+    socketClient.onConnect(handleReconnect);
     socketClient.onError(handleError);
 
     // 정리 함수
@@ -203,15 +237,37 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
     try {
       const socketClient = socketClientRef.current;
       
+      console.log('[ChatInterface] 메시지 전송 시작:', {
+        roomId: inquiry.id,
+        content: messageContent,
+      });
+      
+      // Socket 연결 확인 및 방 입장 확인
       if (!socketClient.isSocketConnected()) {
+        console.log('[ChatInterface] 소켓 연결되지 않음, 연결 시도');
         socketClient.connect();
         await socketClient.joinRoom(inquiry.id);
+      } else {
+        // 이미 연결되어 있지만 방에 입장하지 않은 경우
+        try {
+          console.log('[ChatInterface] 방 입장 확인');
+          await socketClient.joinRoom(inquiry.id);
+        } catch (joinError) {
+          // 방 입장 실패 시 무시 (이미 입장했을 수 있음)
+          console.warn('[ChatInterface] 방 입장 확인 실패 (이미 입장했을 수 있음):', joinError);
+        }
       }
 
-      socketClient.sendMessage(inquiry.id, messageContent);
+      // 메시지 전송 (Promise 반환)
+      console.log('[ChatInterface] sendMessage 호출');
+      await socketClient.sendMessage(inquiry.id, messageContent);
+      console.log('[ChatInterface] sendMessage 완료');
       setNewMessage('');
+      
+      // 서버로부터 receive_message를 받아야 화면에 그려짐
+      console.log('[ChatInterface] 서버로부터 receive_message 이벤트를 기다리는 중...');
     } catch (error) {
-      console.error('메시지 전송 실패:', error);
+      console.error('[ChatInterface] 메시지 전송 실패:', error);
       if (error instanceof Error) {
         if (error.message.includes('네트워크') || error.message.includes('Network')) {
           toast.error('네트워크 오류가 발생했습니다.');
