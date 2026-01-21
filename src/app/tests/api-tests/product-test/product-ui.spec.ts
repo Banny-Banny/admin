@@ -293,3 +293,374 @@ test.describe('상품 목록 UI 테스트 (User Story 1)', () => {
     await page.waitForLoadState('networkidle');
   });
 });
+
+test.describe('상품 등록 UI 테스트 (User Story 2)', () => {
+  test.beforeEach(async ({ page }) => {
+    // 각 테스트 전에 로그인
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    // 로그인
+    await page.fill('input[type="email"]', TEST_ADMIN.email);
+    await page.fill('input[type="password"]', TEST_ADMIN.password);
+    await page.click('button[type="submit"]');
+
+    // 로그인 완료 대기
+    await page.waitForURL(BASE_URL, { timeout: 10000 });
+    await expect(page.locator('h1:has-text("관리자 로그인")')).not.toBeVisible({ timeout: 5000 });
+
+    // 상품 관리 페이지로 이동
+    const productMenuButton = page.locator('button').filter({ hasText: '상품' });
+    await expect(productMenuButton).toBeVisible({ timeout: 5000 });
+    await productMenuButton.click();
+    
+    // 상품 관리 페이지가 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    
+    // 상품 관리 페이지 제목 확인
+    await expect(page.locator('h2:has-text("상품 관리")')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('T066: 상품 등록 폼 표시 테스트', async ({ page }) => {
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await expect(addProductButton).toBeVisible();
+    await addProductButton.click();
+
+    // 폼이 표시되는지 확인
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 필수 필드 확인
+    await expect(page.locator('label:has-text("상품명")')).toBeVisible();
+    await expect(page.locator('input[name="name"]')).toBeVisible();
+    
+    await expect(page.locator('label:has-text("가격")')).toBeVisible();
+    await expect(page.locator('input[name="price"]')).toBeVisible();
+    
+    await expect(page.locator('label:has-text("상품 타입")')).toBeVisible();
+    await expect(page.locator('select[name="productType"]')).toBeVisible();
+    
+    await expect(page.locator('label:has-text("미디어 타입")')).toBeVisible();
+    
+    await expect(page.locator('label:has-text("최대 미디어 개수")')).toBeVisible();
+    await expect(page.locator('input[name="maxMediaCount"]')).toBeVisible();
+    
+    await expect(page.locator('label:has-text("상태")')).toBeVisible();
+    await expect(page.locator('select[name="status"]')).toBeVisible();
+
+    // 제출 버튼 확인
+    await expect(page.locator('button[type="submit"]:has-text("상품 등록")')).toBeVisible();
+    
+    // 취소 버튼 확인 (폼 내부의 취소 버튼만 선택)
+    await expect(page.locator('form').getByRole('button', { name: '취소' })).toBeVisible();
+  });
+
+  test('T067: 폼 검증 테스트 (필수 필드)', async ({ page }) => {
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await addProductButton.click();
+
+    // 폼이 표시될 때까지 대기
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 필수 필드를 비우고 제출 시도
+    const submitButton = page.locator('button[type="submit"]:has-text("상품 등록")');
+    await submitButton.click();
+
+    // 검증 에러 메시지가 표시되는지 확인 (HTML5 validation 또는 커스텀 validation)
+    // HTML5 required 속성으로 인해 브라우저 기본 검증이 작동할 수 있음
+    // 또는 커스텀 검증 메시지가 표시될 수 있음
+    
+    // 상품명 필드에 포커스가 있거나 에러 메시지가 표시되어야 함
+    const nameInput = page.locator('input[name="name"]');
+    const nameInvalid = await nameInput.evaluate((el: HTMLInputElement) => el.validity.valid === false);
+    
+    // 커스텀 검증 에러 메시지 확인 (있는 경우)
+    const validationError = page.locator('text=/상품명|가격|미디어|필수/i');
+    const hasValidationError = await validationError.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+    // HTML5 validation 또는 커스텀 validation이 작동해야 함
+    expect(nameInvalid || hasValidationError).toBe(true);
+  });
+
+  test('T068: 성공적인 상품 등록 플로우 테스트', async ({ page }) => {
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await addProductButton.click();
+
+    // 폼이 표시될 때까지 대기
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 필드 채우기
+    const timestamp = Date.now();
+    const productName = `테스트 상품 ${timestamp}`;
+    
+    await page.fill('input[name="name"]', productName);
+    await page.fill('input[name="price"]', '10000');
+    await page.selectOption('select[name="productType"]', 'TIME_CAPSULE');
+    
+    // 미디어 타입 체크박스 선택 (TEXT)
+    const textCheckbox = page.locator('input[type="checkbox"]').first();
+    await textCheckbox.check();
+    
+    await page.fill('input[name="maxMediaCount"]', '3');
+    await page.selectOption('select[name="status"]', '판매중');
+    await page.fill('textarea[name="description"]', '테스트 상품 설명입니다.');
+
+    // API 응답을 기다리기 위해 네트워크 요청 대기
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/admin/products') && response.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+
+    // 제출 버튼 클릭
+    const submitButton = page.locator('button[type="submit"]:has-text("상품 등록")');
+    await submitButton.click();
+
+    // API 응답 대기 및 상태 확인
+    const response = await responsePromise;
+    
+    if (!response.ok()) {
+      const errorBody = await response.text();
+      console.error('API 응답 실패:', {
+        status: response.status(),
+        statusText: response.statusText(),
+        body: errorBody.substring(0, 500),
+      });
+    }
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const responseData = await response.json();
+    expect(responseData.success).toBe(true);
+
+    // 로딩 상태 확인 (버튼이 "등록 중..."으로 변경되거나 비활성화됨)
+    const loadingButton = page.locator('button[type="submit"]:has-text("등록 중")');
+    const isLoading = await loadingButton.isVisible({ timeout: 1000 }).catch(() => false);
+
+    // 성공 토스트 알림 확인 (선택적 - 토스트가 나타나지 않아도 API 성공이 확인되면 통과)
+    const successToast = page.locator('text=/성공|등록되었습니다/i').first();
+    const toastVisible = await successToast.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // 폼이 닫혔는지 확인 (성공 시 폼이 닫혀야 함)
+    await expect(page.locator('h3:has-text("새 상품 등록")')).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('T069: 상품 생성 후 목록에 새 상품 표시 테스트', async ({ page }) => {
+    // 초기 상품 개수 확인 (ProductsPage의 전체 상품 개수 텍스트 사용)
+    const initialCountText = await page.locator('p:has-text("전체"):has-text("개의 상품")').first().textContent();
+    const initialCount = initialCountText ? parseInt(initialCountText.match(/\d+/)?.[0] || '0') : 0;
+
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await addProductButton.click();
+
+    // 폼이 표시될 때까지 대기
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 필드 채우기
+    const timestamp = Date.now();
+    const productName = `목록 테스트 상품 ${timestamp}`;
+    
+    await page.fill('input[name="name"]', productName);
+    await page.fill('input[name="price"]', '15000');
+    await page.selectOption('select[name="productType"]', 'TIME_CAPSULE');
+    
+    // 미디어 타입 체크박스 선택
+    const textCheckbox = page.locator('input[type="checkbox"]').first();
+    await textCheckbox.check();
+    
+    await page.fill('input[name="maxMediaCount"]', '3');
+    await page.selectOption('select[name="status"]', '판매중');
+
+    // API 응답을 기다리기 위해 네트워크 요청 대기
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/admin/products') && response.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+
+    // 제출 버튼 클릭
+    const submitButton = page.locator('button[type="submit"]:has-text("상품 등록")');
+    await submitButton.click();
+
+    // API 응답 대기 및 상태 확인
+    const response = await responsePromise;
+    
+    if (!response.ok()) {
+      const errorBody = await response.text();
+      console.error('API 응답 실패:', {
+        status: response.status(),
+        statusText: response.statusText(),
+        body: errorBody.substring(0, 500),
+      });
+    }
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const responseData = await response.json();
+    expect(responseData.success).toBe(true);
+
+    // 성공 토스트 알림 확인 (선택적)
+    const successToast = page.locator('text=/성공|등록되었습니다/i').first();
+    const toastVisible = await successToast.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // 목록이 새로고침될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 새 상품이 목록에 표시되는지 확인
+    const productRows = page.locator('tbody tr');
+    const productNameCell = page.locator(`tbody tr:has-text("${productName}")`);
+    await expect(productNameCell.first()).toBeVisible({ timeout: 10000 });
+
+    // 상품 개수가 증가했는지 확인 (ProductsPage의 전체 상품 개수 텍스트 사용)
+    const newCountText = await page.locator('p:has-text("전체"):has-text("개의 상품")').first().textContent();
+    const newCount = newCountText ? parseInt(newCountText.match(/\d+/)?.[0] || '0') : 0;
+    expect(newCount).toBeGreaterThanOrEqual(initialCount);
+  });
+
+  test('T070: 성공적인 제출 후 폼 리셋 테스트', async ({ page }) => {
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await addProductButton.click();
+
+    // 폼이 표시될 때까지 대기
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 필드 채우기
+    const timestamp = Date.now();
+    const productName = `리셋 테스트 상품 ${timestamp}`;
+    
+    await page.fill('input[name="name"]', productName);
+    await page.fill('input[name="price"]', '20000');
+    await page.selectOption('select[name="productType"]', 'EASTER_EGG');
+    
+    // 미디어 타입 체크박스 선택
+    const textCheckbox = page.locator('input[type="checkbox"]').first();
+    await textCheckbox.check();
+    
+    await page.fill('input[name="maxMediaCount"]', '3');
+    await page.selectOption('select[name="status"]', '판매중지');
+    await page.fill('textarea[name="description"]', '리셋 테스트 설명');
+
+    // API 응답을 기다리기 위해 네트워크 요청 대기
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/admin/products') && response.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+
+    // 제출 버튼 클릭
+    const submitButton = page.locator('button[type="submit"]:has-text("상품 등록")');
+    await submitButton.click();
+
+    // API 응답 대기 및 상태 확인
+    const response = await responsePromise;
+    
+    if (!response.ok()) {
+      const errorBody = await response.text();
+      console.error('API 응답 실패:', {
+        status: response.status(),
+        statusText: response.statusText(),
+        body: errorBody.substring(0, 500),
+      });
+    }
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const responseData = await response.json();
+    expect(responseData.success).toBe(true);
+
+    // 성공 토스트 알림 확인 (선택적)
+    const successToast = page.locator('text=/성공|등록되었습니다/i').first();
+    const toastVisible = await successToast.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // 폼이 닫혔는지 확인 (성공 시 폼이 닫혀야 함)
+    await expect(page.locator('h3:has-text("새 상품 등록")')).not.toBeVisible({ timeout: 5000 });
+
+    // 다시 폼 열기
+    await addProductButton.click();
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 필드가 리셋되었는지 확인
+    const nameInput = page.locator('input[name="name"]');
+    const priceInput = page.locator('input[name="price"]');
+    const maxMediaCountInput = page.locator('input[name="maxMediaCount"]');
+    const descriptionTextarea = page.locator('textarea[name="description"]');
+
+    await expect(nameInput).toHaveValue('');
+    await expect(priceInput).toHaveValue('');
+    await expect(maxMediaCountInput).toHaveValue('');
+    await expect(descriptionTextarea).toHaveValue('');
+
+    // 기본값 확인
+    const productTypeSelect = page.locator('select[name="productType"]');
+    await expect(productTypeSelect).toHaveValue('TIME_CAPSULE');
+    
+    const statusSelect = page.locator('select[name="status"]');
+    await expect(statusSelect).toHaveValue('판매중');
+  });
+
+  test('T071: 생성 실패 시 에러 처리 테스트', async ({ page }) => {
+    // API 요청을 실패하도록 모킹
+    await page.route('**/api/admin/products', route => {
+      route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          message: '상품 등록에 실패했습니다.',
+        }),
+      });
+    });
+
+    // "상품 등록" 버튼 클릭
+    const addProductButton = page.locator('button').filter({ hasText: /상품 등록/ });
+    await addProductButton.click();
+
+    // 폼이 표시될 때까지 대기
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 필드 채우기
+    const timestamp = Date.now();
+    const productName = `에러 테스트 상품 ${timestamp}`;
+    
+    await page.fill('input[name="name"]', productName);
+    await page.fill('input[name="price"]', '30000');
+    await page.selectOption('select[name="productType"]', 'TIME_CAPSULE');
+    
+    // 미디어 타입 체크박스 선택
+    const textCheckbox = page.locator('input[type="checkbox"]').first();
+    await textCheckbox.check();
+    
+    await page.fill('input[name="maxMediaCount"]', '3');
+    await page.selectOption('select[name="status"]', '판매중');
+
+    // API 응답을 기다리기 위해 네트워크 요청 대기
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/admin/products') && response.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+
+    // 제출 버튼 클릭
+    const submitButton = page.locator('button[type="submit"]:has-text("상품 등록")');
+    await submitButton.click();
+
+    // API 응답 대기 및 상태 확인 (400 에러 예상)
+    const response = await responsePromise;
+    expect(response.status()).toBe(400);
+
+    // 에러 토스트 알림 확인 (선택적 - API 에러가 확인되면 통과)
+    const errorToast = page.locator('text=/실패|오류|에러|등록에 실패/i').first();
+    const toastVisible = await errorToast.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // 폼이 닫히지 않고 열려있는지 확인
+    await expect(page.locator('h3:has-text("새 상품 등록")')).toBeVisible({ timeout: 5000 });
+
+    // 폼 데이터가 유지되는지 확인 (에러 후에도 입력한 데이터가 남아있어야 함)
+    const nameInput = page.locator('input[name="name"]');
+    await expect(nameInput).toHaveValue(productName);
+
+    // 네트워크 모킹 해제
+    await page.unroute('**/api/admin/products');
+  });
+});

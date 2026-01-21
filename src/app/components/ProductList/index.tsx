@@ -1,4 +1,4 @@
-import { Search, Filter, MoreVertical, Package } from 'lucide-react';
+import { Search, Filter, MoreVertical, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getProducts, type Product, ProductStatus } from '../../commons/apis/product';
 import { useDebounce } from '../../commons/hooks/use-debounce';
@@ -7,9 +7,12 @@ import styles from "./styles.module.css";
 
 interface ProductListProps {
   onProductCountChange?: (count: number) => void;
+  refreshKey?: number; // 상품 생성/수정/삭제 후 목록 새로고침을 위한 키
 }
 
-export function ProductList({ onProductCountChange }: ProductListProps) {
+const ITEMS_PER_PAGE = 10;
+
+export function ProductList({ onProductCountChange, refreshKey }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus>(ProductStatus.ALL);
@@ -17,9 +20,15 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Debounce search term to reduce API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // 검색/필터 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, categoryFilter, statusFilter]);
 
   // Fetch products from API
   useEffect(() => {
@@ -28,6 +37,8 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
       setError(null);
 
       try {
+        const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+        
         const params: {
           search?: string;
           categoryId?: string;
@@ -35,8 +46,8 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
           limit?: number;
           offset?: number;
         } = {
-          limit: 100, // Large limit for now, pagination can be added later
-          offset: 0,
+          limit: ITEMS_PER_PAGE,
+          offset: offset,
         };
 
         if (debouncedSearchTerm) {
@@ -74,7 +85,7 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
 
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchTerm, categoryFilter, statusFilter]);
+  }, [debouncedSearchTerm, categoryFilter, statusFilter, refreshKey, currentPage]);
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? styles.statusActive : styles.statusInactive;
@@ -94,6 +105,19 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
       });
     } catch {
       return dateString;
+    }
+  };
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, total);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // 페이지 상단으로 스크롤
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -226,6 +250,100 @@ export function ProductList({ onProductCountChange }: ProductListProps) {
           </table>
         )}
       </div>
+
+      {/* 페이지네이션 */}
+      {!loading && !error && totalPages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: '24px',
+          padding: '16px',
+          borderTop: '1px solid #e5e7eb'
+        }}>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            전체 {total}개 중 {startIndex + 1}-{endIndex}개 표시
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                color: currentPage === 1 ? '#9ca3af' : '#374151',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <ChevronLeft size={16} />
+              이전
+            </button>
+            
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // 현재 페이지 주변 2페이지씩만 표시
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        backgroundColor: currentPage === page ? '#3b82f6' : 'white',
+                        color: currentPage === page ? 'white' : '#374151',
+                        cursor: 'pointer',
+                        minWidth: '40px',
+                      }}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  page === currentPage - 3 ||
+                  page === currentPage + 3
+                ) {
+                  return (
+                    <span key={page} style={{ padding: '8px 4px', color: '#6b7280' }}>
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              다음
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

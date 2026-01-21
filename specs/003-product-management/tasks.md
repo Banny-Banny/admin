@@ -149,39 +149,39 @@
 
 ### 폼 데이터 매핑 및 API 연동
 
-- [ ] T048 [US2] Update ProductsPage formData state to match CreateProductRequest interface (name, price, description, thumbnailUrl, categoryId, isActive, productType, mediaTypes, maxMediaCount) in src/app/components/ProductsPage/index.tsx
-- [ ] T049 [US2] Remove discountPrice and stock fields from form (not in API) or map appropriately in src/app/components/ProductsPage/index.tsx
-- [ ] T050 [US2] Add productType field to form (TIME_CAPSULE, EASTER_EGG) in src/app/components/ProductsPage/index.tsx
-- [ ] T051 [US2] Add mediaTypes field to form (array of strings) in src/app/components/ProductsPage/index.tsx
-- [ ] T052 [US2] Add maxMediaCount field to form (number) in src/app/components/ProductsPage/index.tsx
-- [ ] T053 [US2] Map form status ('판매중'/'판매중지') to isActive boolean for API in src/app/components/ProductsPage/index.tsx
-- [ ] T054 [US2] Map form category string to categoryId UUID for API (if needed) in src/app/components/ProductsPage/index.tsx
-- [ ] T055 [US2] Replace handleSubmit to call createProduct API instead of local state update in src/app/components/ProductsPage/index.tsx
-- [ ] T056 [US2] Handle API response and add new product to list or refresh list in src/app/components/ProductsPage/index.tsx
-- [ ] T057 [US2] Show success toast notification after successful product creation in src/app/components/ProductsPage/index.tsx
-- [ ] T058 [US2] Show error toast notification on API failure in src/app/components/ProductsPage/index.tsx
+- [X] T048 [US2] Update ProductsPage formData state to match CreateProductRequest interface (name, price, description, thumbnailUrl, categoryId, isActive, productType, mediaTypes, maxMediaCount) in src/app/components/ProductsPage/index.tsx
+- [X] T049 [US2] Remove discountPrice and stock fields from form (not in API) or map appropriately in src/app/components/ProductsPage/index.tsx
+- [X] T050 [US2] Add productType field to form (TIME_CAPSULE, EASTER_EGG) in src/app/components/ProductsPage/index.tsx
+- [X] T051 [US2] Add mediaTypes field to form (array of strings) in src/app/components/ProductsPage/index.tsx
+- [X] T052 [US2] Add maxMediaCount field to form (number) in src/app/components/ProductsPage/index.tsx
+- [X] T053 [US2] Map form status ('판매중'/'판매중지') to isActive boolean for API in src/app/components/ProductsPage/index.tsx
+- [X] T054 [US2] Map form category string to categoryId UUID for API (if needed) in src/app/components/ProductsPage/index.tsx
+- [X] T055 [US2] Replace handleSubmit to call createProduct API instead of local state update in src/app/components/ProductsPage/index.tsx
+- [X] T056 [US2] Handle API response and add new product to list or refresh list in src/app/components/ProductsPage/index.tsx
+- [X] T057 [US2] Show success toast notification after successful product creation in src/app/components/ProductsPage/index.tsx
+- [X] T058 [US2] Show error toast notification on API failure in src/app/components/ProductsPage/index.tsx
 
 ### 폼 검증
 
-- [ ] T059 [US2] Add client-side validation for required fields (name, price, productType, mediaTypes, maxMediaCount, isActive) in src/app/components/ProductsPage/index.tsx
-- [ ] T060 [US2] Display validation error messages for missing required fields in src/app/components/ProductsPage/index.tsx
-- [ ] T061 [US2] Validate price is a positive number in src/app/components/ProductsPage/index.tsx
+- [X] T059 [US2] Add client-side validation for required fields (name, price, productType, mediaTypes, maxMediaCount, isActive) in src/app/components/ProductsPage/index.tsx
+- [X] T060 [US2] Display validation error messages for missing required fields in src/app/components/ProductsPage/index.tsx
+- [X] T061 [US2] Validate price is a positive number in src/app/components/ProductsPage/index.tsx
 
 ### 폼 리셋 및 UI 업데이트
 
-- [ ] T062 [US2] Reset form data after successful submission in src/app/components/ProductsPage/index.tsx
-- [ ] T063 [US2] Close form after successful submission in src/app/components/ProductsPage/index.tsx
-- [ ] T064 [US2] Add loading state during product creation API call in src/app/components/ProductsPage/index.tsx
-- [ ] T065 [US2] Disable submit button during API call to prevent duplicate submissions in src/app/components/ProductsPage/index.tsx
+- [X] T062 [US2] Reset form data after successful submission in src/app/components/ProductsPage/index.tsx
+- [X] T063 [US2] Close form after successful submission in src/app/components/ProductsPage/index.tsx
+- [X] T064 [US2] Add loading state during product creation API call in src/app/components/ProductsPage/index.tsx
+- [X] T065 [US2] Disable submit button during API call to prevent duplicate submissions in src/app/components/ProductsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T066 [US2] Run UI tests for product creation form display
-- [ ] T067 [US2] Run UI tests for form validation (required fields)
-- [ ] T068 [US2] Run UI tests for successful product creation flow
-- [ ] T069 [US2] Run UI tests for new product appearing in list after creation
-- [ ] T070 [US2] Run UI tests for form reset after successful submission
-- [ ] T071 [US2] Run UI tests for error handling on creation failure
+- [X] T066 [US2] Run UI tests for product creation form display
+- [X] T067 [US2] Run UI tests for form validation (required fields)
+- [X] T068 [US2] Run UI tests for successful product creation flow
+- [X] T069 [US2] Run UI tests for new product appearing in list after creation
+- [X] T070 [US2] Run UI tests for form reset after successful submission
+- [X] T071 [US2] Run UI tests for error handling on creation failure
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. UI tests must pass before proceeding.
 
