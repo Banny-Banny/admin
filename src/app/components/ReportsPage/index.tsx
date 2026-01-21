@@ -1,88 +1,100 @@
-import { useState } from 'react';
+'use client';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { getNotices } from '../../commons/apis/notice';
+import type { NoticeListItem } from '../../commons/apis/notice';
+import { useDebounce } from '../../commons/hooks/use-debounce';
+import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
 import styles from "./styles.module.css";
 
+// UI용 Notice 인터페이스 (API 데이터 + UI 전용 필드)
 interface Notice {
-  id: number;
+  id: number; // API의 string id를 number로 변환 (간단한 해시 사용)
   title: string;
-  content: string;
-  author: string;
+  content: string; // 목록에서는 표시하지 않지만, 상세 뷰를 위해 저장
+  author: string; // UI 전용 필드 (API에 없음)
   createdAt: string;
-  views: number;
+  views: number; // UI 전용 필드 (API에 없음)
   isPinned: boolean;
+}
+
+// API NoticeListItem을 UI Notice로 변환하는 헬퍼 함수
+function mapApiNoticeToUiNotice(apiNotice: NoticeListItem, index: number): Notice {
+  // UUID를 간단한 숫자로 변환 (해시 함수 사용)
+  const hashId = apiNotice.id.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc) + char.charCodeAt(0);
+  }, 0);
+  const numericId = Math.abs(hashId) % 1000000; // 0-999999 범위로 제한
+
+  return {
+    id: numericId,
+    title: apiNotice.title,
+    content: '', // 목록에서는 content가 없으므로 빈 문자열
+    author: '관리자', // UI 전용 필드
+    createdAt: apiNotice.createdAt.split('T')[0], // ISO 날짜를 YYYY-MM-DD 형식으로 변환
+    views: 0, // UI 전용 필드 (기본값 0)
+    isPinned: apiNotice.isPinned,
+  };
 }
 
 export function ReportsPage() {
   const [view, setView] = useState<'list' | 'detail' | 'write'>('list');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
 
-  const [notices, setNotices] = useState<Notice[]>([
-    {
-      id: 1,
-      title: '[필독] 2026년 1월 시스템 업데이트 안내',
-      content: '안녕하세요. 관리자입니다.\n\n2026년 1월 20일 새벽 2시부터 4시까지 시스템 정기 점검이 예정되어 있습니다.\n\n점검 시간 동안에는 일시적으로 서비스 이용이 제한될 수 있으니 양해 부탁드립니다.\n\n주요 업데이트 내용:\n- 보안 강화\n- 성능 개선\n- 새로운 기능 추가\n\n감사합니다.',
-      author: '관리자',
-      createdAt: '2026-01-15',
-      views: 1247,
-      isPinned: true,
-    },
-    {
-      id: 2,
-      title: '개인정보 처리방침 변경 안내',
-      content: '개인정보 처리방침이 2026년 2월 1일부로 변경됩니다.\n\n주요 변경사항을 확인하시고, 궁금하신 점이 있으시면 고객센터로 문의해 주시기 바랍니다.\n\n변경된 내용은 홈페이지에서 확인하실 수 있습니다.',
-      author: '운영팀',
-      createdAt: '2026-01-12',
-      views: 856,
-      isPinned: false,
-    },
-    {
-      id: 3,
-      title: '신규 결제 시스템 도입',
-      content: '더욱 편리한 결제를 위해 새로운 결제 시스템을 도입했습니다.\n\n카카오페이, 네이버페이, 토스 등 다양한 간편결제를 지원합니다.\n\n많은 이용 부탁드립니다.',
-      author: '개발팀',
-      createdAt: '2026-01-10',
-      views: 632,
-      isPinned: false,
-    },
-    {
-      id: 4,
-      title: '고객센터 운영시간 안내',
-      content: '고객센터 운영시간을 안내드립니다.\n\n평일: 오전 9시 ~ 오후 6시\n주말 및 공휴일: 휴무\n\n긴급 문의는 이메일로 보내주시면 확인 후 답변드리겠습니다.',
-      author: '고객지원팀',
-      createdAt: '2026-01-08',
-      views: 421,
-      isPinned: false,
-    },
-    {
-      id: 5,
-      title: '설 연휴 배송 일정 안내',
-      content: '설 연휴 기간 배송 일정을 안내드립니다.\n\n1월 27일 ~ 1월 30일: 배송 휴무\n1월 31일부터 정상 배송 시작\n\n미리 주문해 주시면 감사하겠습니다.',
-      author: '물류팀',
-      createdAt: '2026-01-05',
-      views: 893,
-      isPinned: false,
-    },
-  ]);
+  // Debounce search term to reduce API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    isPinned: false,
-  });
+  // API에서 공지사항 목록 조회
+  useEffect(() => {
+    const fetchNotices = async () => {
+      setLoading(true);
+      setError(null);
 
-  const filteredNotices = notices.filter((notice) =>
-    notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    notice.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      try {
+        const response = await getNotices({
+          search: debouncedSearchTerm || undefined,
+          limit: 100, // 충분히 큰 값으로 설정하여 모든 공지사항 조회
+          offset: 0,
+        });
 
-  const sortedNotices = [...filteredNotices].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return b.id - a.id;
-  });
+        if (response.success && response.data) {
+          // API 데이터를 UI Notice로 변환
+          const mappedNotices = response.data.items.map(mapApiNoticeToUiNotice);
+          
+          // 고정 공지사항을 상단에 배치하고, 그 다음 최신순으로 정렬
+          const sortedNotices = [...mappedNotices].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            // 최신순 정렬 (createdAt 기준)
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+
+          setNotices(sortedNotices);
+          setTotal(response.data.total);
+        } else {
+          throw new Error('공지사항 목록을 불러오는데 실패했습니다.');
+        }
+      } catch (err) {
+        const apiError = handleApiErrorWithToast(err, '공지사항 목록을 불러오는데 실패했습니다.');
+        setError(apiError.message);
+        setNotices([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotices();
+  }, [debouncedSearchTerm]);
 
   const handleNoticeClick = (notice: Notice) => {
+    // 조회수 증가 (UI 전용)
     const updatedNotices = notices.map((n) =>
       n.id === notice.id ? { ...n, views: n.views + 1 } : n
     );
@@ -94,6 +106,7 @@ export function ReportsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // TODO: Phase 5에서 API 연동 예정
     const newNotice: Notice = {
       id: notices.length + 1,
       title: formData.title,
@@ -107,14 +120,23 @@ export function ReportsPage() {
     setNotices([newNotice, ...notices]);
     setFormData({ title: '', content: '', isPinned: false });
     setView('list');
+    toast.success('공지사항이 등록되었습니다.');
   };
 
   const handleDelete = (id: number) => {
     if (confirm('정말 이 공지사항을 삭제하시겠습니까?')) {
+      // TODO: Phase 5에서 API 연동 예정
       setNotices(notices.filter((notice) => notice.id !== id));
       setView('list');
+      toast.success('공지사항이 삭제되었습니다.');
     }
   };
+
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    isPinned: false,
+  });
 
   // 목록 뷰
   if (view === 'list') {
@@ -123,7 +145,7 @@ export function ReportsPage() {
         <div className={styles.c_xc8ak4}>
           <div>
             <h2 className={styles.c_1dlkxbt}>공지사항</h2>
-            <p className={styles.c_9ngaqo}>전체 {notices.length}개의 공지사항</p>
+            <p className={styles.c_9ngaqo}>전체 {total}개의 공지사항</p>
           </div>
           <button
             onClick={() => setView('write')}
@@ -149,8 +171,16 @@ export function ReportsPage() {
           </div>
 
           <div className={styles.c_fyf4x}>
-            {sortedNotices.length > 0 ? (
-              sortedNotices.map((notice) => (
+            {loading ? (
+              <div className={styles.c_g9tmm}>
+                공지사항을 불러오는 중...
+              </div>
+            ) : error ? (
+              <div className={styles.c_g9tmm}>
+                {error}
+              </div>
+            ) : notices.length > 0 ? (
+              notices.map((notice) => (
                 <div
                   key={notice.id}
                   onClick={() => handleNoticeClick(notice)}
@@ -171,7 +201,7 @@ export function ReportsPage() {
                         </h3>
                       </div>
                       <p className={styles.c_16wgd3u}>
-                        {notice.content}
+                        {/* 목록에서는 content 미표시 */}
                       </p>
                       <div className={styles.c_kso4az}>
                         <div className={styles.c_2ca09v}>

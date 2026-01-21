@@ -88,31 +88,31 @@
 
 ### API 데이터 바인딩
 
-- [ ] T019 [US1] Update ReportsPage component to fetch notices from API on mount in src/app/components/ReportsPage/index.tsx
-- [ ] T020 [US1] Replace hardcoded notices array with API call using getNotices function in src/app/components/ReportsPage/index.tsx
-- [ ] T021 [US1] Map API NoticeListItem type to existing Notice interface (id: string → number, add author/views fields for UI) in src/app/components/ReportsPage/index.tsx
-- [ ] T022 [US1] Update ReportsPage component to handle loading state during API call in src/app/components/ReportsPage/index.tsx
-- [ ] T023 [US1] Update ReportsPage component to handle error state when API call fails in src/app/components/ReportsPage/index.tsx
-- [ ] T024 [US1] Display empty state message when no notices are found in src/app/components/ReportsPage/index.tsx
+- [X] T019 [US1] Update ReportsPage component to fetch notices from API on mount in src/app/components/ReportsPage/index.tsx
+- [X] T020 [US1] Replace hardcoded notices array with API call using getNotices function in src/app/components/ReportsPage/index.tsx
+- [X] T021 [US1] Map API NoticeListItem type to existing Notice interface (id: string → number, add author/views fields for UI) in src/app/components/ReportsPage/index.tsx
+- [X] T022 [US1] Update ReportsPage component to handle loading state during API call in src/app/components/ReportsPage/index.tsx
+- [X] T023 [US1] Update ReportsPage component to handle error state when API call fails in src/app/components/ReportsPage/index.tsx
+- [X] T024 [US1] Display empty state message when no notices are found in src/app/components/ReportsPage/index.tsx
 
 ### 검색 기능 (API 연동)
 
-- [ ] T025 [US1] Replace client-side search filter with API search parameter in src/app/components/ReportsPage/index.tsx
-- [ ] T026 [US1] Implement debounced search to reduce API calls in src/app/components/ReportsPage/index.tsx
-- [ ] T027 [US1] Update search input to trigger API call with search parameter in src/app/components/ReportsPage/index.tsx
+- [X] T025 [US1] Replace client-side search filter with API search parameter in src/app/components/ReportsPage/index.tsx
+- [X] T026 [US1] Implement debounced search to reduce API calls in src/app/components/ReportsPage/index.tsx
+- [X] T027 [US1] Update search input to trigger API call with search parameter in src/app/components/ReportsPage/index.tsx
 
 ### 고정 공지사항 정렬
 
-- [ ] T028 [US1] Sort notices to display pinned notices at the top in src/app/components/ReportsPage/index.tsx
-- [ ] T029 [US1] Display pinned indicator (badge or icon) for pinned notices in src/app/components/ReportsPage/index.tsx
+- [X] T028 [US1] Sort notices to display pinned notices at the top in src/app/components/ReportsPage/index.tsx
+- [X] T029 [US1] Display pinned indicator (badge or icon) for pinned notices in src/app/components/ReportsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T030 [US1] Verify notice list displays correctly with API data in src/app/components/ReportsPage/index.tsx
-- [ ] T031 [US1] Verify search functionality works with API integration in src/app/components/ReportsPage/index.tsx
-- [ ] T032 [US1] Verify empty state displays when no notices found in src/app/components/ReportsPage/index.tsx
-- [ ] T033 [US1] Verify loading state displays during API call in src/app/components/ReportsPage/index.tsx
-- [ ] T034 [US1] Verify error state displays when API call fails in src/app/components/ReportsPage/index.tsx
+- [X] T030 [US1] Verify notice list displays correctly with API data in src/app/components/ReportsPage/index.tsx
+- [X] T031 [US1] Verify search functionality works with API integration in src/app/components/ReportsPage/index.tsx
+- [X] T032 [US1] Verify empty state displays when no notices found in src/app/components/ReportsPage/index.tsx
+- [X] T033 [US1] Verify loading state displays during API call in src/app/components/ReportsPage/index.tsx
+- [X] T034 [US1] Verify error state displays when API call fails in src/app/components/ReportsPage/index.tsx
 
 **Checkpoint**: User Story 1 완료 - 공지사항 목록 조회 및 검색 기능이 독립적으로 작동합니다
 
