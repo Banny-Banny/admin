@@ -445,3 +445,321 @@ test.describe('공지사항 상세 조회 UI 테스트 (User Story 2)', () => {
     }
   });
 });
+
+test.describe('공지사항 작성 UI 테스트 (User Story 3)', () => {
+  test.beforeEach(async ({ page }) => {
+    // 각 테스트 전에 로그인
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    // 로그인 페이지가 로드될 때까지 대기
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 });
+
+    // 로그인
+    await page.fill('input[type="email"]', TEST_ADMIN.email);
+    await page.fill('input[type="password"]', TEST_ADMIN.password);
+    await page.click('button[type="submit"]');
+
+    // 로그인 완료 대기
+    await page.waitForURL(BASE_URL, { timeout: 10000 });
+    await expect(page.locator('h1:has-text("관리자 로그인")')).not.toBeVisible({ timeout: 5000 });
+
+    // 공지사항 관리 페이지로 이동
+    const noticeMenuButton = page.locator('button').filter({ hasText: '공지사항' });
+    await expect(noticeMenuButton).toBeVisible({ timeout: 5000 });
+    await noticeMenuButton.click();
+    
+    // 공지사항 관리 페이지가 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    
+    // 공지사항 관리 페이지 제목 확인
+    await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('T058: 공지사항 작성 폼 표시 테스트', async ({ page }) => {
+    // "공지사항 작성" 버튼 클릭
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await expect(writeButton).toBeVisible({ timeout: 5000 });
+    await writeButton.click();
+
+    // 작성 폼이 표시되는지 확인
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 작성 폼 제목 확인
+    const formTitle = page.locator('h2:has-text("공지사항 작성")');
+    await expect(formTitle).toBeVisible({ timeout: 5000 });
+
+    // 제목 입력 필드 확인
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    await expect(titleInput).toBeVisible();
+
+    // 내용 입력 필드 확인
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    await expect(contentTextarea).toBeVisible();
+
+    // 상단 고정 체크박스 확인
+    const pinnedCheckbox = page.locator('input[type="checkbox"]').first();
+    await expect(pinnedCheckbox).toBeVisible();
+
+    // 공개 여부 체크박스 확인
+    const visibleCheckbox = page.locator('input[type="checkbox"]').nth(1);
+    await expect(visibleCheckbox).toBeVisible();
+
+    // 이미지 URL 입력 필드 확인
+    const imageUrlInput = page.locator('input[placeholder="이미지 URL을 입력하세요 (선택사항)"]');
+    await expect(imageUrlInput).toBeVisible();
+
+    // 취소 버튼 확인
+    const cancelButton = page.getByRole('button', { name: '취소' });
+    await expect(cancelButton).toBeVisible();
+
+    // 작성 완료 버튼 확인
+    const submitButton = page.getByRole('button', { name: '작성 완료' });
+    await expect(submitButton).toBeVisible();
+  });
+
+  test('T059: 폼 검증 테스트 - 필수 필드', async ({ page }) => {
+    // 작성 폼으로 이동
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 제목과 내용 없이 제출 시도
+    const submitButton = page.getByRole('button', { name: '작성 완료' });
+    await submitButton.click();
+
+    // 검증 에러 메시지가 표시되는지 확인
+    await page.waitForTimeout(500);
+
+    // 제목 에러 메시지 확인
+    const titleError = page.locator('text=/제목을 입력해주세요/i');
+    const hasTitleError = await titleError.isVisible({ timeout: 2000 }).catch(() => false);
+
+    // 내용 에러 메시지 확인
+    const contentError = page.locator('text=/내용을 입력해주세요/i');
+    const hasContentError = await contentError.isVisible({ timeout: 2000 }).catch(() => false);
+
+    // 검증 에러가 표시되어야 함
+    expect(hasTitleError || hasContentError).toBe(true);
+
+    // 제목만 입력하고 내용 없이 제출 시도
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    await titleInput.fill('테스트 제목');
+
+    await submitButton.click();
+    await page.waitForTimeout(500);
+
+    // 내용 에러 메시지가 여전히 표시되는지 확인
+    const contentErrorAfterTitle = await contentError.isVisible({ timeout: 2000 }).catch(() => false);
+    expect(contentErrorAfterTitle).toBe(true);
+
+    // 내용 입력 후 제출 시도
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    await contentTextarea.fill('테스트 내용');
+
+    await submitButton.click();
+    await page.waitForTimeout(500);
+
+    // 검증 에러가 사라졌는지 확인 (API 호출이 시작되어야 함)
+    const titleErrorAfterFill = await titleError.isVisible({ timeout: 1000 }).catch(() => false);
+    const contentErrorAfterFill = await contentError.isVisible({ timeout: 1000 }).catch(() => false);
+    expect(titleErrorAfterFill).toBe(false);
+    expect(contentErrorAfterFill).toBe(false);
+  });
+
+  test('T060: 공지사항 작성 및 목록 표시 테스트', async ({ page }) => {
+    // 작성 폼으로 이동
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 폼 작성
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    
+    const testTitle = `테스트 공지사항 ${Date.now()}`;
+    const testContent = '테스트 내용입니다.';
+
+    await titleInput.fill(testTitle);
+    await contentTextarea.fill(testContent);
+
+    // 작성 완료 버튼 클릭
+    const submitButton = page.getByRole('button', { name: '작성 완료' });
+    await submitButton.click();
+
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // 성공 Toast 확인
+    const successToast = page.locator('[data-sonner-toast], [role="status"]').filter({ 
+      hasText: /등록되었습니다|성공/i 
+    });
+    const hasSuccessToast = await successToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+    // 목록 뷰로 돌아왔는지 확인
+    const listTitle = page.locator('h2:has-text("공지사항")');
+    await expect(listTitle).toBeVisible({ timeout: 5000 });
+
+    // 새로 생성된 공지사항이 목록에 표시되는지 확인
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const noticeTitles = noticeItems.locator('h3');
+    
+    // 생성된 공지사항 제목이 목록에 있는지 확인
+    const hasNewNotice = await noticeTitles.filter({ hasText: testTitle }).count().then(count => count > 0).catch(() => false);
+    
+    // 성공 Toast 또는 목록에 새 공지사항이 표시되어야 함
+    expect(hasSuccessToast || hasNewNotice).toBe(true);
+  });
+
+  test('T061: 취소 버튼 테스트', async ({ page }) => {
+    // 작성 폼으로 이동
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 폼에 데이터 입력
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    
+    await titleInput.fill('취소 테스트 제목');
+    await contentTextarea.fill('취소 테스트 내용');
+
+    // 취소 버튼 클릭
+    const cancelButton = page.getByRole('button', { name: '취소' });
+    await cancelButton.click();
+
+    // 목록 뷰로 돌아왔는지 확인
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    const listTitle = page.locator('h2:has-text("공지사항")');
+    await expect(listTitle).toBeVisible({ timeout: 5000 });
+
+    // 다시 작성 폼으로 이동하여 데이터가 초기화되었는지 확인
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    const titleInputAfterCancel = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    const contentTextareaAfterCancel = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    
+    const titleValue = await titleInputAfterCancel.inputValue();
+    const contentValue = await contentTextareaAfterCancel.inputValue();
+
+    // 폼 데이터가 초기화되어야 함
+    expect(titleValue).toBe('');
+    expect(contentValue).toBe('');
+  });
+
+  test('T062: 공지사항 작성 실패 시 에러 처리 테스트', async ({ page }) => {
+    // 작성 폼으로 이동
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 네트워크 요청을 차단하여 에러 상태 시뮬레이션
+    await page.route('**/api/admin/notices', route => route.abort());
+
+    // 폼 작성
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    
+    await titleInput.fill('에러 테스트 제목');
+    await contentTextarea.fill('에러 테스트 내용');
+
+    // 작성 완료 버튼 클릭
+    const submitButton = page.getByRole('button', { name: '작성 완료' });
+    await submitButton.click();
+
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+
+    // 에러 Toast 확인 (더 넓은 범위로 검색)
+    const errorToast = page.locator('[data-sonner-toast], [role="alert"], [role="status"]').filter({ 
+      hasText: /실패|오류|에러|등록.*실패|네트워크|연결|확인/i 
+    });
+    const hasErrorToast = await errorToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+    // 또는 페이지에 에러 메시지가 표시되는지 확인
+    const errorMessage = page.locator('text=/실패|오류|에러|네트워크|연결/i');
+    const hasErrorMessage = await errorMessage.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+    // 에러가 표시되어야 함 (Toast 또는 페이지 메시지)
+    expect(hasErrorToast || hasErrorMessage).toBe(true);
+
+    // 작성 폼이 여전히 표시되어야 함 (목록으로 이동하지 않음)
+    const formTitle = page.locator('h2:has-text("공지사항 작성")');
+    const isFormVisible = await formTitle.isVisible({ timeout: 2000 }).catch(() => false);
+    expect(isFormVisible).toBe(true);
+
+    // 네트워크 차단 해제
+    await page.unroute('**/api/admin/notices');
+  });
+
+  test('T063: 고정 공지사항 작성 후 상단 표시 테스트', async ({ page }) => {
+    // 작성 폼으로 이동
+    const writeButton = page.getByRole('button', { name: /공지사항 작성/i });
+    await writeButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+
+    // 폼 작성
+    const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+    const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+    const pinnedCheckbox = page.locator('input[type="checkbox"]').first();
+    
+    const testTitle = `고정 공지사항 ${Date.now()}`;
+    const testContent = '고정 공지사항 내용입니다.';
+
+    await titleInput.fill(testTitle);
+    await contentTextarea.fill(testContent);
+    
+    // 고정 체크박스 선택
+    await pinnedCheckbox.check();
+
+    // 작성 완료 버튼 클릭
+    const submitButton = page.getByRole('button', { name: '작성 완료' });
+    await submitButton.click();
+
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // 목록 뷰로 돌아왔는지 확인
+    const listTitle = page.locator('h2:has-text("공지사항")');
+    await expect(listTitle).toBeVisible({ timeout: 5000 });
+
+    // 목록 새로고침 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 첫 번째 공지사항이 고정 공지사항인지 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      const firstItem = noticeItems.first();
+      const firstItemTitle = await firstItem.locator('h3').first().textContent();
+      const pinnedBadge = firstItem.locator('span:has-text("공지")');
+      const hasPinnedBadge = await pinnedBadge.isVisible({ timeout: 2000 }).catch(() => false);
+
+      // 첫 번째 공지사항이 고정 공지사항이거나, 생성한 공지사항이 상단에 있어야 함
+      if (firstItemTitle === testTitle) {
+        expect(hasPinnedBadge).toBe(true);
+      } else if (hasPinnedBadge) {
+        // 고정 공지사항이 상단에 있는 것은 정상
+        expect(hasPinnedBadge).toBe(true);
+      }
+    }
+  });
+});

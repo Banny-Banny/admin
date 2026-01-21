@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getNotices, getNoticeById } from '../../commons/apis/notice';
+import { getNotices, getNoticeById, createNotice } from '../../commons/apis/notice';
 import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
 import { useDebounce } from '../../commons/hooks/use-debounce';
 import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
@@ -70,6 +70,8 @@ export function ReportsPage() {
   const [total, setTotal] = useState(0);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ title?: string; content?: string }>({});
 
   // Debounce search term to reduce API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -158,25 +160,67 @@ export function ReportsPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Phase 6에서 API 연동 예정
-    const newNotice: Notice = {
-      id: notices.length + 1,
-      originalId: `temp-${Date.now()}`, // 임시 UUID (Phase 6에서 실제 API 응답으로 교체 예정)
-      title: formData.title,
-      content: formData.content,
-      author: '관리자',
-      createdAt: new Date().toISOString().split('T')[0],
-      views: 0,
-      isPinned: formData.isPinned,
-    };
+    // 폼 검증
+    const errors: { title?: string; content?: string } = {};
+    if (!formData.title.trim()) {
+      errors.title = '제목을 입력해주세요.';
+    }
+    if (!formData.content.trim()) {
+      errors.content = '내용을 입력해주세요.';
+    }
 
-    setNotices([newNotice, ...notices]);
-    setFormData({ title: '', content: '', isPinned: false });
-    setView('list');
-    toast.success('공지사항이 등록되었습니다.');
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
+    setSubmitLoading(true);
+
+    try {
+      // API 호출
+      const response = await createNotice({
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        imageUrl: formData.imageUrl.trim() || undefined,
+        isPinned: formData.isPinned,
+        isVisible: formData.isVisible,
+      });
+
+      if (response.success && response.data) {
+        // 성공 시 목록 새로고침
+        const listResponse = await getNotices({
+          search: debouncedSearchTerm || undefined,
+          limit: 100,
+          offset: 0,
+        });
+
+        if (listResponse.success && listResponse.data) {
+          const mappedNotices = listResponse.data.items.map(mapApiNoticeToUiNotice);
+          const sortedNotices = [...mappedNotices].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+          setNotices(sortedNotices);
+          setTotal(listResponse.data.total);
+        }
+
+        // 폼 초기화 및 목록으로 이동
+        setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+        setView('list');
+        toast.success('공지사항이 등록되었습니다.');
+      } else {
+        throw new Error('공지사항 등록에 실패했습니다.');
+      }
+    } catch (err) {
+      handleApiErrorWithToast(err, '공지사항 등록에 실패했습니다.');
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -191,7 +235,9 @@ export function ReportsPage() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    imageUrl: '',
     isPinned: false,
+    isVisible: true,
   });
 
   // 목록 뷰
@@ -387,7 +433,11 @@ export function ReportsPage() {
     return (
       <div className={styles.c_1j8i8bf}>
         <button
-          onClick={() => setView('list')}
+          onClick={() => {
+            setView('list');
+            setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+            setFormErrors({});
+          }}
           className={styles.c_1repdhl}
         >
           <ArrowLeft size={20} />
@@ -405,9 +455,25 @@ export function ReportsPage() {
                   checked={formData.isPinned}
                   onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
                   className={styles.c_sk3ga5}
+                  disabled={submitLoading}
                 />
                 <span className={styles.c_1my1zyy}>
                   상단 고정 (중요 공지)
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <label className={styles.c_5znans}>
+                <input
+                  type="checkbox"
+                  checked={formData.isVisible}
+                  onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
+                  className={styles.c_sk3ga5}
+                  disabled={submitLoading}
+                />
+                <span className={styles.c_1my1zyy}>
+                  공개 여부
                 </span>
               </label>
             </div>
@@ -419,11 +485,21 @@ export function ReportsPage() {
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
+                onChange={(e) => {
+                  setFormData({ ...formData, title: e.target.value });
+                  if (formErrors.title) {
+                    setFormErrors({ ...formErrors, title: undefined });
+                  }
+                }}
                 placeholder="공지사항 제목을 입력하세요"
                 className={styles.c_1gzwh21}
+                disabled={submitLoading}
               />
+              {formErrors.title && (
+                <div style={{ color: 'red', fontSize: '14px', marginTop: '4px' }}>
+                  {formErrors.title}
+                </div>
+              )}
             </div>
 
             <div>
@@ -432,27 +508,57 @@ export function ReportsPage() {
               </label>
               <textarea
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                required
+                onChange={(e) => {
+                  setFormData({ ...formData, content: e.target.value });
+                  if (formErrors.content) {
+                    setFormErrors({ ...formErrors, content: undefined });
+                  }
+                }}
                 rows={12}
                 placeholder="공지사항 내용을 입력하세요"
                 className={styles.c_1j5q06i}
+                disabled={submitLoading}
+              />
+              {formErrors.content && (
+                <div style={{ color: 'red', fontSize: '14px', marginTop: '4px' }}>
+                  {formErrors.content}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className={styles.c_a41skz}>
+                이미지 URL
+              </label>
+              <input
+                type="url"
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                placeholder="이미지 URL을 입력하세요 (선택사항)"
+                className={styles.c_1gzwh21}
+                disabled={submitLoading}
               />
             </div>
 
             <div className={styles.c_sm9r4r}>
               <button
                 type="button"
-                onClick={() => setView('list')}
+                onClick={() => {
+                  setView('list');
+                  setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+                  setFormErrors({});
+                }}
                 className={styles.c_8zbzmp}
+                disabled={submitLoading}
               >
                 취소
               </button>
               <button
                 type="submit"
                 className={styles.c_b151g0}
+                disabled={submitLoading}
               >
-                작성 완료
+                {submitLoading ? '등록 중...' : '작성 완료'}
               </button>
             </div>
           </form>

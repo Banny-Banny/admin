@@ -161,32 +161,32 @@
 
 ### API 데이터 바인딩
 
-- [ ] T047 [US3] Update ReportsPage component to call createNotice API when form is submitted in src/app/components/ReportsPage/index.tsx
-- [ ] T048 [US3] Map form data to CreateNoticeRequest type (title, content, imageUrl, isPinned, isVisible) in src/app/components/ReportsPage/index.tsx
-- [ ] T049 [US3] Handle API response and update notice list after successful creation in src/app/components/ReportsPage/index.tsx
-- [ ] T050 [US3] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
-- [ ] T051 [US3] Reset form data after successful notice creation in src/app/components/ReportsPage/index.tsx
+- [X] T047 [US3] Update ReportsPage component to call createNotice API when form is submitted in src/app/components/ReportsPage/index.tsx
+- [X] T048 [US3] Map form data to CreateNoticeRequest type (title, content, imageUrl, isPinned, isVisible) in src/app/components/ReportsPage/index.tsx
+- [X] T049 [US3] Handle API response and update notice list after successful creation in src/app/components/ReportsPage/index.tsx
+- [X] T050 [US3] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
+- [X] T051 [US3] Reset form data after successful notice creation in src/app/components/ReportsPage/index.tsx
 
 ### 폼 검증
 
-- [ ] T052 [US3] Add client-side validation for required fields (title, content) in src/app/components/ReportsPage/index.tsx
-- [ ] T053 [US3] Display validation error messages when required fields are empty in src/app/components/ReportsPage/index.tsx
-- [ ] T054 [US3] Prevent form submission when validation fails in src/app/components/ReportsPage/index.tsx
+- [X] T052 [US3] Add client-side validation for required fields (title, content) in src/app/components/ReportsPage/index.tsx
+- [X] T053 [US3] Display validation error messages when required fields are empty in src/app/components/ReportsPage/index.tsx
+- [X] T054 [US3] Prevent form submission when validation fails in src/app/components/ReportsPage/index.tsx
 
 ### 폼 UI
 
-- [ ] T055 [US3] Update write form to include all fields (title, content, imageUrl, isPinned, isVisible) in src/app/components/ReportsPage/index.tsx
-- [ ] T056 [US3] Implement "취소" button to close form and reset data in src/app/components/ReportsPage/index.tsx
-- [ ] T057 [US3] Update form to show loading state during API call in src/app/components/ReportsPage/index.tsx
+- [X] T055 [US3] Update write form to include all fields (title, content, imageUrl, isPinned, isVisible) in src/app/components/ReportsPage/index.tsx
+- [X] T056 [US3] Implement "취소" button to close form and reset data in src/app/components/ReportsPage/index.tsx
+- [X] T057 [US3] Update form to show loading state during API call in src/app/components/ReportsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T058 [US3] Verify notice creation form displays correctly in src/app/components/ReportsPage/index.tsx
-- [ ] T059 [US3] Verify form validation works for required fields in src/app/components/ReportsPage/index.tsx
-- [ ] T060 [US3] Verify notice is created and appears in list after submission in src/app/components/ReportsPage/index.tsx
-- [ ] T061 [US3] Verify "취소" button closes form and resets data in src/app/components/ReportsPage/index.tsx
-- [ ] T062 [US3] Verify error handling when notice creation fails in src/app/components/ReportsPage/index.tsx
-- [ ] T063 [US3] Verify pinned notice appears at top of list after creation in src/app/components/ReportsPage/index.tsx
+- [X] T058 [US3] Verify notice creation form displays correctly in src/app/components/ReportsPage/index.tsx
+- [X] T059 [US3] Verify form validation works for required fields in src/app/components/ReportsPage/index.tsx
+- [X] T060 [US3] Verify notice is created and appears in list after submission in src/app/components/ReportsPage/index.tsx
+- [X] T061 [US3] Verify "취소" button closes form and resets data in src/app/components/ReportsPage/index.tsx
+- [X] T062 [US3] Verify error handling when notice creation fails in src/app/components/ReportsPage/index.tsx
+- [X] T063 [US3] Verify pinned notice appears at top of list after creation in src/app/components/ReportsPage/index.tsx
 
 **Checkpoint**: User Story 3 완료 - 공지사항 작성 기능이 독립적으로 작동합니다
 

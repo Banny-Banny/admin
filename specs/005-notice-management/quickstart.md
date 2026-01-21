@@ -24,11 +24,8 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 # 또는 프로덕션 URL
 
 # 테스트용 관리자 계정 (E2E 테스트 및 UI 테스트에서만 사용)
-TEST_ADMIN_EMAIL=test-admin@example.com
-TEST_ADMIN_PASSWORD=test-password123
-# 또는
-SUPER_ADMIN_EMAIL=test-admin@example.com
-SUPER_ADMIN_PASSWORD=test-password123
+TEST_ADMIN_EMAIL
+TEST_ADMIN_PASSWORD
 ```
 
 **⚠️ 중요**: 
