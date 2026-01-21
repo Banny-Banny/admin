@@ -98,11 +98,11 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
             }))
           );
 
-          // 3. 방 입장
-          await socketClient.joinRoom(inquiry.roomId);
+          // 3. 방 입장 (inquiry.id를 roomId로 사용)
+          await socketClient.joinRoom(inquiry.id);
 
           // 4. 읽음 알림 전송
-          socketClient.sendReadAlert(inquiry.roomId);
+          socketClient.sendReadAlert(inquiry.id);
 
           setIsLoading(false);
           // 초기 메시지 로드 후 스크롤
@@ -121,7 +121,7 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
     // 메시지 수신 핸들러
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
-      if (isMounted && payload.roomId === inquiry.roomId) {
+      if (isMounted && payload.roomId === inquiry.id) {
         setMessages((prev) => {
           // 중복 메시지 방지
           if (prev.some((msg) => msg.id === payload.id)) {
@@ -143,7 +143,7 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
     // 읽음 알림 핸들러
     const handleReadAlert = (payload: ReadAlertPayload) => {
-      if (isMounted && payload.roomId === inquiry.roomId) {
+      if (isMounted && payload.roomId === inquiry.id) {
         // 읽음 알림 처리 (필요시 UI 업데이트)
         console.log('Read alert received:', payload);
       }
@@ -166,16 +166,16 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       isMounted = false;
       
       // 방 나가기
-      socketClient.leaveRoom(inquiry.roomId);
+      socketClient.leaveRoom(inquiry.id);
       
       // 이벤트 리스너 제거
       socketClient.offReceiveMessage(handleReceiveMessage);
       socketClient.offReadAlert(handleReadAlert);
       
-      // Socket 연결 종료
-      socketClient.disconnect();
+      // Socket 연결은 유지 (싱글톤이므로 앱 전체에서 재사용)
+      // socketClient.disconnect();
     };
-  }, [inquiry.id, inquiry.roomId]);
+  }, [inquiry.id]);
 
   // 새 메시지가 추가될 때마다 스크롤
   useEffect(() => {
@@ -206,10 +206,10 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       
       if (!socketClient.isSocketConnected()) {
         socketClient.connect();
-        await socketClient.joinRoom(inquiry.roomId);
+        await socketClient.joinRoom(inquiry.id);
       }
 
-      socketClient.sendMessage(inquiry.roomId, messageContent);
+      socketClient.sendMessage(inquiry.id, messageContent);
       setNewMessage('');
     } catch (error) {
       console.error('메시지 전송 실패:', error);
@@ -358,7 +358,7 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
   // 닫기 핸들러
   const handleClose = () => {
     const socketClient = socketClientRef.current;
-    socketClient.leaveRoom(inquiry.roomId);
+    socketClient.leaveRoom(inquiry.id);
     socketClient.disconnect();
     onClose();
   };
@@ -369,16 +369,18 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       <div className={styles.c_1hlwyim}>
         <div className={styles.c_2ca09x}>
           <div className={styles.c_1oa1gq1}>
-            {inquiry.customer.name.charAt(0)}
+            {inquiry.user.nickname.charAt(0)}
           </div>
           <div>
             <div className={styles.headerTitleRow}>
-              <h3 className={styles.c_we5pmo}>{inquiry.customer.name}</h3>
+              <h3 className={styles.c_we5pmo}>{inquiry.user.nickname}</h3>
               <span className={`${styles.statusBadge} ${getStatusColor(currentStatus)}`}>
                 {getStatusLabel(currentStatus)}
               </span>
             </div>
-            <p className={styles.c_ibg1vp}>{inquiry.customer.email}</p>
+            {inquiry.user.email && (
+              <p className={styles.c_ibg1vp}>{inquiry.user.email}</p>
+            )}
           </div>
         </div>
         <div className={styles.headerActions}>
@@ -407,11 +409,13 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
         </div>
       </div>
 
-      {/* Subject */}
-      <div className={styles.c_1e5xuuz}>
-        <p className={styles.c_ibg2me}>문의 제목</p>
-        <p className={styles.c_1rg4z9e}>{inquiry.subject}</p>
-      </div>
+      {/* Last Message Preview */}
+      {inquiry.lastMessagePreview && (
+        <div className={styles.c_1e5xuuz}>
+          <p className={styles.c_ibg2me}>최근 메시지</p>
+          <p className={styles.c_1rg4z9e}>{inquiry.lastMessagePreview}</p>
+        </div>
+      )}
 
       {/* Messages */}
       <div className={styles.c_1g2rryz} ref={messagesContainerRef}>

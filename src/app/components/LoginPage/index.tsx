@@ -30,8 +30,6 @@ export function LoginPage() {
       await login(data.email, data.password);
       toast.success('로그인 성공');
       router.push('/');
-      // 페이지 리로드를 통해 인증 상태 반영
-      router.refresh();
     } catch (err) {
       // 네트워크 오류와 인증 오류를 구분하여 메시지 표시
       let errorMessage = '로그인에 실패했습니다';
