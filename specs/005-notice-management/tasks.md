@@ -278,36 +278,36 @@
 
 ### 에러 처리 개선
 
-- [ ] T095 [P] Improve error handling for network errors across all API calls in src/app/components/ReportsPage/index.tsx
-- [ ] T096 [P] Improve error handling for token expiration (401) across all admin API calls in src/app/components/ReportsPage/index.tsx
-- [ ] T097 [P] Add consistent error message display using Toast notifications in src/app/components/ReportsPage/index.tsx
+- [X] T095 [P] Improve error handling for network errors across all API calls in src/app/components/ReportsPage/index.tsx
+- [X] T096 [P] Improve error handling for token expiration (401) across all admin API calls in src/app/components/ReportsPage/index.tsx
+- [X] T097 [P] Add consistent error message display using Toast notifications in src/app/components/ReportsPage/index.tsx
 
 ### 로딩 상태 개선
 
-- [ ] T098 [P] Improve loading state UI consistency across all views in src/app/components/ReportsPage/index.tsx
-- [ ] T099 [P] Add loading spinner component for better UX in src/app/components/ReportsPage/index.tsx
+- [X] T098 [P] Improve loading state UI consistency across all views in src/app/components/ReportsPage/index.tsx
+- [X] T099 [P] Add loading spinner component for better UX in src/app/components/ReportsPage/index.tsx
 
 ### 성능 최적화
 
-- [ ] T100 [P] Implement proper debouncing for search input to reduce API calls in src/app/components/ReportsPage/index.tsx
-- [ ] T101 [P] Add pagination support if needed for large notice lists in src/app/components/ReportsPage/index.tsx
+- [X] T100 [P] Implement proper debouncing for search input to reduce API calls in src/app/components/ReportsPage/index.tsx
+- [X] T101 [P] Add pagination support if needed for large notice lists in src/app/components/ReportsPage/index.tsx
 
 ### 코드 정리
 
-- [ ] T102 [P] Refactor ReportsPage component to improve code organization in src/app/components/ReportsPage/index.tsx
-- [ ] T103 [P] Remove unused code and comments in src/app/components/ReportsPage/index.tsx
-- [ ] T104 [P] Add JSDoc comments for API functions in src/app/commons/apis/notice/http.ts
+- [X] T102 [P] Refactor ReportsPage component to improve code organization in src/app/components/ReportsPage/index.tsx
+- [X] T103 [P] Remove unused code and comments in src/app/components/ReportsPage/index.tsx
+- [X] T104 [P] Add JSDoc comments for API functions in src/app/commons/apis/notice/http.ts
 
 ### 문서화
 
-- [ ] T105 [P] Update component documentation in src/app/components/ReportsPage/index.tsx
+- [X] T105 [P] Update component documentation in src/app/components/ReportsPage/index.tsx
 - [ ] T106 [P] Verify quickstart.md examples work correctly
 
 ### 최종 검증
 
-- [ ] T107 Run all E2E tests using `npm run test:e2e` and verify all tests pass
-- [ ] T108 Run build command and verify no build errors
-- [ ] T109 Verify all user stories work independently and together
+- [X] T107 Run all E2E tests using `npm run test:e2e` and verify all tests pass
+- [X] T108 Run build command and verify no build errors
+- [X] T109 Verify all user stories work independently and together
 
 ---
 

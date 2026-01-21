@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { getNotices, getNoticeById, createNotice, updateNotice, deleteNotice } from '../../commons/apis/notice';
 import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
 import { useDebounce } from '../../commons/hooks/use-debounce';
-import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
+import { handleApiErrorWithToast, handleApiError } from '../../commons/utils/error-handler';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,46 +34,69 @@ interface Notice {
   isPinned: boolean;
 }
 
-// API NoticeListItem을 UI Notice로 변환하는 헬퍼 함수
-function mapApiNoticeToUiNotice(apiNotice: NoticeListItem, index: number): Notice {
+/**
+ * API NoticeListItem을 UI Notice로 변환하는 헬퍼 함수
+ * @param apiNotice - API에서 받은 공지사항 목록 항목
+ * @returns UI에서 사용할 Notice 객체
+ */
+function mapApiNoticeToUiNotice(apiNotice: NoticeListItem): Notice {
   // UUID를 간단한 숫자로 변환 (해시 함수 사용)
   const hashId = apiNotice.id.split('').reduce((acc, char) => {
     return ((acc << 5) - acc) + char.charCodeAt(0);
   }, 0);
-  const numericId = Math.abs(hashId) % 1000000; // 0-999999 범위로 제한
+  const numericId = Math.abs(hashId) % 1000000;
 
   return {
     id: numericId,
-    originalId: apiNotice.id, // 원본 UUID 저장 (상세 조회용)
+    originalId: apiNotice.id,
     title: apiNotice.title,
-    content: '', // 목록에서는 content가 없으므로 빈 문자열
-    author: '관리자', // UI 전용 필드
-    createdAt: apiNotice.createdAt.split('T')[0], // ISO 날짜를 YYYY-MM-DD 형식으로 변환
-    views: 0, // UI 전용 필드 (기본값 0)
+    content: '',
+    author: '관리자',
+    createdAt: apiNotice.createdAt.split('T')[0],
+    views: 0,
     isPinned: apiNotice.isPinned,
   };
 }
 
-// API Notice를 UI Notice로 변환하는 헬퍼 함수 (상세 조회용)
+/**
+ * API Notice를 UI Notice로 변환하는 헬퍼 함수 (상세 조회용)
+ * @param apiNotice - API에서 받은 공지사항 상세 정보
+ * @returns UI에서 사용할 Notice 객체
+ */
 function mapApiNoticeDetailToUiNotice(apiNotice: ApiNotice): Notice {
   // UUID를 간단한 숫자로 변환 (해시 함수 사용)
   const hashId = apiNotice.id.split('').reduce((acc, char) => {
     return ((acc << 5) - acc) + char.charCodeAt(0);
   }, 0);
-  const numericId = Math.abs(hashId) % 1000000; // 0-999999 범위로 제한
+  const numericId = Math.abs(hashId) % 1000000;
 
   return {
     id: numericId,
-    originalId: apiNotice.id, // 원본 UUID 저장
+    originalId: apiNotice.id,
     title: apiNotice.title,
-    content: apiNotice.content, // 상세 조회에서는 content가 있음
-    author: '관리자', // UI 전용 필드
-    createdAt: apiNotice.createdAt.split('T')[0], // ISO 날짜를 YYYY-MM-DD 형식으로 변환
-    views: 0, // UI 전용 필드 (기본값 0)
+    content: apiNotice.content,
+    author: '관리자',
+    createdAt: apiNotice.createdAt.split('T')[0],
+    views: 0,
     isPinned: apiNotice.isPinned,
   };
 }
 
+/**
+ * 공지사항 관리 페이지 컴포넌트
+ * 
+ * 관리자가 공지사항을 조회, 작성, 수정, 삭제할 수 있는 페이지입니다.
+ * 
+ * 주요 기능:
+ * - 공지사항 목록 조회 및 검색
+ * - 공지사항 상세 조회
+ * - 공지사항 작성
+ * - 공지사항 수정
+ * - 공지사항 삭제
+ * - 페이지네이션 지원
+ * 
+ * @returns 공지사항 관리 페이지 JSX
+ */
 export function ReportsPage() {
   const [view, setView] = useState<'list' | 'detail' | 'write' | 'edit'>('list');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
@@ -83,7 +106,6 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -92,13 +114,12 @@ export function ReportsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Debounce search term to reduce API calls
+  // 검색어 debounce 처리 (300ms 지연)
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // 검색어가 변경되면 첫 페이지로 리셋
   useEffect(() => {
     setCurrentPage(1);
-    setOffset(0);
   }, [debouncedSearchTerm]);
 
   // API에서 공지사항 목록 조회
@@ -137,6 +158,15 @@ export function ReportsPage() {
         setError(apiError.message);
         setNotices([]);
         setTotal(0);
+        
+        // 네트워크 에러인 경우 추가 안내
+        if (apiError.isNetworkError) {
+          console.error('[ReportsPage] 네트워크 오류:', err);
+        }
+        // 인증 에러인 경우 (401) - apiClient에서 이미 처리되지만 로깅
+        if (apiError.isAuthError) {
+          console.error('[ReportsPage] 인증 오류:', err);
+        }
       } finally {
         setLoading(false);
       }
@@ -150,7 +180,6 @@ export function ReportsPage() {
     const totalPages = Math.ceil(total / NOTICES_PER_PAGE);
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setOffset((page - 1) * NOTICES_PER_PAGE);
       // 페이지 변경 시 스크롤을 맨 위로 이동
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -188,14 +217,26 @@ export function ReportsPage() {
         throw new Error('공지사항 상세 정보를 불러오는데 실패했습니다.');
       }
     } catch (err: any) {
+      const apiError = handleApiError(err);
+      
       // 404 에러 처리
-      if (err.response?.status === 404) {
+      if (apiError.isNotFound) {
         const errorMessage = '공지사항을 찾을 수 없습니다.';
         setDetailError(errorMessage);
-        handleApiErrorWithToast(err, errorMessage);
+        toast.error(errorMessage);
       } else {
-        const apiError = handleApiErrorWithToast(err, '공지사항 상세 정보를 불러오는데 실패했습니다.');
+        // 네트워크 에러 또는 기타 에러
+        handleApiErrorWithToast(err, '공지사항 상세 정보를 불러오는데 실패했습니다.');
         setDetailError(apiError.message);
+        
+        // 네트워크 에러인 경우 추가 안내
+        if (apiError.isNetworkError) {
+          console.error('[ReportsPage] 네트워크 오류:', err);
+        }
+        // 인증 에러인 경우 (401) - apiClient에서 이미 처리되지만 로깅
+        if (apiError.isAuthError) {
+          console.error('[ReportsPage] 인증 오류:', err);
+        }
       }
     } finally {
       setDetailLoading(false);
@@ -284,7 +325,6 @@ export function ReportsPage() {
         if (response.success && response.data) {
           // 성공 시 목록 새로고침 (새 공지사항이 추가되므로 첫 페이지로)
           setCurrentPage(1);
-          setOffset(0);
           const listResponse = await getNotices({
             search: debouncedSearchTerm || undefined,
             limit: NOTICES_PER_PAGE,
@@ -312,7 +352,16 @@ export function ReportsPage() {
       }
     } catch (err) {
       const errorMessage = view === 'edit' ? '공지사항 수정에 실패했습니다.' : '공지사항 등록에 실패했습니다.';
-      handleApiErrorWithToast(err, errorMessage);
+      const apiError = handleApiErrorWithToast(err, errorMessage);
+      
+      // 네트워크 에러인 경우 추가 안내
+      if (apiError.isNetworkError) {
+        console.error('[ReportsPage] 네트워크 오류:', err);
+      }
+      // 인증 에러인 경우 (401) - apiClient에서 이미 처리되지만 로깅
+      if (apiError.isAuthError) {
+        console.error('[ReportsPage] 인증 오류:', err);
+      }
     } finally {
       setSubmitLoading(false);
     }
@@ -338,7 +387,6 @@ export function ReportsPage() {
           // 현재 페이지에 항목이 1개뿐이고 첫 페이지가 아니면 이전 페이지로
           newPage = Math.max(1, currentPage - 1);
           setCurrentPage(newPage);
-          setOffset((newPage - 1) * NOTICES_PER_PAGE);
         }
 
         // 목록 새로고침
@@ -369,7 +417,16 @@ export function ReportsPage() {
         throw new Error('공지사항 삭제에 실패했습니다.');
       }
     } catch (err) {
-      handleApiErrorWithToast(err, '공지사항 삭제에 실패했습니다.');
+      const apiError = handleApiErrorWithToast(err, '공지사항 삭제에 실패했습니다.');
+      
+      // 네트워크 에러인 경우 추가 안내
+      if (apiError.isNetworkError) {
+        console.error('[ReportsPage] 네트워크 오류:', err);
+      }
+      // 인증 에러인 경우 (401) - apiClient에서 이미 처리되지만 로깅
+      if (apiError.isAuthError) {
+        console.error('[ReportsPage] 인증 오류:', err);
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -421,8 +478,9 @@ export function ReportsPage() {
 
           <div className={styles.c_fyf4x}>
             {loading ? (
-              <div className={styles.c_g9tmm}>
-                공지사항을 불러오는 중...
+              <div className={styles.loadingSpinner}>
+                <div className={styles.spinner}></div>
+                <p className={styles.loadingText}>공지사항을 불러오는 중...</p>
               </div>
             ) : error ? (
               <div className={styles.c_g9tmm}>
@@ -449,9 +507,7 @@ export function ReportsPage() {
                           {notice.title}
                         </h3>
                       </div>
-                      <p className={styles.c_16wgd3u}>
-                        {/* 목록에서는 content 미표시 */}
-                      </p>
+                      <p className={styles.c_16wgd3u}></p>
                       <div className={styles.c_kso4az}>
                         <div className={styles.c_2ca09v}>
                           <User size={14} />
@@ -593,8 +649,9 @@ export function ReportsPage() {
 
         <div className={styles.c_4rnbt2}>
           {detailLoading ? (
-            <div className={styles.c_g9tmm}>
-              공지사항을 불러오는 중...
+            <div className={styles.loadingSpinner}>
+              <div className={styles.spinner}></div>
+              <p className={styles.loadingText}>공지사항을 불러오는 중...</p>
             </div>
           ) : detailError ? (
             <div className={styles.c_g9tmm}>
@@ -638,13 +695,21 @@ export function ReportsPage() {
                             throw new Error('공지사항 정보를 불러오는데 실패했습니다.');
                           }
                         } catch (err) {
-                          handleApiErrorWithToast(err, '공지사항 정보를 불러오는데 실패했습니다.');
+                          const apiError = handleApiErrorWithToast(err, '공지사항 정보를 불러오는데 실패했습니다.');
+                          
+                          // 네트워크 에러인 경우 추가 안내
+                          if (apiError.isNetworkError) {
+                            console.error('[ReportsPage] 네트워크 오류:', err);
+                          }
+                          // 인증 에러인 경우 (401) - apiClient에서 이미 처리되지만 로깅
+                          if (apiError.isAuthError) {
+                            console.error('[ReportsPage] 인증 오류:', err);
+                          }
                         } finally {
                           setSubmitLoading(false);
                         }
                       }}
-                      className={styles.c_jiqtbf}
-                      style={{ backgroundColor: '#3b82f6' }}
+                      className={styles.editButton}
                       disabled={submitLoading}
                     >
                       <Edit size={18} />
