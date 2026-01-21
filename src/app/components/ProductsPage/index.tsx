@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Plus, Package, Image as ImageIcon, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Package, X } from 'lucide-react';
+import Image from 'next/image';
+import { AxiosError } from 'axios';
 import { ProductList } from '../ProductList';
-import { createProduct, ProductType, type CreateProductRequest } from '../../commons/apis/product';
+import { createProduct, getProductById, ProductType, type CreateProductRequest, type Product } from '../../commons/apis/product';
 import { toast } from 'sonner';
 import styles from "./styles.module.css";
 
@@ -11,6 +13,12 @@ export function ProductsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // 상품 상세 조회 상태
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [productDetail, setProductDetail] = useState<Product | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -103,11 +111,11 @@ export function ProductsPage() {
       } else {
         throw new Error('상품 등록에 실패했습니다.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = '상품 등록에 실패했습니다.';
       
       // Axios 에러 응답에서 메시지 추출
-      if (err?.response?.data) {
+      if (err instanceof AxiosError && err.response?.data) {
         const errorData = err.response.data;
         
         // maxMediaCount 관련 에러 메시지 파싱
@@ -177,6 +185,76 @@ export function ProductsPage() {
         ...validationErrors,
         mediaTypes: '',
       });
+    }
+  };
+
+  // 상품 상세 조회 핸들러
+  const handleProductClick = (productId: string) => {
+    setSelectedProductId(productId);
+    setDetailError(null);
+  };
+
+  // 상품 상세 정보 로드
+  useEffect(() => {
+    if (!selectedProductId) {
+      setProductDetail(null);
+      return;
+    }
+
+    const fetchProductDetail = async () => {
+      setDetailLoading(true);
+      setDetailError(null);
+
+      try {
+        const response = await getProductById(selectedProductId);
+        
+        if (response.success) {
+          setProductDetail(response.data);
+        } else {
+          throw new Error('상품 정보를 불러오는데 실패했습니다.');
+        }
+      } catch (err: unknown) {
+        let errorMessage = '상품 정보를 불러오는데 실패했습니다.';
+        
+        // Axios 에러 처리
+        if (err instanceof AxiosError) {
+          // 404 에러 처리
+          if (err.response?.status === 404) {
+            errorMessage = '상품을 찾을 수 없습니다.';
+          } else if (err.response?.data?.message) {
+            errorMessage = Array.isArray(err.response.data.message) 
+              ? err.response.data.message.join(', ')
+              : err.response.data.message;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+        
+        setDetailError(errorMessage);
+        toast.error(errorMessage);
+        setProductDetail(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    fetchProductDetail();
+  }, [selectedProductId]);
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
     }
   };
 
@@ -437,7 +515,207 @@ export function ProductsPage() {
         </div>
       )}
 
-      <ProductList onProductCountChange={setTotalProductCount} refreshKey={refreshKey} />
+      <ProductList 
+        onProductCountChange={setTotalProductCount} 
+        refreshKey={refreshKey}
+        onProductClick={handleProductClick}
+      />
+
+      {/* 상품 상세 조회 Modal */}
+      {selectedProductId !== null && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+          onClick={() => {
+            setSelectedProductId(null);
+            setProductDetail(null);
+            setDetailError(null);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '4px' }}>상품 상세 정보</h2>
+                <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                  {productDetail ? productDetail.name : '상품 정보를 불러오는 중...'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedProductId(null);
+                  setProductDetail(null);
+                  setDetailError(null);
+                }}
+                style={{
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+          {detailLoading ? (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <p>상품 정보를 불러오는 중...</p>
+            </div>
+          ) : detailError ? (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <p style={{ color: 'red' }}>{detailError}</p>
+            </div>
+          ) : productDetail ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* 기본 정보 */}
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>기본 정보</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>상품명</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>{productDetail.name}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>가격</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>₩{productDetail.price.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>상품 타입</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>{productDetail.productType}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>상태</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>
+                      {productDetail.isActive ? '판매중' : '판매중지'}
+                    </p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>카테고리 ID</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>{productDetail.categoryId || '없음'}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>최대 미디어 개수</label>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>
+                      {typeof productDetail.maxMediaCount === 'number' 
+                        ? productDetail.maxMediaCount 
+                        : JSON.stringify(productDetail.maxMediaCount)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 설명 */}
+              {productDetail.description && (
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>상품 설명</h3>
+                  <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.6' }}>
+                    {productDetail.description}
+                  </p>
+                </div>
+              )}
+
+              {/* 미디어 타입 */}
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>미디어 타입</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {productDetail.mediaTypes && productDetail.mediaTypes.length > 0 ? (
+                    productDetail.mediaTypes.map((type, index) => (
+                      <span 
+                        key={index}
+                        style={{
+                          padding: '4px 12px',
+                          backgroundColor: '#f3f4f6',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          color: '#374151',
+                        }}
+                      >
+                        {type}
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ color: '#9ca3af' }}>없음</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 썸네일 */}
+              {productDetail.thumbnailUrl && (
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>썸네일</h3>
+                  <div style={{ position: 'relative', width: '100%', maxHeight: '300px', borderRadius: '8px', overflow: 'hidden' }}>
+                    <Image 
+                      src={productDetail.thumbnailUrl} 
+                      alt={productDetail.name}
+                      width={800}
+                      height={300}
+                      style={{ 
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '300px',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 날짜 정보 */}
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>날짜 정보</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div>
+                    <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>등록일</label>
+                    <p style={{ fontSize: '14px', color: '#374151' }}>{formatDate(productDetail.createdAt)}</p>
+                  </div>
+                  {productDetail.updatedAt && (
+                    <div>
+                      <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>수정일</label>
+                      <p style={{ fontSize: '14px', color: '#374151' }}>{formatDate(productDetail.updatedAt)}</p>
+                    </div>
+                  )}
+                  {productDetail.deletedAt && (
+                    <div>
+                      <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>삭제일</label>
+                      <p style={{ fontSize: '14px', color: '#dc2626' }}>{formatDate(productDetail.deletedAt)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 상품 ID */}
+              <div>
+                <label style={{ fontSize: '14px', color: '#6b7280', display: 'block', marginBottom: '4px' }}>상품 ID</label>
+                <p style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace' }}>{productDetail.id}</p>
+              </div>
+            </div>
+          ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

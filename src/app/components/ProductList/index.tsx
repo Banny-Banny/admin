@@ -8,11 +8,12 @@ import styles from "./styles.module.css";
 interface ProductListProps {
   onProductCountChange?: (count: number) => void;
   refreshKey?: number; // 상품 생성/수정/삭제 후 목록 새로고침을 위한 키
+  onProductClick?: (productId: string) => void; // 상품 클릭 핸들러
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export function ProductList({ onProductCountChange, refreshKey }: ProductListProps) {
+export function ProductList({ onProductCountChange, refreshKey, onProductClick }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus>(ProductStatus.ALL);
@@ -186,7 +187,12 @@ export function ProductList({ onProductCountChange, refreshKey }: ProductListPro
             <tbody className={styles.c_fyf4x}>
               {products.length > 0 ? (
                 products.map((product) => (
-                  <tr key={product.id} className={styles.c_x2lcqj}>
+                  <tr 
+                    key={product.id} 
+                    className={styles.c_x2lcqj}
+                    onClick={() => onProductClick?.(product.id)}
+                    style={{ cursor: onProductClick ? 'pointer' : 'default' }}
+                  >
                     <td className={styles.c_g43mv3}>
                       <div className={styles.c_2ca09x}>
                         <div className={styles.c_1ci45al}>

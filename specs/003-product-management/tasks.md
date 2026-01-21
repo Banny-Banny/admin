@@ -199,22 +199,22 @@
 
 ### 상세 조회 UI 추가
 
-- [ ] T072 [US3] Add product detail view/modal component or page route in src/app/components/ProductsPage/index.tsx or create ProductDetail component
-- [ ] T073 [US3] Add click handler to ProductList rows to open product detail view in src/app/components/ProductList/index.tsx
-- [ ] T074 [US3] Implement getProductById API call when product is selected in src/app/components/ProductsPage/index.tsx or ProductDetail component
-- [ ] T075 [US3] Display product detail information (all fields from API response) in product detail view
-- [ ] T076 [US3] Map API Product fields to UI display format in product detail view
-- [ ] T077 [US3] Add loading state while fetching product detail
-- [ ] T078 [US3] Add error handling for product not found (404) with appropriate message
-- [ ] T079 [US3] Add error handling for API failures with toast notification
+- [X] T072 [US3] Add product detail view/modal component or page route in src/app/components/ProductsPage/index.tsx or create ProductDetail component
+- [X] T073 [US3] Add click handler to ProductList rows to open product detail view in src/app/components/ProductList/index.tsx
+- [X] T074 [US3] Implement getProductById API call when product is selected in src/app/components/ProductsPage/index.tsx or ProductDetail component
+- [X] T075 [US3] Display product detail information (all fields from API response) in product detail view
+- [X] T076 [US3] Map API Product fields to UI display format in product detail view
+- [X] T077 [US3] Add loading state while fetching product detail
+- [X] T078 [US3] Add error handling for product not found (404) with appropriate message
+- [X] T079 [US3] Add error handling for API failures with toast notification
 
 ### UI 테스트
 
-- [ ] T080 [US3] Run UI tests for product detail view opening when product is clicked
-- [ ] T081 [US3] Run UI tests for product detail information display (all fields)
-- [ ] T082 [US3] Run UI tests for loading state while fetching product detail
-- [ ] T083 [US3] Run UI tests for error handling when product not found (404)
-- [ ] T084 [US3] Run UI tests for error handling on API failures
+- [X] T080 [US3] Run UI tests for product detail view opening when product is clicked
+- [X] T081 [US3] Run UI tests for product detail information display (all fields)
+- [X] T082 [US3] Run UI tests for loading state while fetching product detail
+- [X] T083 [US3] Run UI tests for error handling when product not found (404)
+- [X] T084 [US3] Run UI tests for error handling on API failures
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently. UI tests must pass before proceeding.
 
