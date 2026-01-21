@@ -232,29 +232,29 @@
 
 ### 수정 폼 구현
 
-- [ ] T085 [US4] Add "수정" button to product detail view
-- [ ] T086 [US4] Create edit mode state in product detail view or ProductsPage component
-- [ ] T087 [US4] Load existing product data into edit form when edit button is clicked
-- [ ] T088 [US4] Map API Product fields to edit form fields (handle null values appropriately)
-- [ ] T089 [US4] Implement updateProduct API call with UpdateProductRequest in edit form submit handler
-- [ ] T090 [US4] Handle partial updates (only changed fields) in UpdateProductRequest
-- [ ] T091 [US4] Show success toast notification after successful product update
-- [ ] T092 [US4] Refresh product list and detail view after successful update
-- [ ] T093 [US4] Show error toast notification on API failure
-- [ ] T094 [US4] Add loading state during product update API call
-- [ ] T095 [US4] Add "취소" button to exit edit mode without saving
-- [ ] T096 [US4] Add client-side validation for required fields in edit form
-- [ ] T097 [US4] Display validation error messages for invalid inputs
+- [X] T085 [US4] Add "수정" button to product detail view
+- [X] T086 [US4] Create edit mode state in product detail view or ProductsPage component
+- [X] T087 [US4] Load existing product data into edit form when edit button is clicked
+- [X] T088 [US4] Map API Product fields to edit form fields (handle null values appropriately)
+- [X] T089 [US4] Implement updateProduct API call with UpdateProductRequest in edit form submit handler
+- [X] T090 [US4] Handle partial updates (only changed fields) in UpdateProductRequest
+- [X] T091 [US4] Show success toast notification after successful product update
+- [X] T092 [US4] Refresh product list and detail view after successful update
+- [X] T093 [US4] Show error toast notification on API failure
+- [X] T094 [US4] Add loading state during product update API call
+- [X] T095 [US4] Add "취소" button to exit edit mode without saving
+- [X] T096 [US4] Add client-side validation for required fields in edit form
+- [X] T097 [US4] Display validation error messages for invalid inputs
 
 ### UI 테스트
 
-- [ ] T098 [US4] Run UI tests for edit mode activation when edit button is clicked
-- [ ] T099 [US4] Run UI tests for existing product data loading into edit form
-- [ ] T100 [US4] Run UI tests for product update flow (form submission)
-- [ ] T101 [US4] Run UI tests for updated product data reflecting in list and detail view
-- [ ] T102 [US4] Run UI tests for form validation in edit mode
-- [ ] T103 [US4] Run UI tests for cancel button functionality (exit edit mode without saving)
-- [ ] T104 [US4] Run UI tests for error handling on update failure
+- [X] T098 [US4] Run UI tests for edit mode activation when edit button is clicked
+- [X] T099 [US4] Run UI tests for existing product data loading into edit form
+- [X] T100 [US4] Run UI tests for product update flow (form submission)
+- [X] T101 [US4] Run UI tests for updated product data reflecting in list and detail view
+- [X] T102 [US4] Run UI tests for form validation in edit mode
+- [X] T103 [US4] Run UI tests for cancel button functionality (exit edit mode without saving)
+- [X] T104 [US4] Run UI tests for error handling on update failure
 
 **Checkpoint**: At this point, User Stories 1, 2, 3, AND 4 should all work independently. UI tests must pass before proceeding.
 

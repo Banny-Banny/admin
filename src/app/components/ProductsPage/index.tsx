@@ -3,7 +3,7 @@ import { Plus, Package, X } from 'lucide-react';
 import Image from 'next/image';
 import { AxiosError } from 'axios';
 import { ProductList } from '../ProductList';
-import { createProduct, getProductById, ProductType, type CreateProductRequest, type Product } from '../../commons/apis/product';
+import { createProduct, getProductById, updateProduct, ProductType, type CreateProductRequest, type UpdateProductRequest, type Product } from '../../commons/apis/product';
 import { toast } from 'sonner';
 import styles from "./styles.module.css";
 
@@ -19,6 +19,22 @@ export function ProductsPage() {
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  
+  // 수정 모드 상태
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    categoryId: '',
+    price: '',
+    status: '판매중',
+    description: '',
+    thumbnailUrl: '',
+    productType: ProductType.TIME_CAPSULE,
+    mediaTypes: [] as string[],
+    maxMediaCount: '',
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editValidationErrors, setEditValidationErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     name: '',
@@ -255,6 +271,222 @@ export function ProductsPage() {
       });
     } catch {
       return dateString;
+    }
+  };
+
+  // 수정 모드 진입 핸들러
+  const handleEditClick = () => {
+    if (!productDetail) return;
+    
+    // 기존 상품 데이터를 폼에 로드
+    setEditFormData({
+      name: productDetail.name,
+      categoryId: productDetail.categoryId || '',
+      price: productDetail.price.toString(),
+      status: productDetail.isActive ? '판매중' : '판매중지',
+      description: productDetail.description || '',
+      thumbnailUrl: productDetail.thumbnailUrl || '',
+      productType: productDetail.productType,
+      mediaTypes: productDetail.mediaTypes || [],
+      maxMediaCount: typeof productDetail.maxMediaCount === 'number' 
+        ? productDetail.maxMediaCount.toString() 
+        : '1',
+    });
+    setIsEditMode(true);
+    setEditValidationErrors({});
+  };
+
+  // 수정 취소 핸들러
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditFormData({
+      name: '',
+      categoryId: '',
+      price: '',
+      status: '판매중',
+      description: '',
+      thumbnailUrl: '',
+      productType: ProductType.TIME_CAPSULE,
+      mediaTypes: [],
+      maxMediaCount: '',
+    });
+    setEditValidationErrors({});
+  };
+
+  // 수정 폼 검증
+  const validateEditForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!editFormData.name.trim()) {
+      errors.name = '상품명을 입력해주세요.';
+    }
+
+    if (!editFormData.price || parseFloat(editFormData.price) <= 0) {
+      errors.price = '가격은 0보다 큰 숫자여야 합니다.';
+    }
+
+    if (!editFormData.productType) {
+      errors.productType = '상품 타입을 선택해주세요.';
+    }
+
+    if (!editFormData.mediaTypes || editFormData.mediaTypes.length === 0) {
+      errors.mediaTypes = '미디어 타입을 최소 1개 이상 선택해주세요.';
+    }
+
+    if (!editFormData.maxMediaCount || parseFloat(editFormData.maxMediaCount) <= 0) {
+      errors.maxMediaCount = '최대 미디어 개수는 0보다 큰 숫자여야 합니다.';
+    } else if (parseFloat(editFormData.maxMediaCount) > 3) {
+      errors.maxMediaCount = '최대 미디어 개수는 3을 초과할 수 없습니다.';
+    }
+
+    setEditValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // 수정 폼 제출 핸들러
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedProductId || !productDetail) return;
+
+    if (!validateEditForm()) {
+      return;
+    }
+
+    if (isUpdating) {
+      return; // 중복 제출 방지
+    }
+
+    setIsUpdating(true);
+    setEditValidationErrors({});
+
+    try {
+      // 변경된 필드만 추출하여 부분 업데이트
+      const updateData: UpdateProductRequest = {};
+
+      if (editFormData.name !== productDetail.name) {
+        updateData.name = editFormData.name.trim();
+      }
+      if (parseFloat(editFormData.price) !== productDetail.price) {
+        updateData.price = parseFloat(editFormData.price);
+      }
+      if (editFormData.description !== (productDetail.description || '')) {
+        updateData.description = editFormData.description.trim() || null;
+      }
+      if (editFormData.thumbnailUrl !== (productDetail.thumbnailUrl || '')) {
+        updateData.thumbnailUrl = editFormData.thumbnailUrl.trim() || null;
+      }
+      if (editFormData.categoryId !== (productDetail.categoryId || '')) {
+        updateData.categoryId = editFormData.categoryId || null;
+      }
+      if ((editFormData.status === '판매중') !== productDetail.isActive) {
+        updateData.isActive = editFormData.status === '판매중';
+      }
+      if (editFormData.productType !== productDetail.productType) {
+        updateData.productType = editFormData.productType;
+      }
+      if (JSON.stringify(editFormData.mediaTypes.sort()) !== JSON.stringify((productDetail.mediaTypes || []).sort())) {
+        updateData.mediaTypes = editFormData.mediaTypes;
+      }
+      const currentMaxMediaCount = typeof productDetail.maxMediaCount === 'number' 
+        ? productDetail.maxMediaCount 
+        : 1;
+      if (parseFloat(editFormData.maxMediaCount) !== currentMaxMediaCount) {
+        updateData.maxMediaCount = parseFloat(editFormData.maxMediaCount);
+      }
+
+      // 변경사항이 없으면 경고
+      if (Object.keys(updateData).length === 0) {
+        toast.info('변경된 내용이 없습니다.');
+        setIsUpdating(false);
+        return;
+      }
+
+      const response = await updateProduct(selectedProductId, updateData);
+
+      if (response.success) {
+        toast.success('상품 정보가 성공적으로 수정되었습니다.');
+        setIsEditMode(false);
+        // 상세 정보 새로고침
+        setProductDetail(response.data);
+        // 목록 새로고침
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        throw new Error('상품 수정에 실패했습니다.');
+      }
+    } catch (err: unknown) {
+      let errorMessage = '상품 수정에 실패했습니다.';
+      
+      // Axios 에러 응답에서 메시지 추출
+      if (err instanceof AxiosError && err.response?.data) {
+        const errorData = err.response.data;
+        
+        // maxMediaCount 관련 에러 메시지 파싱
+        if (errorData.message) {
+          const messages = Array.isArray(errorData.message) ? errorData.message : [errorData.message];
+          const maxMediaCountError = messages.find((msg: string) => 
+            typeof msg === 'string' && (msg.includes('maxMediaCount') || msg.includes('must not be greater than 3'))
+          );
+          
+          if (maxMediaCountError) {
+            errorMessage = '최대 미디어 개수는 3을 초과할 수 없습니다.';
+            setEditValidationErrors({
+              ...editValidationErrors,
+              maxMediaCount: '최대 미디어 개수는 3을 초과할 수 없습니다.',
+            });
+          } else {
+            errorMessage = messages.join(', ') || errorData.message || errorMessage;
+          }
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 수정 폼 변경 핸들러
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'mediaType') {
+      return;
+    }
+
+    setEditFormData({
+      ...editFormData,
+      [name]: value,
+    });
+
+    // 검증 에러 초기화
+    if (editValidationErrors[name]) {
+      setEditValidationErrors({
+        ...editValidationErrors,
+        [name]: '',
+      });
+    }
+  };
+
+  // 수정 폼 미디어 타입 변경 핸들러
+  const handleEditMediaTypeChange = (mediaType: string, checked: boolean) => {
+    setEditFormData({
+      ...editFormData,
+      mediaTypes: checked
+        ? [...editFormData.mediaTypes, mediaType]
+        : editFormData.mediaTypes.filter((type) => type !== mediaType),
+    });
+
+    // 검증 에러 초기화
+    if (editValidationErrors.mediaTypes) {
+      setEditValidationErrors({
+        ...editValidationErrors,
+        mediaTypes: '',
+      });
     }
   };
 
@@ -537,6 +769,7 @@ export function ProductsPage() {
             setSelectedProductId(null);
             setProductDetail(null);
             setDetailError(null);
+            setIsEditMode(false);
           }}
         >
           <div
@@ -554,30 +787,55 @@ export function ProductsPage() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '4px' }}>상품 상세 정보</h2>
+                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '4px' }}>
+                  {isEditMode ? '상품 정보 수정' : '상품 상세 정보'}
+                </h2>
                 <p style={{ fontSize: '14px', color: '#6b7280' }}>
                   {productDetail ? productDetail.name : '상품 정보를 불러오는 중...'}
                 </p>
               </div>
-              <button
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {!isEditMode && productDetail && (
+                  <button
+                    onClick={handleEditClick}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: '1px solid #3b82f6',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                    }}
+                  >
+                    수정
+                  </button>
+                )}
+                <button
                 onClick={() => {
+                  if (isEditMode) {
+                    handleCancelEdit();
+                  }
                   setSelectedProductId(null);
                   setProductDetail(null);
                   setDetailError(null);
+                  setIsEditMode(false);
                 }}
-                style={{
-                  padding: '8px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <X size={20} />
-              </button>
+                  style={{
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
           {detailLoading ? (
@@ -588,6 +846,229 @@ export function ProductsPage() {
             <div style={{ padding: '40px', textAlign: 'center' }}>
               <p style={{ color: 'red' }}>{detailError}</p>
             </div>
+          ) : isEditMode && productDetail ? (
+            <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                {/* 상품명 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    상품명 <span className={styles.c_uurwux}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditFormChange}
+                    required
+                    placeholder="상품명을 입력하세요"
+                    className={styles.c_mbvevs}
+                  />
+                  {editValidationErrors.name && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* 카테고리 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    카테고리 (선택)
+                  </label>
+                  <select
+                    name="categoryId"
+                    value={editFormData.categoryId}
+                    onChange={handleEditFormChange}
+                    className={styles.c_mbvevs}
+                  >
+                    <option value="">카테고리 선택 (선택사항)</option>
+                    {/* TODO: 카테고리 목록을 API에서 가져와서 동적으로 표시 */}
+                  </select>
+                  {editValidationErrors.categoryId && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.categoryId}
+                    </p>
+                  )}
+                </div>
+
+                {/* 가격 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    가격 <span className={styles.c_uurwux}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={editFormData.price}
+                    onChange={handleEditFormChange}
+                    required
+                    min="1"
+                    step="1"
+                    placeholder="0"
+                    className={styles.c_mbvevs}
+                  />
+                  {editValidationErrors.price && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.price}
+                    </p>
+                  )}
+                </div>
+
+                {/* 상품 타입 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    상품 타입 <span className={styles.c_uurwux}>*</span>
+                  </label>
+                  <select
+                    name="productType"
+                    value={editFormData.productType}
+                    onChange={handleEditFormChange}
+                    required
+                    className={styles.c_mbvevs}
+                  >
+                    <option value={ProductType.TIME_CAPSULE}>타임캡슐</option>
+                    <option value={ProductType.EASTER_EGG}>이스터에그</option>
+                  </select>
+                  {editValidationErrors.productType && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.productType}
+                    </p>
+                  )}
+                </div>
+
+                {/* 상태 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    상태 <span className={styles.c_uurwux}>*</span>
+                  </label>
+                  <select
+                    name="status"
+                    value={editFormData.status}
+                    onChange={handleEditFormChange}
+                    required
+                    className={styles.c_mbvevs}
+                  >
+                    <option value="판매중">판매중</option>
+                    <option value="판매중지">판매중지</option>
+                  </select>
+                  {editValidationErrors.status && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.status}
+                    </p>
+                  )}
+                </div>
+
+                {/* 최대 미디어 개수 */}
+                <div>
+                  <label className={styles.c_a41skz}>
+                    최대 미디어 개수 <span className={styles.c_uurwux}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="maxMediaCount"
+                    value={editFormData.maxMediaCount}
+                    onChange={handleEditFormChange}
+                    required
+                    min="1"
+                    max="3"
+                    step="1"
+                    placeholder="1"
+                    className={styles.c_mbvevs}
+                  />
+                  <p className={styles.c_d8pr7p} style={{ fontSize: '0.875rem', color: '#666' }}>
+                    최대 3개까지 입력 가능합니다.
+                  </p>
+                  {editValidationErrors.maxMediaCount && (
+                    <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                      {editValidationErrors.maxMediaCount}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 미디어 타입 */}
+              <div>
+                <label className={styles.c_a41skz}>
+                  미디어 타입 <span className={styles.c_uurwux}>*</span>
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {['TEXT', 'IMAGE', 'VIDEO', 'AUDIO'].map((type) => (
+                    <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        checked={editFormData.mediaTypes.includes(type)}
+                        onChange={(e) => handleEditMediaTypeChange(type, e.target.checked)}
+                      />
+                      <span>{type}</span>
+                    </label>
+                  ))}
+                </div>
+                {editValidationErrors.mediaTypes && (
+                  <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                    {editValidationErrors.mediaTypes}
+                  </p>
+                )}
+              </div>
+
+              {/* 상품 설명 */}
+              <div>
+                <label className={styles.c_a41skz}>
+                  상품 설명 (선택)
+                </label>
+                <textarea
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleEditFormChange}
+                  rows={4}
+                  placeholder="상품에 대한 설명을 입력하세요"
+                  className={styles.c_1amsm21}
+                />
+                {editValidationErrors.description && (
+                  <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                    {editValidationErrors.description}
+                  </p>
+                )}
+              </div>
+
+              {/* 썸네일 URL */}
+              <div>
+                <label className={styles.c_a41skz}>
+                  썸네일 URL (선택)
+                </label>
+                <input
+                  type="url"
+                  name="thumbnailUrl"
+                  value={editFormData.thumbnailUrl}
+                  onChange={handleEditFormChange}
+                  placeholder="https://example.com/image.jpg"
+                  className={styles.c_mbvevs}
+                />
+                {editValidationErrors.thumbnailUrl && (
+                  <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
+                    {editValidationErrors.thumbnailUrl}
+                  </p>
+                )}
+              </div>
+
+              {/* 버튼 */}
+              <div className={styles.c_sm9r4r}>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className={styles.c_8zbzmp}
+                  disabled={isUpdating}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className={styles.c_b151g0}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? '수정 중...' : '저장'}
+                </button>
+              </div>
+            </form>
           ) : productDetail ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {/* 기본 정보 */}
