@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app').replace(/\/$/, '');
 
 // Socket.IO 네임스페이스 (환경 변수로 설정 가능, 기본값은 '/admin-chat' 네임스페이스)
+// 스펙에 따라 /admin-chat 네임스페이스 사용
 const SOCKET_NAMESPACE = process.env.NEXT_PUBLIC_SOCKET_NAMESPACE || '/admin-chat';
 
 // 테스트용 관리자 계정 (.env 파일에서 읽어옴)
@@ -496,6 +497,268 @@ test.describe('문의하기 Socket.IO E2E 테스트', () => {
         clearTimeout(timeout);
         socket.disconnect();
         reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+    });
+  });
+
+  test('토큰 없이 연결 후 재인증(authenticate) 테스트', async () => {
+    return new Promise<void>((resolve, reject) => {
+      // 토큰 없이 연결 시도
+      const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
+        transports: ['websocket'],
+      });
+
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error('재인증 테스트 시간 초과'));
+      }, 15000);
+
+      let connectionEstablished = false;
+
+      socket.on('connect', () => {
+        connectionEstablished = true;
+        console.log('[테스트] 토큰 없이 연결 성공, 재인증을 시도합니다.');
+        
+        // 5초 유예 시간 내에 authenticate 이벤트로 토큰 전송
+        socket.emit('authenticate', { token: adminAccessToken }, (response: { success?: boolean; error?: string }) => {
+          clearTimeout(timeout);
+          
+          if (response.error) {
+            socket.disconnect();
+            reject(new Error(`재인증 실패: ${response.error}`));
+          } else if (!response.success) {
+            socket.disconnect();
+            reject(new Error('재인증 실패: success=false'));
+          } else {
+            console.log('[테스트] 재인증 성공');
+            expect(response.success).toBeTruthy();
+            socket.disconnect();
+            resolve();
+          }
+        });
+      });
+
+      socket.on('connect_error', (error) => {
+        clearTimeout(timeout);
+        socket.disconnect();
+        reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+
+      socket.on('disconnect', (reason) => {
+        // 재인증 전에 연결이 끊어진 경우
+        if (!connectionEstablished || reason === 'io server disconnect') {
+          clearTimeout(timeout);
+          reject(new Error(`재인증 전 연결 해제됨: ${reason}`));
+        }
+      });
+    });
+  });
+
+  test('재인증 후 방 입장 테스트', async () => {
+    if (!testRoomId) {
+      test.skip();
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      // 토큰 없이 연결 시도
+      const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
+        transports: ['websocket'],
+      });
+
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error('재인증 후 방 입장 테스트 시간 초과'));
+      }, 20000);
+
+      socket.on('connect', () => {
+        console.log('[테스트] 연결 성공, 재인증을 시도합니다.');
+        
+        // 재인증
+        socket.emit('authenticate', { token: adminAccessToken }, (authResponse: { success?: boolean; error?: string }) => {
+          if (authResponse.error) {
+            clearTimeout(timeout);
+            socket.disconnect();
+            reject(new Error(`재인증 실패: ${authResponse.error}`));
+            return;
+          }
+
+          if (!authResponse.success) {
+            clearTimeout(timeout);
+            socket.disconnect();
+            reject(new Error('재인증 실패: success=false'));
+            return;
+          }
+
+          console.log('[테스트] 재인증 성공, 방 입장을 시도합니다.');
+          
+          // 재인증 후 방 입장
+          socket.emit('join_room', { roomId: testRoomId }, (joinResponse: { success?: boolean; roomId?: string; error?: string }) => {
+            clearTimeout(timeout);
+            
+            if (joinResponse.error) {
+              socket.disconnect();
+              reject(new Error(`방 입장 실패: ${joinResponse.error}`));
+            } else {
+              console.log('[테스트] 방 입장 성공');
+              expect(joinResponse.success).toBeTruthy();
+              expect(joinResponse.roomId).toBe(testRoomId);
+              socket.disconnect();
+              resolve();
+            }
+          });
+        });
+      });
+
+      socket.on('connect_error', (error) => {
+        clearTimeout(timeout);
+        socket.disconnect();
+        reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+
+      socket.on('disconnect', (reason) => {
+        if (reason === 'io server disconnect') {
+          clearTimeout(timeout);
+          reject(new Error(`서버에서 연결을 끊었습니다: ${reason}`));
+        }
+      });
+    });
+  });
+
+  test('잘못된 토큰으로 재인증 실패 테스트', async () => {
+    return new Promise<void>((resolve, reject) => {
+      const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
+        transports: ['websocket'],
+      });
+
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error('잘못된 토큰 테스트 시간 초과'));
+      }, 15000);
+
+      let responseReceived = false;
+
+      socket.on('connect', () => {
+        console.log('[테스트] 연결 성공, 잘못된 토큰으로 재인증을 시도합니다.');
+        
+        // 잘못된 토큰으로 재인증 시도
+        const invalidToken = 'invalid_token_12345';
+        socket.emit('authenticate', { token: invalidToken }, (response: { success?: boolean; error?: string }) => {
+          responseReceived = true;
+          clearTimeout(timeout);
+          
+          // 실패해야 정상
+          if (response.error || !response.success) {
+            console.log('[테스트] 예상대로 재인증 실패');
+            expect(response.success).toBeFalsy();
+            socket.disconnect();
+            resolve();
+          } else {
+            socket.disconnect();
+            reject(new Error('잘못된 토큰으로 재인증이 성공했습니다 (예상치 못한 동작)'));
+          }
+        });
+
+        // 콜백이 없을 경우를 대비해 disconnect 이벤트 감지
+        setTimeout(() => {
+          if (!responseReceived) {
+            console.log('[테스트] 서버가 응답하지 않아 disconnect 이벤트를 기다립니다.');
+          }
+        }, 3000);
+      });
+
+      socket.on('disconnect', (reason) => {
+        if (!responseReceived && reason === 'io server disconnect') {
+          clearTimeout(timeout);
+          console.log('[테스트] 서버에서 연결을 끊었습니다 (예상된 동작)');
+          socket.disconnect();
+          resolve();
+        }
+      });
+
+      socket.on('connect_error', (error) => {
+        clearTimeout(timeout);
+        socket.disconnect();
+        reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+    });
+  });
+
+  test('토큰 갱신 시나리오 시뮬레이션 테스트', async () => {
+    if (!testRoomId) {
+      test.skip();
+      return;
+    }
+
+    return new Promise<void>(async (resolve, reject) => {
+      // 1단계: 정상 토큰으로 연결 및 방 입장
+      const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
+        auth: {
+          token: adminAccessToken,
+        },
+        transports: ['websocket'],
+      });
+
+      const timeout = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error('토큰 갱신 시나리오 테스트 시간 초과'));
+      }, 30000);
+
+      socket.on('connect', () => {
+        console.log('[테스트] 초기 연결 성공');
+        
+        socket.emit('join_room', { roomId: testRoomId }, async (joinResponse: { success?: boolean; error?: string }) => {
+          if (joinResponse.error || !joinResponse.success) {
+            clearTimeout(timeout);
+            socket.disconnect();
+            reject(new Error(`방 입장 실패: ${joinResponse.error}`));
+            return;
+          }
+
+          console.log('[테스트] 방 입장 성공, 토큰 갱신을 시뮬레이션합니다.');
+
+          // 2단계: 새 토큰으로 재인증 (토큰 갱신 시뮬레이션)
+          // 실제로는 refresh token으로 새 access token을 받아야 하지만, 
+          // 테스트에서는 기존 토큰으로 재인증을 테스트
+          socket.emit('authenticate', { token: adminAccessToken }, (authResponse: { success?: boolean; error?: string }) => {
+            if (authResponse.error || !authResponse.success) {
+              clearTimeout(timeout);
+              socket.disconnect();
+              reject(new Error(`재인증 실패: ${authResponse.error}`));
+              return;
+            }
+
+            console.log('[테스트] 재인증 성공, 방에 다시 입장합니다.');
+
+            // 3단계: 재인증 후 같은 방에 다시 입장
+            socket.emit('join_room', { roomId: testRoomId }, (rejoinResponse: { success?: boolean; error?: string }) => {
+              clearTimeout(timeout);
+              
+              if (rejoinResponse.error || !rejoinResponse.success) {
+                socket.disconnect();
+                reject(new Error(`재입장 실패: ${rejoinResponse.error}`));
+              } else {
+                console.log('[테스트] 재입장 성공 - 토큰 갱신 시나리오 완료');
+                expect(rejoinResponse.success).toBeTruthy();
+                socket.disconnect();
+                resolve();
+              }
+            });
+          });
+        });
+      });
+
+      socket.on('connect_error', (error) => {
+        clearTimeout(timeout);
+        socket.disconnect();
+        reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+
+      socket.on('disconnect', (reason) => {
+        if (reason === 'io server disconnect') {
+          clearTimeout(timeout);
+          reject(new Error(`예상치 못한 서버 연결 해제: ${reason}`));
+        }
       });
     });
   });
