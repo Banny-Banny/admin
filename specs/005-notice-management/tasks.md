@@ -204,32 +204,32 @@
 
 ### API 데이터 바인딩
 
-- [ ] T064 [US4] Update ReportsPage component to call updateNotice API when edit form is submitted in src/app/components/ReportsPage/index.tsx
-- [ ] T065 [US4] Map form data to UpdateNoticeRequest type (partial update support) in src/app/components/ReportsPage/index.tsx
-- [ ] T066 [US4] Handle API response and update notice detail view after successful update in src/app/components/ReportsPage/index.tsx
-- [ ] T067 [US4] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
-- [ ] T068 [US4] Refresh notice list after successful update to reflect changes in src/app/components/ReportsPage/index.tsx
+- [X] T064 [US4] Update ReportsPage component to call updateNotice API when edit form is submitted in src/app/components/ReportsPage/index.tsx
+- [X] T065 [US4] Map form data to UpdateNoticeRequest type (partial update support) in src/app/components/ReportsPage/index.tsx
+- [X] T066 [US4] Handle API response and update notice detail view after successful update in src/app/components/ReportsPage/index.tsx
+- [X] T067 [US4] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
+- [X] T068 [US4] Refresh notice list after successful update to reflect changes in src/app/components/ReportsPage/index.tsx
 
 ### 수정 폼 UI
 
-- [ ] T069 [US4] Add "수정" button to notice detail view in src/app/components/ReportsPage/index.tsx
-- [ ] T070 [US4] Implement edit mode that populates form with existing notice data in src/app/components/ReportsPage/index.tsx
-- [ ] T071 [US4] Update form to support edit mode (pre-fill with existing data) in src/app/components/ReportsPage/index.tsx
-- [ ] T072 [US4] Implement "취소" button to exit edit mode and discard changes in src/app/components/ReportsPage/index.tsx
-- [ ] T073 [US4] Update form to show loading state during API call in src/app/components/ReportsPage/index.tsx
+- [X] T069 [US4] Add "수정" button to notice detail view in src/app/components/ReportsPage/index.tsx
+- [X] T070 [US4] Implement edit mode that populates form with existing notice data in src/app/components/ReportsPage/index.tsx
+- [X] T071 [US4] Update form to support edit mode (pre-fill with existing data) in src/app/components/ReportsPage/index.tsx
+- [X] T072 [US4] Implement "취소" button to exit edit mode and discard changes in src/app/components/ReportsPage/index.tsx
+- [X] T073 [US4] Update form to show loading state during API call in src/app/components/ReportsPage/index.tsx
 
 ### 폼 검증
 
-- [ ] T074 [US4] Add client-side validation for required fields in edit mode in src/app/components/ReportsPage/index.tsx
-- [ ] T075 [US4] Display validation error messages when required fields are empty in src/app/components/ReportsPage/index.tsx
+- [X] T074 [US4] Add client-side validation for required fields in edit mode in src/app/components/ReportsPage/index.tsx
+- [X] T075 [US4] Display validation error messages when required fields are empty in src/app/components/ReportsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T076 [US4] Verify edit button opens form with existing data in src/app/components/ReportsPage/index.tsx
-- [ ] T077 [US4] Verify notice is updated and changes reflect in detail view after submission in src/app/components/ReportsPage/index.tsx
-- [ ] T078 [US4] Verify notice list is updated after successful edit in src/app/components/ReportsPage/index.tsx
-- [ ] T079 [US4] Verify "취소" button exits edit mode without saving in src/app/components/ReportsPage/index.tsx
-- [ ] T080 [US4] Verify error handling when notice update fails in src/app/components/ReportsPage/index.tsx
+- [X] T076 [US4] Verify edit button opens form with existing data in src/app/components/ReportsPage/index.tsx
+- [X] T077 [US4] Verify notice is updated and changes reflect in detail view after submission in src/app/components/ReportsPage/index.tsx
+- [X] T078 [US4] Verify notice list is updated after successful edit in src/app/components/ReportsPage/index.tsx
+- [X] T079 [US4] Verify "취소" button exits edit mode without saving in src/app/components/ReportsPage/index.tsx
+- [X] T080 [US4] Verify error handling when notice update fails in src/app/components/ReportsPage/index.tsx
 
 **Checkpoint**: User Story 4 완료 - 공지사항 수정 기능이 독립적으로 작동합니다
 

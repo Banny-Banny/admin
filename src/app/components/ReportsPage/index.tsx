@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
-import { getNotices, getNoticeById, createNotice } from '../../commons/apis/notice';
+import { getNotices, getNoticeById, createNotice, updateNotice } from '../../commons/apis/notice';
 import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
 import { useDebounce } from '../../commons/hooks/use-debounce';
 import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
@@ -61,8 +61,9 @@ function mapApiNoticeDetailToUiNotice(apiNotice: ApiNotice): Notice {
 }
 
 export function ReportsPage() {
-  const [view, setView] = useState<'list' | 'detail' | 'write'>('list');
+  const [view, setView] = useState<'list' | 'detail' | 'write' | 'edit'>('list');
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,43 +182,93 @@ export function ReportsPage() {
     setSubmitLoading(true);
 
     try {
-      // API 호출
-      const response = await createNotice({
-        title: formData.title.trim(),
-        content: formData.content.trim(),
-        imageUrl: formData.imageUrl.trim() || undefined,
-        isPinned: formData.isPinned,
-        isVisible: formData.isVisible,
-      });
-
-      if (response.success && response.data) {
-        // 성공 시 목록 새로고침
-        const listResponse = await getNotices({
-          search: debouncedSearchTerm || undefined,
-          limit: 100,
-          offset: 0,
+      // 수정 모드인 경우
+      if (view === 'edit' && editingNoticeId) {
+        const response = await updateNotice(editingNoticeId, {
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          imageUrl: formData.imageUrl.trim() || undefined,
+          isPinned: formData.isPinned,
+          isVisible: formData.isVisible,
         });
 
-        if (listResponse.success && listResponse.data) {
-          const mappedNotices = listResponse.data.items.map(mapApiNoticeToUiNotice);
-          const sortedNotices = [...mappedNotices].sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (response.success) {
+          // 목록 새로고침
+          const listResponse = await getNotices({
+            search: debouncedSearchTerm || undefined,
+            limit: 100,
+            offset: 0,
           });
-          setNotices(sortedNotices);
-          setTotal(listResponse.data.total);
-        }
 
-        // 폼 초기화 및 목록으로 이동
-        setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
-        setView('list');
-        toast.success('공지사항이 등록되었습니다.');
+          if (listResponse.success && listResponse.data) {
+            const mappedNotices = listResponse.data.items.map(mapApiNoticeToUiNotice);
+            const sortedNotices = [...mappedNotices].sort((a, b) => {
+              if (a.isPinned && !b.isPinned) return -1;
+              if (!a.isPinned && b.isPinned) return 1;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+            setNotices(sortedNotices);
+            setTotal(listResponse.data.total);
+          }
+
+          // 상세 뷰 업데이트
+          if (selectedNotice) {
+            const detailResponse = await getNoticeById(editingNoticeId);
+            if (detailResponse.success && detailResponse.data) {
+              const updatedNotice = mapApiNoticeDetailToUiNotice(detailResponse.data);
+              updatedNotice.views = selectedNotice.views; // 조회수 유지
+              setSelectedNotice(updatedNotice);
+            }
+          }
+
+          // 수정 모드 종료 및 상세 뷰로 이동
+          setEditingNoticeId(null);
+          setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+          setView('detail');
+          toast.success('공지사항이 수정되었습니다.');
+        } else {
+          throw new Error('공지사항 수정에 실패했습니다.');
+        }
       } else {
-        throw new Error('공지사항 등록에 실패했습니다.');
+        // 작성 모드인 경우
+        const response = await createNotice({
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          imageUrl: formData.imageUrl.trim() || undefined,
+          isPinned: formData.isPinned,
+          isVisible: formData.isVisible,
+        });
+
+        if (response.success && response.data) {
+          // 성공 시 목록 새로고침
+          const listResponse = await getNotices({
+            search: debouncedSearchTerm || undefined,
+            limit: 100,
+            offset: 0,
+          });
+
+          if (listResponse.success && listResponse.data) {
+            const mappedNotices = listResponse.data.items.map(mapApiNoticeToUiNotice);
+            const sortedNotices = [...mappedNotices].sort((a, b) => {
+              if (a.isPinned && !b.isPinned) return -1;
+              if (!a.isPinned && b.isPinned) return 1;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+            setNotices(sortedNotices);
+            setTotal(listResponse.data.total);
+          }
+
+          // 폼 초기화 및 목록으로 이동
+          setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+          setView('list');
+          toast.success('공지사항이 등록되었습니다.');
+        } else {
+          throw new Error('공지사항 등록에 실패했습니다.');
+        }
       }
     } catch (err) {
-      handleApiErrorWithToast(err, '공지사항 등록에 실패했습니다.');
+      const errorMessage = view === 'edit' ? '공지사항 수정에 실패했습니다.' : '공지사항 등록에 실패했습니다.';
+      handleApiErrorWithToast(err, errorMessage);
     } finally {
       setSubmitLoading(false);
     }
@@ -373,13 +424,50 @@ export function ReportsPage() {
                       {selectedNotice.title}
                     </h1>
                   </div>
-                  <button
-                    onClick={() => handleDelete(selectedNotice.id)}
-                    className={styles.c_jiqtbf}
-                  >
-                    <Trash2 size={18} />
-                    삭제
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={async () => {
+                        // 수정 모드로 전환: API에서 최신 상세 정보 불러오기
+                        setEditingNoticeId(selectedNotice.originalId);
+                        setFormErrors({});
+                        setSubmitLoading(true);
+
+                        try {
+                          const detailResponse = await getNoticeById(selectedNotice.originalId);
+                          if (detailResponse.success && detailResponse.data) {
+                            const noticeDetail = detailResponse.data;
+                            setFormData({
+                              title: noticeDetail.title,
+                              content: noticeDetail.content,
+                              imageUrl: noticeDetail.imageUrl || '',
+                              isPinned: noticeDetail.isPinned,
+                              isVisible: noticeDetail.isVisible,
+                            });
+                            setView('edit');
+                          } else {
+                            throw new Error('공지사항 정보를 불러오는데 실패했습니다.');
+                          }
+                        } catch (err) {
+                          handleApiErrorWithToast(err, '공지사항 정보를 불러오는데 실패했습니다.');
+                        } finally {
+                          setSubmitLoading(false);
+                        }
+                      }}
+                      className={styles.c_jiqtbf}
+                      style={{ backgroundColor: '#3b82f6' }}
+                      disabled={submitLoading}
+                    >
+                      <Edit size={18} />
+                      수정
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedNotice.id)}
+                      className={styles.c_jiqtbf}
+                    >
+                      <Trash2 size={18} />
+                      삭제
+                    </button>
+                  </div>
                 </div>
                 <div className={styles.c_1pyvd59}>
                   <div className={styles.c_2ca09w}>
@@ -423,6 +511,147 @@ export function ReportsPage() {
           >
             목록으로
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 수정 뷰
+  if (view === 'edit') {
+    return (
+      <div className={styles.c_1j8i8bf}>
+        <button
+          onClick={() => {
+            setView('detail');
+            setEditingNoticeId(null);
+            setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+            setFormErrors({});
+          }}
+          className={styles.c_1repdhl}
+        >
+          <ArrowLeft size={20} />
+          상세로 돌아가기
+        </button>
+
+        <div className={styles.c_6422p}>
+          <h2 className={styles.c_uoh44m}>공지사항 수정</h2>
+
+          <form onSubmit={handleSubmit} className={styles.c_1j8i8bf}>
+            <div>
+              <label className={styles.c_5znans}>
+                <input
+                  type="checkbox"
+                  checked={formData.isPinned}
+                  onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
+                  className={styles.c_sk3ga5}
+                  disabled={submitLoading}
+                />
+                <span className={styles.c_1my1zyy}>
+                  상단 고정 (중요 공지)
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <label className={styles.c_5znans}>
+                <input
+                  type="checkbox"
+                  checked={formData.isVisible}
+                  onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
+                  className={styles.c_sk3ga5}
+                  disabled={submitLoading}
+                />
+                <span className={styles.c_1my1zyy}>
+                  공개 여부
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <label className={styles.c_a41skz}>
+                제목 <span className={styles.c_uurwux}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => {
+                  setFormData({ ...formData, title: e.target.value });
+                  if (formErrors.title) {
+                    setFormErrors({ ...formErrors, title: undefined });
+                  }
+                }}
+                placeholder="공지사항 제목을 입력하세요"
+                className={styles.c_1gzwh21}
+                disabled={submitLoading}
+              />
+              {formErrors.title && (
+                <div style={{ color: 'red', fontSize: '14px', marginTop: '4px' }}>
+                  {formErrors.title}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className={styles.c_a41skz}>
+                내용 <span className={styles.c_uurwux}>*</span>
+              </label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => {
+                  setFormData({ ...formData, content: e.target.value });
+                  if (formErrors.content) {
+                    setFormErrors({ ...formErrors, content: undefined });
+                  }
+                }}
+                rows={12}
+                placeholder="공지사항 내용을 입력하세요"
+                className={styles.c_1j5q06i}
+                disabled={submitLoading}
+              />
+              {formErrors.content && (
+                <div style={{ color: 'red', fontSize: '14px', marginTop: '4px' }}>
+                  {formErrors.content}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className={styles.c_a41skz}>
+                이미지 URL
+              </label>
+              <input
+                type="url"
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                placeholder="이미지 URL을 입력하세요 (선택사항)"
+                className={styles.c_1gzwh21}
+                disabled={submitLoading}
+              />
+            </div>
+
+            <div className={styles.c_sm9r4r}>
+              <button
+                type="button"
+                onClick={() => {
+                  setView('detail');
+                  setEditingNoticeId(null);
+                  setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+                  setFormErrors({});
+                }}
+                className={styles.c_8zbzmp}
+                disabled={submitLoading}
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                className={styles.c_b151g0}
+                disabled={submitLoading}
+              >
+                {submitLoading ? '수정 중...' : '수정 완료'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );

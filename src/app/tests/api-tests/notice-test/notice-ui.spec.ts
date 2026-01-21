@@ -763,3 +763,387 @@ test.describe('공지사항 작성 UI 테스트 (User Story 3)', () => {
     }
   });
 });
+
+test.describe('공지사항 수정 UI 테스트 (User Story 4)', () => {
+  test.beforeEach(async ({ page }) => {
+    // 각 테스트 전에 로그인
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    // 로그인 페이지가 로드될 때까지 대기
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 });
+
+    // 로그인
+    await page.fill('input[type="email"]', TEST_ADMIN.email);
+    await page.fill('input[type="password"]', TEST_ADMIN.password);
+    await page.click('button[type="submit"]');
+
+    // 로그인 완료 대기
+    await page.waitForURL(BASE_URL, { timeout: 10000 });
+    await expect(page.locator('h1:has-text("관리자 로그인")')).not.toBeVisible({ timeout: 5000 });
+
+    // 공지사항 관리 페이지로 이동
+    const noticeMenuButton = page.locator('button').filter({ hasText: '공지사항' });
+    await expect(noticeMenuButton).toBeVisible({ timeout: 5000 });
+    await noticeMenuButton.click();
+    
+    // 공지사항 관리 페이지가 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    
+    // 공지사항 관리 페이지 제목 확인
+    await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('T076: 수정 버튼 클릭 시 폼에 기존 데이터 표시 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    // 공지사항이 있어야 수정 테스트 가능
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭하여 상세 뷰로 이동
+      const firstItem = noticeItems.first();
+      const noticeTitle = await firstItem.locator('h3').first().textContent();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 상세 뷰에서 제목이 표시되는지 확인
+      const detailTitle = page.locator('h1').filter({ hasText: noticeTitle || '' });
+      await expect(detailTitle).toBeVisible({ timeout: 5000 });
+
+      // "수정" 버튼 찾기
+      const editButton = page.getByRole('button', { name: /수정/i });
+      await expect(editButton).toBeVisible({ timeout: 2000 });
+
+      // 수정 버튼 클릭
+      await editButton.click();
+
+      // 수정 폼이 표시될 때까지 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 수정 폼 제목 확인
+      const formTitle = page.locator('h2:has-text("공지사항 수정")');
+      await expect(formTitle).toBeVisible({ timeout: 5000 });
+
+      // 제목 입력 필드에 기존 제목이 채워져 있는지 확인
+      const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+      await expect(titleInput).toBeVisible();
+      const titleValue = await titleInput.inputValue();
+      expect(titleValue).toBe(noticeTitle);
+
+      // 내용 입력 필드가 표시되는지 확인
+      const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+      await expect(contentTextarea).toBeVisible();
+      const contentValue = await contentTextarea.inputValue();
+      expect(contentValue.length).toBeGreaterThan(0); // 내용이 채워져 있어야 함
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T077: 공지사항 수정 후 상세 뷰에 변경사항 반영 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    // 공지사항이 있어야 수정 테스트 가능
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭하여 상세 뷰로 이동
+      const firstItem = noticeItems.first();
+      const originalTitle = await firstItem.locator('h3').first().textContent();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 상세 뷰에서 제목 확인
+      const detailTitle = page.locator('h1').filter({ hasText: originalTitle || '' });
+      await expect(detailTitle).toBeVisible({ timeout: 5000 });
+
+      // "수정" 버튼 클릭
+      const editButton = page.getByRole('button', { name: /수정/i });
+      await editButton.click();
+
+      // 수정 폼이 표시될 때까지 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 수정할 내용 입력
+      const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+      const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+      
+      const updatedTitle = `수정된 제목 ${Date.now()}`;
+      const updatedContent = `수정된 내용 ${Date.now()}`;
+
+      await titleInput.fill(updatedTitle);
+      await contentTextarea.fill(updatedContent);
+
+      // 수정 완료 버튼 클릭
+      const submitButton = page.getByRole('button', { name: '수정 완료' });
+      await submitButton.click();
+
+      // API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 성공 Toast 확인
+      const successToast = page.locator('[data-sonner-toast], [role="status"]').filter({ 
+        hasText: /수정되었습니다|성공/i 
+      });
+      const hasSuccessToast = await successToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+      // 상세 뷰로 돌아왔는지 확인
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 상세 뷰에서 수정된 제목이 표시되는지 확인
+      const updatedDetailTitle = page.locator('h1').filter({ hasText: updatedTitle });
+      await expect(updatedDetailTitle).toBeVisible({ timeout: 5000 });
+
+      // 수정된 내용이 표시되는지 확인
+      const contentArea = page.locator('[class*="c_gz1eh"], div').filter({ hasText: updatedContent });
+      const hasUpdatedContent = await contentArea.first().isVisible({ timeout: 2000 }).catch(() => false);
+      expect(hasUpdatedContent).toBe(true);
+
+      // 성공 Toast 또는 상세 뷰에 변경사항이 반영되어야 함
+      expect(hasSuccessToast || await updatedDetailTitle.isVisible()).toBe(true);
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T078: 공지사항 수정 후 목록 업데이트 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    // 공지사항이 있어야 수정 테스트 가능
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭하여 상세 뷰로 이동
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // "수정" 버튼 클릭
+      const editButton = page.getByRole('button', { name: /수정/i });
+      await editButton.click();
+
+      // 수정 폼이 표시될 때까지 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 수정할 내용 입력
+      const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+      const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+      
+      const updatedTitle = `목록 업데이트 테스트 ${Date.now()}`;
+      const updatedContent = `목록 업데이트 테스트 내용 ${Date.now()}`;
+
+      await titleInput.fill(updatedTitle);
+      await contentTextarea.fill(updatedContent);
+
+      // 수정 완료 버튼 클릭
+      const submitButton = page.getByRole('button', { name: '수정 완료' });
+      await submitButton.click();
+
+      // API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 상세 뷰로 돌아왔는지 확인
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // "목록으로" 버튼 클릭하여 목록 뷰로 이동
+      const backButton = page.getByRole('button', { name: '목록으로', exact: true });
+      await backButton.click();
+
+      // 목록 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 목록 뷰의 제목이 표시되는지 확인
+      const listTitle = page.locator('h2:has-text("공지사항")');
+      await expect(listTitle).toBeVisible({ timeout: 5000 });
+
+      // 목록 새로고침 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 수정된 공지사항이 목록에 표시되는지 확인
+      const updatedNoticeItems = page.locator('[class*="noticeItem"]');
+      const updatedNoticeTitles = updatedNoticeItems.locator('h3');
+      
+      // 수정된 제목이 목록에 있는지 확인
+      const hasUpdatedNotice = await updatedNoticeTitles.filter({ hasText: updatedTitle }).count().then(count => count > 0).catch(() => false);
+      
+      // 수정된 공지사항이 목록에 표시되어야 함
+      expect(hasUpdatedNotice).toBe(true);
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T079: 취소 버튼으로 수정 모드 종료 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    // 공지사항이 있어야 수정 테스트 가능
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭하여 상세 뷰로 이동
+      const firstItem = noticeItems.first();
+      const originalTitle = await firstItem.locator('h3').first().textContent();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 상세 뷰에서 제목 확인
+      const detailTitle = page.locator('h1').filter({ hasText: originalTitle || '' });
+      await expect(detailTitle).toBeVisible({ timeout: 5000 });
+
+      // "수정" 버튼 클릭
+      const editButton = page.getByRole('button', { name: /수정/i });
+      await editButton.click();
+
+      // 수정 폼이 표시될 때까지 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 수정 폼 제목 확인
+      const formTitle = page.locator('h2:has-text("공지사항 수정")');
+      await expect(formTitle).toBeVisible({ timeout: 5000 });
+
+      // 수정할 내용 입력 (저장하지 않음)
+      const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+      const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+      
+      await titleInput.fill('취소 테스트 제목');
+      await contentTextarea.fill('취소 테스트 내용');
+
+      // 취소 버튼 클릭
+      const cancelButton = page.getByRole('button', { name: '취소' });
+      await cancelButton.click();
+
+      // 상세 뷰로 돌아왔는지 확인
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 상세 뷰가 표시되는지 확인
+      const detailTitleAfterCancel = page.locator('h1').filter({ hasText: originalTitle || '' });
+      await expect(detailTitleAfterCancel).toBeVisible({ timeout: 5000 });
+
+      // 수정 폼이 사라졌는지 확인
+      const formTitleAfterCancel = page.locator('h2:has-text("공지사항 수정")');
+      const isFormVisible = await formTitleAfterCancel.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(isFormVisible).toBe(false);
+
+      // 원래 제목이 그대로 표시되는지 확인 (변경사항이 저장되지 않음)
+      const originalDetailTitle = page.locator('h1').filter({ hasText: originalTitle || '' });
+      await expect(originalDetailTitle).toBeVisible({ timeout: 2000 });
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T080: 공지사항 수정 실패 시 에러 처리 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    // 공지사항이 있어야 수정 테스트 가능
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭하여 상세 뷰로 이동
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // "수정" 버튼 클릭
+      const editButton = page.getByRole('button', { name: /수정/i });
+      await editButton.click();
+
+      // 수정 폼이 표시될 때까지 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 네트워크 요청을 차단하여 에러 상태 시뮬레이션
+      await page.route('**/api/admin/notices/*', route => route.abort());
+
+      // 수정할 내용 입력
+      const titleInput = page.locator('input[placeholder="공지사항 제목을 입력하세요"]');
+      const contentTextarea = page.locator('textarea[placeholder="공지사항 내용을 입력하세요"]');
+      
+      await titleInput.fill('에러 테스트 제목');
+      await contentTextarea.fill('에러 테스트 내용');
+
+      // 수정 완료 버튼 클릭
+      const submitButton = page.getByRole('button', { name: '수정 완료' });
+      await submitButton.click();
+
+      // API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(3000);
+
+      // 에러 Toast 확인
+      const errorToast = page.locator('[data-sonner-toast], [role="alert"], [role="status"]').filter({ 
+        hasText: /실패|오류|에러|수정.*실패|네트워크|연결|확인/i 
+      });
+      const hasErrorToast = await errorToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+      // 또는 페이지에 에러 메시지가 표시되는지 확인
+      const errorMessage = page.locator('text=/실패|오류|에러|네트워크|연결/i');
+      const hasErrorMessage = await errorMessage.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+      // 에러가 표시되어야 함 (Toast 또는 페이지 메시지)
+      expect(hasErrorToast || hasErrorMessage).toBe(true);
+
+      // 수정 폼이 여전히 표시되어야 함 (상세 뷰로 이동하지 않음)
+      const formTitle = page.locator('h2:has-text("공지사항 수정")');
+      const isFormVisible = await formTitle.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(isFormVisible).toBe(true);
+
+      // 네트워크 차단 해제
+      await page.unroute('**/api/admin/notices/*');
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+});
