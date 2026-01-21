@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-01-19
 
 ## Active Technologies
+- TypeScript 5, React 19.2.3, Next.js 16.1.3 (001-notification-send)
+- 백엔드 API를 통한 데이터 저장 (프론트엔드에서는 로컬 상태 관리만) (001-notification-send)
 
 - TypeScript 5.x, JavaScript (ES2020+) + Next.js 16.1.3, React 19.2.3, Axios 1.7.9, React Hook Form 7.71.1 (001-admin-auth)
 
@@ -23,6 +25,7 @@ npm test && npm run lint
 TypeScript 5.x, JavaScript (ES2020+): Follow standard conventions
 
 ## Recent Changes
+- 001-notification-send: Added TypeScript 5, React 19.2.3, Next.js 16.1.3
 
 - 001-admin-auth: Added TypeScript 5.x, JavaScript (ES2020+) + Next.js 16.1.3, React 19.2.3, Axios 1.7.9, React Hook Form 7.71.1
 
