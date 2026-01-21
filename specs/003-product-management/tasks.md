@@ -26,10 +26,10 @@
 
 **Purpose**: 프로젝트 초기화 및 기본 구조 확인
 
-- [ ] T001 [P] Create directory structure for product API in src/app/commons/apis/product/
-- [ ] T002 [P] Create directory structure for product tests in src/app/tests/api-tests/product-test/
-- [ ] T003 [P] Verify existing ProductsPage component exists in src/app/components/ProductsPage/index.tsx
-- [ ] T004 [P] Verify existing ProductList component exists in src/app/components/ProductList/index.tsx
+- [X] T001 [P] Create directory structure for product API in src/app/commons/apis/product/
+- [X] T002 [P] Create directory structure for product tests in src/app/tests/api-tests/product-test/
+- [X] T003 [P] Verify existing ProductsPage component exists in src/app/components/ProductsPage/index.tsx
+- [X] T004 [P] Verify existing ProductList component exists in src/app/components/ProductList/index.tsx
 
 ---
 
@@ -41,17 +41,17 @@
 
 ### 타입 정의
 
-- [ ] T005 [P] Create Product type definitions in src/app/commons/types/product.ts (Product, ProductListResponse, ProductDetailResponse, CreateProductRequest, UpdateProductRequest, GetProductsParams, ProductType enum, ProductStatus enum)
+- [X] T005 [P] Create Product type definitions in src/app/commons/types/product.ts (Product, ProductListResponse, ProductDetailResponse, CreateProductRequest, UpdateProductRequest, GetProductsParams, ProductType enum, ProductStatus enum)
 
 ### API 클라이언트 구현
 
-- [ ] T006 [P] Create HTTP API client file in src/app/commons/apis/product/http.ts with getProducts function (GET /api/admin/products with query params: search, categoryId, status, limit, offset)
-- [ ] T007 [P] Implement getProductById function in src/app/commons/apis/product/http.ts (GET /api/admin/products/{id})
-- [ ] T008 [P] Implement createProduct function in src/app/commons/apis/product/http.ts (POST /api/admin/products)
-- [ ] T009 [P] Implement updateProduct function in src/app/commons/apis/product/http.ts (PATCH /api/admin/products/{id})
-- [ ] T010 [P] Implement deleteProduct function in src/app/commons/apis/product/http.ts (DELETE /api/admin/products/{id})
-- [ ] T011 [P] Create index.ts export file in src/app/commons/apis/product/index.ts to export all API functions and types
-- [ ] T012 [P] Verify API client uses existing apiClient with token interceptor in src/app/commons/apis/product/http.ts
+- [X] T006 [P] Create HTTP API client file in src/app/commons/apis/product/http.ts with getProducts function (GET /api/admin/products with query params: search, categoryId, status, limit, offset)
+- [X] T007 [P] Implement getProductById function in src/app/commons/apis/product/http.ts (GET /api/admin/products/{id})
+- [X] T008 [P] Implement createProduct function in src/app/commons/apis/product/http.ts (POST /api/admin/products)
+- [X] T009 [P] Implement updateProduct function in src/app/commons/apis/product/http.ts (PATCH /api/admin/products/{id})
+- [X] T010 [P] Implement deleteProduct function in src/app/commons/apis/product/http.ts (DELETE /api/admin/products/{id})
+- [X] T011 [P] Create index.ts export file in src/app/commons/apis/product/index.ts to export all API functions and types
+- [X] T012 [P] Verify API client uses existing apiClient with token interceptor in src/app/commons/apis/product/http.ts
 
 **Checkpoint**: Foundation ready - E2E 테스트를 먼저 실행합니다
 
@@ -65,13 +65,13 @@
 
 ### E2E 테스트 작성 및 실행
 
-- [ ] T013 [P] Create E2E test file for product API in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T014 [P] Write E2E test for GET /api/admin/products (list products with filters) in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T015 [P] Write E2E test for POST /api/admin/products (create product) in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T016 [P] Write E2E test for GET /api/admin/products/{id} (get product detail) in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T017 [P] Write E2E test for PATCH /api/admin/products/{id} (update product) in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T018 [P] Write E2E test for DELETE /api/admin/products/{id} (soft delete product) in src/app/tests/api-tests/product-test/product-api.spec.ts
-- [ ] T019 Run all E2E tests using `npm run test:e2e` and verify all product API tests pass
+- [X] T013 [P] Create E2E test file for product API in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T014 [P] Write E2E test for GET /api/admin/products (list products with filters) in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T015 [P] Write E2E test for POST /api/admin/products (create product) in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T016 [P] Write E2E test for GET /api/admin/products/{id} (get product detail) in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T017 [P] Write E2E test for PATCH /api/admin/products/{id} (update product) in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T018 [P] Write E2E test for DELETE /api/admin/products/{id} (soft delete product) in src/app/tests/api-tests/product-test/product-api.spec.ts
+- [X] T019 Run all E2E tests using `npm run test:e2e` and verify all product API tests pass
 
 **Checkpoint**: 모든 E2E 테스트 통과 확인 - 이제 데이터 바인딩 작업을 시작할 수 있습니다
 
