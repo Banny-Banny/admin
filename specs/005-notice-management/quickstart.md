@@ -22,7 +22,19 @@
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 # 또는 프로덕션 URL
+
+# 테스트용 관리자 계정 (E2E 테스트 및 UI 테스트에서만 사용)
+TEST_ADMIN_EMAIL=test-admin@example.com
+TEST_ADMIN_PASSWORD=test-password123
+# 또는
+SUPER_ADMIN_EMAIL=test-admin@example.com
+SUPER_ADMIN_PASSWORD=test-password123
 ```
+
+**⚠️ 중요**: 
+- 테스트 계정은 **E2E 테스트 및 UI 테스트에서만** 사용합니다
+- 실제 구현 코드에서는 테스트 이메일/비밀번호를 사용하지 않습니다
+- 실제 사용자 인증은 기존 인증 시스템을 통해 처리합니다
 
 ## 구현 단계
 
@@ -366,69 +378,108 @@ export function ReportsPage() {
 
 ```typescript
 import { test, expect } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app';
-let authToken: string;
+// .env 파일 직접 로드 (Playwright 워커 프로세스에서도 동작하도록)
+dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
+
+// API_BASE_URL은 절대 URL로 사용해야 함 (Playwright request는 baseURL을 사용하지 않음)
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app').replace(/\/$/, '');
+
+// 테스트용 관리자 계정 (.env 파일에서 읽어옴)
+const TEST_ADMIN = {
+  email: process.env.TEST_ADMIN_EMAIL || process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.TEST_ADMIN_PASSWORD || process.env.SUPER_ADMIN_PASSWORD || 'password123',
+};
+
+let adminAccessToken: string;
 let createdNoticeId: string | null = null;
 
-test.beforeAll(async ({ request }) => {
+test.describe('공지사항 관리 API E2E 테스트', () => {
   // 로그인하여 토큰 획득
-  const loginResponse = await request.post(`${API_BASE_URL}/api/admin/auth/login`, {
-    data: {
-      email: 'admin@example.com',
-      password: 'password123',
-    },
-  });
-  
-  const loginData = await loginResponse.json();
-  authToken = loginData.accessToken;
-});
+  test.beforeAll(async ({ request }) => {
+    // 환경 변수 확인 (디버깅용)
+    if (!TEST_ADMIN.email || !TEST_ADMIN.password) {
+      console.error('환경 변수가 설정되지 않았습니다:', {
+        email: TEST_ADMIN.email,
+        password: TEST_ADMIN.password ? '***' : undefined,
+        envEmail: process.env.TEST_ADMIN_EMAIL || process.env.SUPER_ADMIN_EMAIL,
+        envPassword: (process.env.TEST_ADMIN_PASSWORD || process.env.SUPER_ADMIN_PASSWORD) ? '***' : undefined,
+      });
+    }
 
-test.afterAll(async ({ request }) => {
-  // 테스트로 생성한 공지사항 삭제
-  if (createdNoticeId) {
-    await request.delete(`${API_BASE_URL}/api/admin/notices/${createdNoticeId}`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
+    const loginResponse = await request.post(`${API_BASE_URL}/api/admin/auth/login`, {
+      data: {
+        email: TEST_ADMIN.email,
+        password: TEST_ADMIN.password,
       },
     });
-  }
-});
 
-test('공지사항 목록 조회 (공개 API)', async ({ request }) => {
-  const response = await request.get(`${API_BASE_URL}/api/notices`);
+    if (!loginResponse.ok()) {
+      const errorBody = await loginResponse.text();
+      console.error('로그인 실패:', {
+        status: loginResponse.status(),
+        statusText: loginResponse.statusText(),
+        requestUrl: `${API_BASE_URL}/api/admin/auth/login`,
+        actualUrl: loginResponse.url(),
+        body: errorBody.substring(0, 200),
+        email: TEST_ADMIN.email,
+      });
+    }
 
-  expect(response.status()).toBe(200);
-  const data = await response.json();
-  expect(data.success).toBe(true);
-  expect(data.data).toHaveProperty('items');
-  expect(data.data).toHaveProperty('total');
-  expect(data.data).toHaveProperty('limit');
-  expect(data.data).toHaveProperty('offset');
-});
+    expect(loginResponse.ok()).toBeTruthy();
+    const loginData = await loginResponse.json();
+    adminAccessToken = loginData.accessToken;
+    expect(adminAccessToken).toBeTruthy();
+  });
 
-test('공지사항 상세 조회 (공개 API)', async ({ request }) => {
-  // 먼저 공지사항 목록을 조회하여 ID 획득
-  const listResponse = await request.get(`${API_BASE_URL}/api/notices`);
-  const listData = await listResponse.json();
-  const noticeId = listData.data.items[0]?.id;
-  
-  if (!noticeId) {
-    test.skip();
-    return;
-  }
+  test.afterAll(async ({ request }) => {
+    // 테스트로 생성한 공지사항 삭제
+    if (createdNoticeId) {
+      await request.delete(`${API_BASE_URL}/api/admin/notices/${createdNoticeId}`, {
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+      });
+    }
+  });
 
-  const response = await request.get(`${API_BASE_URL}/api/notices/${noticeId}`);
+  test('공지사항 목록 조회 (공개 API)', async ({ request }) => {
+    const response = await request.get(`${API_BASE_URL}/api/notices`);
 
-  expect(response.status()).toBe(200);
-  const data = await response.json();
-  expect(data.success).toBe(true);
-  expect(data.data.id).toBe(noticeId);
-  expect(data.data).toHaveProperty('title');
-  expect(data.data).toHaveProperty('content');
-});
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.data).toHaveProperty('items');
+    expect(data.data).toHaveProperty('total');
+    expect(data.data).toHaveProperty('limit');
+    expect(data.data).toHaveProperty('offset');
+    expect(Array.isArray(data.data.items)).toBeTruthy();
+  });
 
-test('공지사항 등록 (관리자 API)', async ({ request }) => {
+  test('공지사항 상세 조회 (공개 API)', async ({ request }) => {
+    // 먼저 공지사항 목록을 조회하여 ID 획득
+    const listResponse = await request.get(`${API_BASE_URL}/api/notices`);
+    const listData = await listResponse.json();
+    const noticeId = listData.data.items[0]?.id;
+    
+    if (!noticeId) {
+      test.skip();
+      return;
+    }
+
+    const response = await request.get(`${API_BASE_URL}/api/notices/${noticeId}`);
+
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.data.id).toBe(noticeId);
+    expect(data.data).toHaveProperty('title');
+    expect(data.data).toHaveProperty('content');
+  });
+
+  test('공지사항 등록 (관리자 API)', async ({ request }) => {
   const noticeData = {
     title: '테스트 공지사항',
     content: '테스트 내용입니다.',
@@ -438,23 +489,34 @@ test('공지사항 등록 (관리자 API)', async ({ request }) => {
 
   const response = await request.post(`${API_BASE_URL}/api/admin/notices`, {
     headers: {
-      Authorization: `Bearer ${authToken}`,
+      Authorization: `Bearer ${adminAccessToken}`,
       'Content-Type': 'application/json',
     },
     data: noticeData,
   });
 
-  expect(response.status()).toBe(200);
-  const data = await response.json();
-  expect(data.success).toBe(true);
-  expect(data.data.title).toBe(noticeData.title);
-  expect(data.data.content).toBe(noticeData.content);
-  
-  // 생성된 공지사항 ID 저장 (삭제용)
-  createdNoticeId = data.data.id;
-});
+    if (!response.ok()) {
+      const errorBody = await response.text();
+      console.error('공지사항 등록 실패:', {
+        status: response.status(),
+        statusText: response.statusText(),
+        body: errorBody.substring(0, 500),
+        requestData: noticeData,
+      });
+    }
 
-test('공지사항 수정 (관리자 API)', async ({ request }) => {
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.data.title).toBe(noticeData.title);
+    expect(data.data.content).toBe(noticeData.content);
+    
+    // 생성된 공지사항 ID 저장 (삭제용)
+    createdNoticeId = data.data.id;
+    expect(createdNoticeId).toBeTruthy();
+  });
+
+  test('공지사항 수정 (관리자 API)', async ({ request }) => {
   // POST로 생성한 데이터가 있을 경우에만 테스트 진행
   if (!createdNoticeId) {
     test.skip();
@@ -468,18 +530,18 @@ test('공지사항 수정 (관리자 API)', async ({ request }) => {
 
   const response = await request.patch(`${API_BASE_URL}/api/admin/notices/${createdNoticeId}`, {
     headers: {
-      Authorization: `Bearer ${authToken}`,
+      Authorization: `Bearer ${adminAccessToken}`,
       'Content-Type': 'application/json',
     },
     data: updateData,
   });
 
-  expect(response.status()).toBe(200);
-  const data = await response.json();
-  expect(data.success).toBe(true);
-});
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.success).toBe(true);
+  });
 
-test('공지사항 삭제 (관리자 API)', async ({ request }) => {
+  test('공지사항 삭제 (관리자 API)', async ({ request }) => {
   // POST로 생성한 데이터가 있을 경우에만 테스트 진행
   if (!createdNoticeId) {
     test.skip();
@@ -488,16 +550,17 @@ test('공지사항 삭제 (관리자 API)', async ({ request }) => {
 
   const response = await request.delete(`${API_BASE_URL}/api/admin/notices/${createdNoticeId}`, {
     headers: {
-      Authorization: `Bearer ${authToken}`,
+      Authorization: `Bearer ${adminAccessToken}`,
     },
   });
 
-  expect(response.status()).toBe(200);
-  const data = await response.json();
-  expect(data.success).toBe(true);
-  
-  // 삭제 후 ID 초기화
-  createdNoticeId = null;
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    
+    // 삭제 후 ID 초기화
+    createdNoticeId = null;
+  });
 });
 ```
 
@@ -533,6 +596,7 @@ npm run dev
 
 ## 주의사항
 
+- **테스트 계정 사용**: E2E 테스트 및 UI 테스트에서만 테스트 계정(`TEST_ADMIN_EMAIL`, `TEST_ADMIN_PASSWORD`)을 사용합니다. 실제 구현 코드에서는 테스트 계정을 사용하지 않습니다.
 - PATCH와 DELETE 테스트는 POST로 생성한 데이터가 있을 경우에만 진행합니다
 - 공개 API(GET /api/notices, GET /api/notices/{id})는 인증 토큰이 필요하지 않습니다
 - 관리자 API(POST, PATCH, DELETE)는 인증 토큰이 필요합니다

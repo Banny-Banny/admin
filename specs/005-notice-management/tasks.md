@@ -40,7 +40,7 @@
 
 ### 타입 정의
 
-- [ ] T004 [P] Create Notice type definitions in src/app/commons/types/notice.ts (Notice, NoticeListItem, NoticeListResponse, NoticeDetailResponse, CreateNoticeRequest, CreateNoticeResponse, UpdateNoticeRequest, GetNoticesParams)
+- [ ] T004 [P] Create Notice type definitions in src/app/commons/apis/notice/ (Notice, NoticeListItem, NoticeListResponse, NoticeDetailResponse, CreateNoticeRequest, CreateNoticeResponse, UpdateNoticeRequest, GetNoticesParams)
 
 ### API 클라이언트 구현
 
@@ -414,3 +414,10 @@ With single developer or sequential workflow:
 - API 응답에 없는 필드(author, views)는 UI에서 처리합니다
 - 공개 API(GET)는 인증 토큰이 필요하지 않습니다
 - 관리자 API(POST, PATCH, DELETE)는 인증 토큰이 필요합니다
+
+### 테스트 계정 사용 규칙
+
+- **E2E 테스트 및 UI 테스트**: 모두 테스트 계정 사용 (환경 변수: `TEST_ADMIN_EMAIL`, `TEST_ADMIN_PASSWORD` 또는 `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`)
+- **실제 구현**: 테스트 이메일/비밀번호 사용 금지 - 실제 사용자 인증 시스템 사용
+- 테스트 파일에서만 환경 변수로부터 테스트 계정 정보를 읽어 사용
+- 실제 컴포넌트 코드에는 테스트 계정 정보를 하드코딩하지 않음
