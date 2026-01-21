@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: Admin Dashboard API
+  description: 관리자 대시보드 조회 및 차트 시각화 API
+  version: 1.0.0
+
+servers:
+  - url: ${NEXT_PUBLIC_API_BASE_URL}
+    description: Production server
+
+paths:
+  /api/admin/dashboard/summary:
+    get:
+      summary: 대시보드 요약 지표 조회
+      description: 관리자가 대시보드에 접속 시 서비스의 핵심 요약 지표를 조회합니다.
+      operationId: getDashboardSummary
+      tags:
+        - Dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 요약 지표 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/dashboard/charts:
+    get:
+      summary: 기간별 차트 데이터 조회
+      description: 일/주/월 단위로 서비스 데이터를 조회하여 차트로 시각화할 수 있는 데이터를 반환합니다.
+      operationId: getDashboardCharts
+      tags:
+        - Dashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: 집계 기간 단위
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+        - name: startDate
+          in: query
+          description: 시작 날짜 (ISO 8601 형식, YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: 종료 날짜 (ISO 8601 형식, YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 차트 데이터 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardChartsResponse'
+        '400':
+          description: 잘못된 요청 파라미터
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/dashboard/user-trends:
+    get:
+      summary: 사용자 가입/탈퇴 추이 조회
+      description: 최근 90일 동안의 사용자 가입 및 탈퇴 추이를 조회합니다.
+      operationId: getUserTrends
+      tags:
+        - Dashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: 조회 기간
+          required: false
+          schema:
+            type: string
+            enum: [90d]
+            default: 90d
+      responses:
+        '200':
+          description: 사용자 추이 데이터 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTrendsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    DashboardSummaryResponse:
+      type: object
+      required:
+        - totalUsers
+        - activeUsers
+        - totalOrders
+        - totalRevenue
+      properties:
+        totalUsers:
+          type: integer
+          format: int64
+          description: 총 사용자 수
+          example: 15234
+          minimum: 0
+        activeUsers:
+          type: integer
+          format: int64
+          description: 활성 사용자 수
+          example: 8934
+          minimum: 0
+        totalOrders:
+          type: integer
+          format: int64
+          description: 총 주문 수
+          example: 45678
+          minimum: 0
+        totalRevenue:
+          type: number
+          format: double
+          description: 총 매출액
+          example: 12345678.90
+          minimum: 0
+
+    DashboardChartsResponse:
+      type: object
+      required:
+        - labels
+        - data
+      properties:
+        labels:
+          type: array
+          description: 차트의 X축 레이블 (날짜 또는 시간)
+          items:
+            type: string
+          example: ["2026-01-01", "2026-01-02", "2026-01-03"]
+        data:
+          type: array
+          description: 차트의 Y축 데이터 값
+          items:
+            type: number
+            minimum: 0
+          example: [100, 150, 200]
+
+    UserTrendsResponse:
+      type: object
+      required:
+        - dates
+        - signups
+        - withdrawals
+      properties:
+        dates:
+          type: array
+          description: 날짜 배열 (ISO 8601 형식)
+          items:
+            type: string
+            format: date
+          example: ["2026-01-01", "2026-01-02", "2026-01-03"]
+        signups:
+          type: array
+          description: 날짜별 가입 사용자 수
+          items:
+            type: integer
+            format: int64
+            minimum: 0
+          example: [50, 45, 60]
+        withdrawals:
+          type: array
+          description: 날짜별 탈퇴 사용자 수
+          items:
+            type: integer
+            format: int64
+            minimum: 0
+          example: [5, 3, 8]
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 에러 메시지
+        code:
+          type: string
+          description: 에러 코드 (선택사항)
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: 인증되지 않은 요청
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: 서버 내부 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
