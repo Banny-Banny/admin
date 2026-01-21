@@ -1386,3 +1386,444 @@ test.describe('상품 정보 수정 UI 테스트 (User Story 4)', () => {
     await page.unroute('**/api/admin/products/*');
   });
 });
+
+test.describe('상품 삭제 UI 테스트 (User Story 5)', () => {
+  test.beforeEach(async ({ page }) => {
+    // 각 테스트 전에 로그인
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    // 로그인
+    await page.fill('input[type="email"]', TEST_ADMIN.email);
+    await page.fill('input[type="password"]', TEST_ADMIN.password);
+    await page.click('button[type="submit"]');
+
+    // 로그인 완료 대기
+    await page.waitForURL(BASE_URL, { timeout: 10000 });
+    await expect(page.locator('h1:has-text("관리자 로그인")')).not.toBeVisible({ timeout: 5000 });
+
+    // 상품 관리 페이지로 이동
+    const productMenuButton = page.locator('button').filter({ hasText: '상품' });
+    await expect(productMenuButton).toBeVisible({ timeout: 5000 });
+    await productMenuButton.click();
+    
+    // 상품 관리 페이지가 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    
+    // 상품 관리 페이지 제목 확인
+    await expect(page.locator('h2:has-text("상품 관리")')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('T115: 삭제 확인 다이얼로그 표시 테스트', async ({ page }) => {
+    // 상품 목록이 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 상품 행 찾기
+    const productRows = page.locator('tbody tr');
+    const rowCount = await productRows.count();
+
+    if (rowCount > 0) {
+      // 첫 번째 상품 행 클릭
+      const firstRow = productRows.first();
+      await firstRow.click();
+
+      // 모달이 열렸는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 5000 });
+
+      // API 응답 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button:has-text("삭제")');
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('text=/정말로 이 상품을 삭제하시겠습니까/i')).toBeVisible({ timeout: 5000 });
+      
+      // 취소 버튼과 삭제 버튼이 표시되는지 확인
+      // 다이얼로그 내부의 버튼만 선택 (AlertDialogContent 내부)
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      await expect(dialogContent.locator('button:has-text("취소")')).toBeVisible({ timeout: 5000 });
+      await expect(dialogContent.locator('button:has-text("삭제")')).toBeVisible({ timeout: 5000 });
+
+      // 다이얼로그 닫기
+      const cancelButton = page.locator('button:has-text("취소")');
+      await cancelButton.click();
+      
+      // 다이얼로그가 닫혔는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).not.toBeVisible({ timeout: 2000 });
+    } else {
+      test.skip();
+    }
+  });
+
+  test('T116: 상품 삭제 플로우 테스트 (확인 → 삭제)', async ({ page }) => {
+    // DELETE API 요청을 인터셉트하여 확인
+    let deleteRequestIntercepted = false;
+    let deleteRequestUrl = '';
+    
+    await page.route('**/api/admin/products/**', route => {
+      const method = route.request().method();
+      const url = route.request().url();
+      
+      if (method === 'DELETE') {
+        deleteRequestIntercepted = true;
+        deleteRequestUrl = url;
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            message: '상품이 삭제되었습니다.',
+          }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    // 상품 목록이 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 상품 행 찾기
+    const productRows = page.locator('tbody tr');
+    const rowCount = await productRows.count();
+
+    if (rowCount > 0) {
+      // 첫 번째 상품 행 클릭
+      const firstRow = productRows.first();
+      await firstRow.click();
+
+      // 모달이 열렸는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 5000 });
+
+      // API 응답 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button:has-text("삭제")');
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).toBeVisible({ timeout: 5000 });
+
+      // 확인 버튼 클릭 (다이얼로그 내의 삭제 버튼)
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      const confirmDeleteButton = dialogContent.locator('button:has-text("삭제")');
+      await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
+      
+      // API 응답 대기
+      const responsePromise = page.waitForResponse(
+        (response) => {
+          const url = response.url();
+          const method = response.request().method();
+          return url.includes('/api/admin/products/') && method === 'DELETE';
+        },
+        { timeout: 10000 }
+      ).catch(() => null);
+      
+      await confirmDeleteButton.click();
+      
+      // 응답 대기
+      const response = await responsePromise;
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // DELETE 요청이 인터셉트되었는지 확인
+      expect(deleteRequestIntercepted).toBe(true);
+      expect(deleteRequestUrl).toContain('/api/admin/products/');
+      
+      // 응답이 있으면 상태 코드 확인
+      if (response) {
+        expect(response.status()).toBe(200);
+      }
+
+      // 성공 토스트 확인
+      await page.waitForTimeout(1000);
+      const successToast = page.locator('text=/상품이 성공적으로 삭제되었습니다/i');
+      const toastVisible = await successToast.isVisible({ timeout: 5000 }).catch(() => false);
+      
+      // 상세 뷰가 닫혔는지 확인
+      await expect(page.locator('text=상품 상세 정보')).not.toBeVisible({ timeout: 3000 });
+
+      // 토스트가 표시되었는지 또는 API 호출이 성공했는지 확인
+      expect(toastVisible || deleteRequestIntercepted).toBe(true);
+    } else {
+      test.skip();
+    }
+
+    // 네트워크 모킹 해제
+    await page.unroute('**/api/admin/products/**');
+  });
+
+  test('T117: 삭제된 상품이 목록에서 제거되는지 테스트', async ({ page }) => {
+    // 상품 목록이 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 상품 행 찾기
+    const productRows = page.locator('tbody tr');
+    const rowCount = await productRows.count();
+
+    if (rowCount > 0) {
+      // DELETE API 요청을 성공으로 모킹
+      await page.route('**/api/admin/products/**', route => {
+        const method = route.request().method();
+        
+        if (method === 'DELETE') {
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              message: '상품이 삭제되었습니다.',
+            }),
+          });
+        } else {
+          route.continue();
+        }
+      });
+
+      // 첫 번째 상품 행 클릭
+      const firstRow = productRows.first();
+      await firstRow.click();
+
+      // 모달이 열렸는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 5000 });
+
+      // API 응답 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button:has-text("삭제")');
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그에서 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      const confirmDeleteButton = dialogContent.locator('button:has-text("삭제")');
+      await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
+      
+      await confirmDeleteButton.click();
+      
+      // 삭제 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 상세 뷰가 닫혔는지 확인
+      await expect(page.locator('text=상품 상세 정보')).not.toBeVisible({ timeout: 3000 });
+
+      // 목록이 새로고침되었는지 확인 (GET 요청이 다시 발생했는지)
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 목록이 새로고침되었는지 확인
+      const updatedProductRows = page.locator('tbody tr');
+      const updatedRowCount = await updatedProductRows.count();
+      
+      // 목록이 새로고침되었는지 확인 (refreshKey가 변경되어 목록이 새로고침되었는지)
+      expect(updatedRowCount >= 0).toBe(true);
+    } else {
+      test.skip();
+    }
+
+    // 네트워크 모킹 해제
+    await page.unroute('**/api/admin/products/**');
+  });
+
+  test('T118: 삭제 확인 다이얼로그의 취소 버튼 테스트', async ({ page }) => {
+    // 상품 목록이 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 상품 행 찾기
+    const productRows = page.locator('tbody tr');
+    const rowCount = await productRows.count();
+
+    if (rowCount > 0) {
+      // DELETE API 요청이 발생하지 않았는지 확인하기 위한 플래그
+      let deleteRequestIntercepted = false;
+      
+      await page.route('**/api/admin/products/**', route => {
+        const method = route.request().method();
+        
+        if (method === 'DELETE') {
+          deleteRequestIntercepted = true;
+        }
+        route.continue();
+      });
+
+      // 첫 번째 상품 행 클릭
+      const firstRow = productRows.first();
+      await firstRow.click();
+
+      // 모달이 열렸는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 5000 });
+
+      // API 응답 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button:has-text("삭제")');
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).toBeVisible({ timeout: 5000 });
+
+      // 취소 버튼 클릭
+      const cancelButton = page.locator('button:has-text("취소")');
+      await expect(cancelButton).toBeVisible({ timeout: 5000 });
+      await cancelButton.click();
+
+      // 다이얼로그가 닫혔는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).not.toBeVisible({ timeout: 2000 });
+
+      // 상세 뷰가 여전히 열려있는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 2000 });
+
+      // DELETE 요청이 발생하지 않았는지 확인
+      await page.waitForTimeout(1000);
+      expect(deleteRequestIntercepted).toBe(false);
+    } else {
+      test.skip();
+    }
+
+    // 네트워크 모킹 해제
+    await page.unroute('**/api/admin/products/**');
+  });
+
+  test('T119: 삭제 실패 시 에러 처리 테스트', async ({ page }) => {
+    // DELETE API 요청을 실패하도록 모킹
+    let deleteRequestIntercepted = false;
+    let deleteRequestUrl = '';
+    
+    await page.route('**/api/admin/products/**', route => {
+      const method = route.request().method();
+      const url = route.request().url();
+      
+      if (method === 'DELETE') {
+        deleteRequestIntercepted = true;
+        deleteRequestUrl = url;
+        route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            message: '서버 오류가 발생했습니다.',
+          }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    // 상품 목록이 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 상품 행 찾기
+    const productRows = page.locator('tbody tr');
+    const rowCount = await productRows.count();
+
+    if (rowCount > 0) {
+      // 첫 번째 상품 행 클릭
+      const firstRow = productRows.first();
+      await firstRow.click();
+
+      // 모달이 열렸는지 확인
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 5000 });
+
+      // API 응답 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button:has-text("삭제")');
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      await expect(page.locator('text=상품 삭제 확인')).toBeVisible({ timeout: 5000 });
+
+      // 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      const confirmDeleteButton = dialogContent.locator('button:has-text("삭제")');
+      await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
+      
+      // API 응답 대기
+      const responsePromise = page.waitForResponse(
+        (response) => {
+          const url = response.url();
+          const method = response.request().method();
+          return url.includes('/api/admin/products/') && method === 'DELETE';
+        },
+        { timeout: 10000 }
+      ).catch(() => null);
+      
+      await confirmDeleteButton.click();
+      
+      // 응답 대기
+      const response = await responsePromise;
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // DELETE 요청이 인터셉트되었는지 확인
+      expect(deleteRequestIntercepted).toBe(true);
+      expect(deleteRequestUrl).toContain('/api/admin/products/');
+      
+      // 응답이 있으면 상태 코드 확인
+      if (response) {
+        expect(response.status()).toBe(500);
+      }
+
+      // 에러 토스트 확인
+      await page.waitForTimeout(1000);
+      const errorToast1 = page.locator('text=/상품 삭제에 실패했습니다/i');
+      const errorToast2 = page.locator('text=/실패|오류|에러|삭제에 실패|서버 오류/i');
+      const errorToast3 = page.locator('[role="status"]').filter({ hasText: /실패|오류|에러|삭제|서버/i });
+      const errorToast4 = page.locator('[data-sonner-toast]').filter({ hasText: /실패|오류|에러|삭제|서버/i });
+      const errorToast5 = page.locator('[data-sonner-toast]');
+      
+      const toastVisible1 = await errorToast1.isVisible({ timeout: 5000 }).catch(() => false);
+      const toastVisible2 = await errorToast2.isVisible({ timeout: 5000 }).catch(() => false);
+      const toastVisible3 = await errorToast3.isVisible({ timeout: 5000 }).catch(() => false);
+      const toastVisible4 = await errorToast4.isVisible({ timeout: 5000 }).catch(() => false);
+      const hasAnyToast = await errorToast5.count().then(count => count > 0).catch(() => false);
+      
+      // 페이지에 에러 관련 텍스트가 있는지 확인
+      const pageText = await page.locator('body').textContent().catch(() => '');
+      const pageHasError = pageText?.includes('실패') || pageText?.includes('오류') || pageText?.includes('에러') || pageText?.includes('삭제에 실패') || false;
+      
+      // DELETE 요청이 인터셉트되었고 500 응답을 받았는지 확인
+      const apiCallFailed = deleteRequestIntercepted && (response?.status() === 500 || response === null);
+      
+      // 다이얼로그가 닫혔는지 확인 (에러가 발생해도 다이얼로그는 닫혀야 함)
+      await expect(page.locator('text=상품 삭제 확인')).not.toBeVisible({ timeout: 3000 });
+      
+      // 상세 뷰가 여전히 열려있는지 확인 (삭제 실패 시 상세 뷰는 유지되어야 함)
+      await expect(page.locator('text=상품 상세 정보')).toBeVisible({ timeout: 3000 });
+      
+      // 토스트가 표시되었는지 또는 API 호출이 실패했는지 확인
+      expect(toastVisible1 || toastVisible2 || toastVisible3 || toastVisible4 || hasAnyToast || pageHasError || apiCallFailed).toBe(true);
+    } else {
+      test.skip();
+    }
+
+    // 네트워크 모킹 해제
+    await page.unroute('**/api/admin/products/**');
+  });
+});

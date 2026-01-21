@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Plus, Package, X } from 'lucide-react';
+import { Plus, Package, X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { AxiosError } from 'axios';
 import { ProductList } from '../ProductList';
-import { createProduct, getProductById, updateProduct, ProductType, type CreateProductRequest, type UpdateProductRequest, type Product } from '../../commons/apis/product';
+import { createProduct, getProductById, updateProduct, deleteProduct, ProductType, type CreateProductRequest, type UpdateProductRequest, type Product } from '../../commons/apis/product';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../commons/components/alert-dialog';
 import styles from "./styles.module.css";
 
 export function ProductsPage() {
@@ -35,6 +45,10 @@ export function ProductsPage() {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [editValidationErrors, setEditValidationErrors] = useState<Record<string, string>>({});
+  
+  // 삭제 관련 상태
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -490,6 +504,71 @@ export function ProductsPage() {
     }
   };
 
+  // 삭제 핸들러
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedProductId) return;
+
+    if (isDeleting) {
+      return; // 중복 제출 방지
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const response = await deleteProduct(selectedProductId);
+
+      if (response.success) {
+        toast.success('상품이 성공적으로 삭제되었습니다.');
+        // 상세 뷰 닫기
+        setSelectedProductId(null);
+        setProductDetail(null);
+        setDetailError(null);
+        setIsEditMode(false);
+        setShowDeleteDialog(false);
+        // 목록 새로고침
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        throw new Error('상품 삭제에 실패했습니다.');
+      }
+    } catch (err: unknown) {
+      let errorMessage = '상품 삭제에 실패했습니다.';
+      
+      // Axios 에러 처리
+      if (err instanceof AxiosError) {
+        // 404 에러 처리
+        if (err.response?.status === 404) {
+          errorMessage = '삭제할 상품을 찾을 수 없습니다.';
+          // 이미 삭제된 상품이므로 상세 뷰 닫기
+          setSelectedProductId(null);
+          setProductDetail(null);
+          setDetailError(null);
+          setIsEditMode(false);
+        } else if (err.response?.data?.message) {
+          errorMessage = Array.isArray(err.response.data.message) 
+            ? err.response.data.message.join(', ')
+            : err.response.data.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
+  };
+
   return (
     <div className={styles.c_1j8i8bf}>
       <div className={styles.c_xc8ak4}>
@@ -796,21 +875,42 @@ export function ProductsPage() {
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {!isEditMode && productDetail && (
-                  <button
-                    onClick={handleEditClick}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '6px',
-                      border: '1px solid #3b82f6',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    수정
-                  </button>
+                  <>
+                    <button
+                      onClick={handleEditClick}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid #3b82f6',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid #dc2626',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Trash2 size={16} />
+                      삭제
+                    </button>
+                  </>
                 )}
                 <button
                 onClick={() => {
@@ -1197,6 +1297,38 @@ export function ProductsPage() {
           </div>
         </div>
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>상품 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 이 상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              {productDetail && (
+                <div style={{ marginTop: '8px', fontWeight: '500' }}>
+                  상품명: {productDetail.name}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+              }}
+            >
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

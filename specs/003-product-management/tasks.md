@@ -272,24 +272,24 @@
 
 ### 삭제 기능 구현
 
-- [ ] T105 [US5] Add "삭제" button to product detail view
-- [ ] T106 [US5] Create delete confirmation dialog component using Radix UI AlertDialog
-- [ ] T107 [US5] Show confirmation dialog when delete button is clicked
-- [ ] T108 [US5] Implement deleteProduct API call when confirmation is confirmed
-- [ ] T109 [US5] Handle delete success: remove product from list or refresh list
-- [ ] T110 [US5] Show success toast notification after successful product deletion
-- [ ] T111 [US5] Show error toast notification on API failure
-- [ ] T112 [US5] Add loading state during product deletion API call
-- [ ] T113 [US5] Close product detail view after successful deletion
-- [ ] T114 [US5] Handle case where deleted product ID is used for detail view (show error or redirect)
+- [X] T105 [US5] Add "삭제" button to product detail view
+- [X] T106 [US5] Create delete confirmation dialog component using Radix UI AlertDialog
+- [X] T107 [US5] Show confirmation dialog when delete button is clicked
+- [X] T108 [US5] Implement deleteProduct API call when confirmation is confirmed
+- [X] T109 [US5] Handle delete success: remove product from list or refresh list
+- [X] T110 [US5] Show success toast notification after successful product deletion
+- [X] T111 [US5] Show error toast notification on API failure
+- [X] T112 [US5] Add loading state during product deletion API call
+- [X] T113 [US5] Close product detail view after successful deletion
+- [X] T114 [US5] Handle case where deleted product ID is used for detail view (show error or redirect)
 
 ### UI 테스트
 
-- [ ] T115 [US5] Run UI tests for delete confirmation dialog display
-- [ ] T116 [US5] Run UI tests for product deletion flow (confirmation → deletion)
-- [ ] T117 [US5] Run UI tests for deleted product removal from list
-- [ ] T118 [US5] Run UI tests for cancel button in delete confirmation dialog
-- [ ] T119 [US5] Run UI tests for error handling on deletion failure
+- [X] T115 [US5] Run UI tests for delete confirmation dialog display
+- [X] T116 [US5] Run UI tests for product deletion flow (confirmation → deletion)
+- [X] T117 [US5] Run UI tests for deleted product removal from list
+- [X] T118 [US5] Run UI tests for cancel button in delete confirmation dialog
+- [X] T119 [US5] Run UI tests for error handling on deletion failure
 
 **Checkpoint**: At this point, all User Stories (1-5) should be fully functional. UI tests must pass before proceeding.
 
