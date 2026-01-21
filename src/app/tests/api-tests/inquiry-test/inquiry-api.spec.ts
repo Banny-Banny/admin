@@ -17,7 +17,11 @@ const TEST_ADMIN = {
 
 let adminAccessToken: string;
 
-test.describe('문의하기 API E2E 테스트', () => {
+// NOTE:
+// 이 API E2E 테스트는 실서버 데이터에 직접 영향을 줍니다(상태 변경/삭제/메시지 수정·삭제 등).
+// 실행 시 운영/개발 환경의 문의 데이터가 변경되거나 "문의가 사라짐"처럼 보이는 문제가 발생할 수 있어
+// 안전한 테스트 환경(스테이징/로컬 + 테스트 전용 데이터) 마련 전까지 전체 스킵합니다.
+test.describe.skip('문의하기 API E2E 테스트', () => {
   // 로그인하여 토큰 획득
   test.beforeAll(async ({ request }) => {
     // 환경 변수 확인 (디버깅용)
