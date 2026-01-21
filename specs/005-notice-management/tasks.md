@@ -26,9 +26,9 @@
 
 **Purpose**: 프로젝트 초기화 및 기본 구조 확인
 
-- [ ] T001 [P] Create directory structure for notice API in src/app/commons/apis/notice/
-- [ ] T002 [P] Create directory structure for notice tests in src/app/tests/api-tests/notice-test/
-- [ ] T003 [P] Verify existing ReportsPage component exists in src/app/components/ReportsPage/index.tsx
+- [X] T001 [P] Create directory structure for notice API in src/app/commons/apis/notice/
+- [X] T002 [P] Create directory structure for notice tests in src/app/tests/api-tests/notice-test/
+- [X] T003 [P] Verify existing ReportsPage component exists in src/app/components/ReportsPage/index.tsx
 
 ---
 
@@ -40,17 +40,17 @@
 
 ### 타입 정의
 
-- [ ] T004 [P] Create Notice type definitions in src/app/commons/apis/notice/ (Notice, NoticeListItem, NoticeListResponse, NoticeDetailResponse, CreateNoticeRequest, CreateNoticeResponse, UpdateNoticeRequest, GetNoticesParams)
+- [X] T004 [P] Create Notice type definitions in src/app/commons/apis/notice/types.ts (Notice, NoticeListItem, NoticeListResponse, NoticeDetailResponse, CreateNoticeRequest, CreateNoticeResponse, UpdateNoticeRequest, GetNoticesParams)
 
 ### API 클라이언트 구현
 
-- [ ] T005 [P] Create HTTP API client file in src/app/commons/apis/notice/http.ts with getNotices function (GET /api/notices with query params: search, limit, offset) - 공개 API
-- [ ] T006 [P] Implement getNoticeById function in src/app/commons/apis/notice/http.ts (GET /api/notices/{id}) - 공개 API
-- [ ] T007 [P] Implement createNotice function in src/app/commons/apis/notice/http.ts (POST /api/admin/notices) - 관리자 API
-- [ ] T008 [P] Implement updateNotice function in src/app/commons/apis/notice/http.ts (PATCH /api/admin/notices/{id}) - 관리자 API
-- [ ] T009 [P] Implement deleteNotice function in src/app/commons/apis/notice/http.ts (DELETE /api/admin/notices/{id}) - 관리자 API
-- [ ] T010 [P] Create index.ts export file in src/app/commons/apis/notice/index.ts to export all API functions and types
-- [ ] T011 [P] Verify API client uses existing apiClient with token interceptor for admin APIs in src/app/commons/apis/notice/http.ts
+- [X] T005 [P] Create HTTP API client file in src/app/commons/apis/notice/http.ts with getNotices function (GET /api/notices with query params: search, limit, offset) - 공개 API
+- [X] T006 [P] Implement getNoticeById function in src/app/commons/apis/notice/http.ts (GET /api/notices/{id}) - 공개 API
+- [X] T007 [P] Implement createNotice function in src/app/commons/apis/notice/http.ts (POST /api/admin/notices) - 관리자 API
+- [X] T008 [P] Implement updateNotice function in src/app/commons/apis/notice/http.ts (PATCH /api/admin/notices/{id}) - 관리자 API
+- [X] T009 [P] Implement deleteNotice function in src/app/commons/apis/notice/http.ts (DELETE /api/admin/notices/{id}) - 관리자 API
+- [X] T010 [P] Create index.ts export file in src/app/commons/apis/notice/index.ts to export all API functions and types
+- [X] T011 [P] Verify API client uses existing apiClient with token interceptor for admin APIs in src/app/commons/apis/notice/http.ts
 
 **Checkpoint**: Foundation ready - E2E 테스트를 먼저 실행합니다
 
@@ -417,7 +417,7 @@ With single developer or sequential workflow:
 
 ### 테스트 계정 사용 규칙
 
-- **E2E 테스트 및 UI 테스트**: 모두 테스트 계정 사용 (환경 변수: `TEST_ADMIN_EMAIL`, `TEST_ADMIN_PASSWORD` 또는 `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`)
+- **E2E 테스트 및 UI 테스트**: 모두 테스트 계정 사용 (환경 변수: `TEST_ADMIN_EMAIL`, `TEST_ADMIN_PASSWORD`)
 - **실제 구현**: 테스트 이메일/비밀번호 사용 금지 - 실제 사용자 인증 시스템 사용
 - 테스트 파일에서만 환경 변수로부터 테스트 계정 정보를 읽어 사용
 - 실제 컴포넌트 코드에는 테스트 계정 정보를 하드코딩하지 않음
