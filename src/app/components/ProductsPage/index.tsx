@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Package, X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { AxiosError } from 'axios';
 import { ProductList } from '../ProductList';
 import { createProduct, getProductById, updateProduct, deleteProduct, ProductType, type CreateProductRequest, type UpdateProductRequest, type Product } from '../../commons/apis/product';
+import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
+import { Skeleton } from '../../commons/components/skeleton';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -142,37 +143,15 @@ export function ProductsPage() {
         throw new Error('상품 등록에 실패했습니다.');
       }
     } catch (err: unknown) {
-      let errorMessage = '상품 등록에 실패했습니다.';
+      const apiError = handleApiErrorWithToast(err, '상품 등록에 실패했습니다.');
       
-      // Axios 에러 응답에서 메시지 추출
-      if (err instanceof AxiosError && err.response?.data) {
-        const errorData = err.response.data;
-        
-        // maxMediaCount 관련 에러 메시지 파싱
-        if (errorData.message) {
-          const messages = Array.isArray(errorData.message) ? errorData.message : [errorData.message];
-          const maxMediaCountError = messages.find((msg: string) => 
-            typeof msg === 'string' && (msg.includes('maxMediaCount') || msg.includes('must not be greater than 3'))
-          );
-          
-          if (maxMediaCountError) {
-            errorMessage = '최대 미디어 개수는 3을 초과할 수 없습니다.';
-            // 폼의 maxMediaCount 필드에 에러 표시
-            setValidationErrors({
-              ...validationErrors,
-              maxMediaCount: '최대 미디어 개수는 3을 초과할 수 없습니다.',
-            });
-          } else {
-            errorMessage = messages.join(', ') || errorData.message || errorMessage;
-          }
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
+      // maxMediaCount 관련 에러 메시지 파싱
+      if (apiError.message.includes('maxMediaCount') || apiError.message.includes('must not be greater than 3')) {
+        setValidationErrors({
+          ...validationErrors,
+          maxMediaCount: '최대 미디어 개수는 3을 초과할 수 없습니다.',
+        });
       }
-      
-      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -244,27 +223,14 @@ export function ProductsPage() {
           throw new Error('상품 정보를 불러오는데 실패했습니다.');
         }
       } catch (err: unknown) {
-        let errorMessage = '상품 정보를 불러오는데 실패했습니다.';
+        const apiError = handleApiErrorWithToast(err, '상품 정보를 불러오는데 실패했습니다.');
+        setDetailError(apiError.message);
         
-        // Axios 에러 처리
-        if (err instanceof AxiosError) {
-          // 404 에러 처리
-          if (err.response?.status === 404) {
-            errorMessage = '상품을 찾을 수 없습니다.';
-          } else if (err.response?.data?.message) {
-            errorMessage = Array.isArray(err.response.data.message) 
-              ? err.response.data.message.join(', ')
-              : err.response.data.message;
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-        } else if (err instanceof Error) {
-          errorMessage = err.message;
+        // 404 에러인 경우 상세 뷰 닫기
+        if (apiError.isNotFound) {
+          setSelectedProductId(null);
+          setProductDetail(null);
         }
-        
-        setDetailError(errorMessage);
-        toast.error(errorMessage);
-        setProductDetail(null);
       } finally {
         setDetailLoading(false);
       }
@@ -273,20 +239,22 @@ export function ProductsPage() {
     fetchProductDetail();
   }, [selectedProductId]);
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return dateString;
-    }
-  };
+  const formatDate = useMemo(() => {
+    return (dateString: string) => {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } catch {
+        return dateString;
+      }
+    };
+  }, []);
 
   // 수정 모드 진입 핸들러
   const handleEditClick = () => {
@@ -429,36 +397,15 @@ export function ProductsPage() {
         throw new Error('상품 수정에 실패했습니다.');
       }
     } catch (err: unknown) {
-      let errorMessage = '상품 수정에 실패했습니다.';
+      const apiError = handleApiErrorWithToast(err, '상품 수정에 실패했습니다.');
       
-      // Axios 에러 응답에서 메시지 추출
-      if (err instanceof AxiosError && err.response?.data) {
-        const errorData = err.response.data;
-        
-        // maxMediaCount 관련 에러 메시지 파싱
-        if (errorData.message) {
-          const messages = Array.isArray(errorData.message) ? errorData.message : [errorData.message];
-          const maxMediaCountError = messages.find((msg: string) => 
-            typeof msg === 'string' && (msg.includes('maxMediaCount') || msg.includes('must not be greater than 3'))
-          );
-          
-          if (maxMediaCountError) {
-            errorMessage = '최대 미디어 개수는 3을 초과할 수 없습니다.';
-            setEditValidationErrors({
-              ...editValidationErrors,
-              maxMediaCount: '최대 미디어 개수는 3을 초과할 수 없습니다.',
-            });
-          } else {
-            errorMessage = messages.join(', ') || errorData.message || errorMessage;
-          }
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
+      // maxMediaCount 관련 에러 메시지 파싱
+      if (apiError.message.includes('maxMediaCount') || apiError.message.includes('must not be greater than 3')) {
+        setEditValidationErrors({
+          ...editValidationErrors,
+          maxMediaCount: '최대 미디어 개수는 3을 초과할 수 없습니다.',
+        });
       }
-      
-      toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
     }
@@ -535,30 +482,15 @@ export function ProductsPage() {
         throw new Error('상품 삭제에 실패했습니다.');
       }
     } catch (err: unknown) {
-      let errorMessage = '상품 삭제에 실패했습니다.';
+      const apiError = handleApiErrorWithToast(err, '상품 삭제에 실패했습니다.');
       
-      // Axios 에러 처리
-      if (err instanceof AxiosError) {
-        // 404 에러 처리
-        if (err.response?.status === 404) {
-          errorMessage = '삭제할 상품을 찾을 수 없습니다.';
-          // 이미 삭제된 상품이므로 상세 뷰 닫기
-          setSelectedProductId(null);
-          setProductDetail(null);
-          setDetailError(null);
-          setIsEditMode(false);
-        } else if (err.response?.data?.message) {
-          errorMessage = Array.isArray(err.response.data.message) 
-            ? err.response.data.message.join(', ')
-            : err.response.data.message;
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
+      // 404 에러인 경우 상세 뷰 닫기
+      if (apiError.isNotFound) {
+        setSelectedProductId(null);
+        setProductDetail(null);
+        setDetailError(null);
+        setIsEditMode(false);
       }
-      
-      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -939,8 +871,17 @@ export function ProductsPage() {
             </div>
 
           {detailLoading ? (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <p>상품 정보를 불러오는 중...</p>
+            <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Skeleton style={{ width: '100%', height: '24px' }} />
+              <Skeleton style={{ width: '60%', height: '20px' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginTop: '16px' }}>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Skeleton style={{ width: '80px', height: '16px' }} />
+                    <Skeleton style={{ width: '100%', height: '20px' }} />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : detailError ? (
             <div style={{ padding: '40px', textAlign: 'center' }}>

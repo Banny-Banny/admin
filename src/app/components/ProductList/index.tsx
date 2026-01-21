@@ -1,8 +1,9 @@
 import { Search, Filter, MoreVertical, Package, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { getProducts, type Product, ProductStatus } from '../../commons/apis/product';
 import { useDebounce } from '../../commons/hooks/use-debounce';
-import { toast } from 'sonner';
+import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
+import { Skeleton } from '../../commons/components/skeleton';
 import styles from "./styles.module.css";
 
 interface ProductListProps {
@@ -13,7 +14,7 @@ interface ProductListProps {
 
 const ITEMS_PER_PAGE = 10;
 
-export function ProductList({ onProductCountChange, refreshKey, onProductClick }: ProductListProps) {
+export const ProductList = memo(function ProductList({ onProductCountChange, refreshKey, onProductClick }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus>(ProductStatus.ALL);
@@ -73,9 +74,8 @@ export function ProductList({ onProductCountChange, refreshKey, onProductClick }
           throw new Error('상품 목록을 불러오는데 실패했습니다.');
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '상품 목록을 불러오는데 실패했습니다.';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        const apiError = handleApiErrorWithToast(err, '상품 목록을 불러오는데 실패했습니다.');
+        setError(apiError.message);
         setProducts([]);
         setTotal(0);
         onProductCountChange?.(0);
@@ -96,18 +96,20 @@ export function ProductList({ onProductCountChange, refreshKey, onProductClick }
     return isActive ? '판매중' : '판매중지';
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-    } catch {
-      return dateString;
-    }
-  };
+  const formatDate = useMemo(() => {
+    return (dateString: string) => {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+      } catch {
+        return dateString;
+      }
+    };
+  }, []);
 
   // 페이지네이션 계산
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -164,11 +166,21 @@ export function ProductList({ onProductCountChange, refreshKey, onProductClick }
       <div className={styles.c_1bb8j67}>
         {loading ? (
           <div className={styles.c_13nmcpi}>
-            <p>상품 목록을 불러오는 중...</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} style={{ display: 'flex', gap: '16px', padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
+                  <Skeleton style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Skeleton style={{ width: '60%', height: '20px' }} />
+                    <Skeleton style={{ width: '40%', height: '16px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className={styles.c_13nmcpi}>
-            <p>{error}</p>
+            <p style={{ color: '#dc2626' }}>{error}</p>
           </div>
         ) : (
           <table className={styles.c_1l2zdph}>
@@ -352,4 +364,4 @@ export function ProductList({ onProductCountChange, refreshKey, onProductClick }
       )}
     </div>
   );
-}
+});
