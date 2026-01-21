@@ -5,7 +5,6 @@ import path from 'path';
 // .env 파일 직접 로드 (Playwright 워커 프로세스에서도 동작하도록)
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
-const BASE_URL = process.env.BASE_URL || process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 // API_BASE_URL은 절대 URL로 사용해야 함 (Playwright request는 baseURL을 사용하지 않음)
 // 테스트에서는 프로덕션 서버(NEXT_PUBLIC_API_BASE_URL)를 우선 사용, 없으면 API_BASE_URL, 마지막으로 기본값
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app').replace(/\/$/, '');
@@ -18,7 +17,11 @@ const TEST_ADMIN = {
 
 let adminAccessToken: string;
 
-test.describe('문의하기 API E2E 테스트', () => {
+// NOTE:
+// 이 API E2E 테스트는 실서버 데이터에 직접 영향을 줍니다(상태 변경/삭제/메시지 수정·삭제 등).
+// 실행 시 운영/개발 환경의 문의 데이터가 변경되거나 "문의가 사라짐"처럼 보이는 문제가 발생할 수 있어
+// 안전한 테스트 환경(스테이징/로컬 + 테스트 전용 데이터) 마련 전까지 전체 스킵합니다.
+test.describe.skip('문의하기 API E2E 테스트', () => {
   // 로그인하여 토큰 획득
   test.beforeAll(async ({ request }) => {
     // 환경 변수 확인 (디버깅용)
@@ -30,10 +33,6 @@ test.describe('문의하기 API E2E 테스트', () => {
         envPassword: process.env.SUPER_ADMIN_PASSWORD ? '***' : undefined,
       });
     }
-
-    // API_BASE_URL 확인
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('로그인 요청 URL:', `${API_BASE_URL}/api/admin/auth/login`);
 
     const loginResponse = await request.post(`${API_BASE_URL}/api/admin/auth/login`, {
       data: {
@@ -71,13 +70,29 @@ test.describe('문의하기 API E2E 테스트', () => {
     const data = await response.json();
     
     // 응답 구조 검증 (실제 API 응답 구조에 맞게 수정)
-    // 실제 응답: {"data": {"items": [], "limit": 20, "offset": 0, "total": 0}, "success": true}
+    // 실제 응답: {"success": true, "data": {"items": [...], "limit": 10, "offset": 0, "total": 1}}
+    expect(data).toHaveProperty('success');
     expect(data).toHaveProperty('data');
     expect(data.data).toHaveProperty('items');
     expect(data.data).toHaveProperty('total');
     expect(data.data).toHaveProperty('limit');
     expect(data.data).toHaveProperty('offset');
     expect(Array.isArray(data.data.items)).toBeTruthy();
+    
+    // items의 구조 검증
+    if (data.data.items.length > 0) {
+      const item = data.data.items[0];
+      expect(item).toHaveProperty('id');
+      expect(item).toHaveProperty('user');
+      expect(item.user).toHaveProperty('id');
+      expect(item.user).toHaveProperty('nickname');
+      expect(item).toHaveProperty('status');
+      expect(item).toHaveProperty('isResolved');
+      expect(item).toHaveProperty('lastMessageAt');
+      expect(item).toHaveProperty('lastMessagePreview');
+      expect(item).toHaveProperty('unreadCount');
+      expect(item).toHaveProperty('createdAt');
+    }
   });
 
   test('문의 목록 조회 - 상태 필터 테스트', async ({ request }) => {
@@ -142,6 +157,8 @@ test.describe('문의하기 API E2E 테스트', () => {
     const detailData = await detailResponse.json();
 
     // 응답 구조 검증 (실제 API 응답 구조에 맞게 수정)
+    // 실제 응답 구조: {"success": true, "data": {"inquiry": {...}, "messages": [...], "total": ..., "limit": ..., "offset": ...}}
+    expect(detailData).toHaveProperty('success');
     expect(detailData).toHaveProperty('data');
     expect(detailData.data).toHaveProperty('inquiry');
     expect(detailData.data).toHaveProperty('messages');
