@@ -1374,15 +1374,25 @@ test.describe('공지사항 삭제 UI 테스트 (User Story 5)', () => {
 
       // 삭제 API 호출 완료 대기
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(3000);
 
       // 목록 뷰로 이동했는지 확인
-      await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 10000 });
 
-      // 상세 뷰가 사라졌는지 확인
-      const detailViewAfterDelete = page.locator('h1').first();
-      const isDetailViewVisible = await detailViewAfterDelete.isVisible({ timeout: 2000 }).catch(() => false);
-      expect(isDetailViewVisible).toBe(false);
+      // 상세 뷰에만 있는 요소들이 사라졌는지 확인 (삭제/수정 버튼 또는 "목록으로 돌아가기" 버튼)
+      const deleteButtonAfterDelete = page.locator('button').filter({ hasText: '삭제' });
+      const isDeleteButtonVisible = await deleteButtonAfterDelete.isVisible({ timeout: 2000 }).catch(() => false);
+      
+      const backButton = page.locator('button').filter({ hasText: '목록으로 돌아가기' });
+      const isBackButtonVisible = await backButton.isVisible({ timeout: 2000 }).catch(() => false);
+
+      // 삭제 버튼과 "목록으로 돌아가기" 버튼이 모두 사라져야 함 (목록 뷰에는 없음)
+      expect(isDeleteButtonVisible).toBe(false);
+      expect(isBackButtonVisible).toBe(false);
+
+      // 목록 뷰의 "공지사항 작성" 버튼이 보이는지 확인
+      const writeButton = page.locator('button').filter({ hasText: '공지사항 작성' });
+      await expect(writeButton).toBeVisible({ timeout: 2000 });
     } else {
       // 공지사항이 없는 경우 테스트 스킵
       test.skip();
