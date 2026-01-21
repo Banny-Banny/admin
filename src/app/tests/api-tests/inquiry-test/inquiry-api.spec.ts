@@ -5,7 +5,6 @@ import path from 'path';
 // .env 파일 직접 로드 (Playwright 워커 프로세스에서도 동작하도록)
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
-const BASE_URL = process.env.BASE_URL || process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 // API_BASE_URL은 절대 URL로 사용해야 함 (Playwright request는 baseURL을 사용하지 않음)
 // 테스트에서는 프로덕션 서버(NEXT_PUBLIC_API_BASE_URL)를 우선 사용, 없으면 API_BASE_URL, 마지막으로 기본값
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'https://be-production-8aa2.up.railway.app').replace(/\/$/, '');
@@ -30,10 +29,6 @@ test.describe('문의하기 API E2E 테스트', () => {
         envPassword: process.env.SUPER_ADMIN_PASSWORD ? '***' : undefined,
       });
     }
-
-    // API_BASE_URL 확인
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('로그인 요청 URL:', `${API_BASE_URL}/api/admin/auth/login`);
 
     const loginResponse = await request.post(`${API_BASE_URL}/api/admin/auth/login`, {
       data: {

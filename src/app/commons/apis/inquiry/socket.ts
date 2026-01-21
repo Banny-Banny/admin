@@ -103,7 +103,6 @@ export class InquirySocketClient {
     this.socket.on('connect', () => {
       this.isConnected = true;
       const connectTime = Date.now();
-      console.log(`[Socket.IO] Connected to ${namespace} at ${new Date(connectTime).toISOString()}`);
       
       // 성능 모니터링: 연결 시간 기록
       if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
@@ -116,7 +115,6 @@ export class InquirySocketClient {
     this.socket.on('disconnect', (reason) => {
       this.isConnected = false;
       const disconnectTime = Date.now();
-      console.log(`[Socket.IO] Disconnected from ${namespace} at ${new Date(disconnectTime).toISOString()}, reason: ${reason}`);
       
       // 성능 모니터링: 연결 해제 시간 기록
       if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
@@ -256,7 +254,6 @@ export class InquirySocketClient {
     this.socket.emit('send_message', { roomId, content });
     
     // 성능 모니터링: 메시지 전송 시간 기록
-    console.log(`[Socket.IO] Message sent to room ${roomId} at ${new Date(sendTime).toISOString()}, length: ${content.length}`);
     
     if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
       (window as any).__SOCKET_METRICS__.messagesSent = 

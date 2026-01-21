@@ -145,7 +145,6 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
     const handleReadAlert = (payload: ReadAlertPayload) => {
       if (isMounted && payload.roomId === inquiry.id) {
         // 읽음 알림 처리 (필요시 UI 업데이트)
-        console.log('Read alert received:', payload);
       }
     };
 
