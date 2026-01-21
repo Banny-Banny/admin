@@ -247,26 +247,26 @@
 
 ### API 데이터 바인딩
 
-- [ ] T081 [US5] Update ReportsPage component to call deleteNotice API when delete is confirmed in src/app/components/ReportsPage/index.tsx
-- [ ] T082 [US5] Handle API response and remove notice from list after successful deletion in src/app/components/ReportsPage/index.tsx
-- [ ] T083 [US5] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
-- [ ] T084 [US5] Navigate to list view after successful deletion in src/app/components/ReportsPage/index.tsx
+- [X] T081 [US5] Update ReportsPage component to call deleteNotice API when delete is confirmed in src/app/components/ReportsPage/index.tsx
+- [X] T082 [US5] Handle API response and remove notice from list after successful deletion in src/app/components/ReportsPage/index.tsx
+- [X] T083 [US5] Handle API error response and display error message in src/app/components/ReportsPage/index.tsx
+- [X] T084 [US5] Navigate to list view after successful deletion in src/app/components/ReportsPage/index.tsx
 
 ### 삭제 확인 다이얼로그
 
-- [ ] T085 [US5] Add "삭제" button to notice detail view in src/app/components/ReportsPage/index.tsx
-- [ ] T086 [US5] Implement delete confirmation dialog using AlertDialog component in src/app/components/ReportsPage/index.tsx
-- [ ] T087 [US5] Handle "확인" button click to proceed with deletion in src/app/components/ReportsPage/index.tsx
-- [ ] T088 [US5] Handle "취소" button click to close dialog without deletion in src/app/components/ReportsPage/index.tsx
+- [X] T085 [US5] Add "삭제" button to notice detail view in src/app/components/ReportsPage/index.tsx
+- [X] T086 [US5] Implement delete confirmation dialog using AlertDialog component in src/app/components/ReportsPage/index.tsx
+- [X] T087 [US5] Handle "확인" button click to proceed with deletion in src/app/components/ReportsPage/index.tsx
+- [X] T088 [US5] Handle "취소" button click to close dialog without deletion in src/app/components/ReportsPage/index.tsx
 
 ### UI 테스트
 
-- [ ] T089 [US5] Verify delete button opens confirmation dialog in src/app/components/ReportsPage/index.tsx
-- [ ] T090 [US5] Verify notice is deleted and removed from list after confirmation in src/app/components/ReportsPage/index.tsx
-- [ ] T091 [US5] Verify "취소" button closes dialog without deletion in src/app/components/ReportsPage/index.tsx
-- [ ] T092 [US5] Verify navigation to list view after successful deletion in src/app/components/ReportsPage/index.tsx
-- [ ] T093 [US5] Verify error handling when notice deletion fails in src/app/components/ReportsPage/index.tsx
-- [ ] T094 [US5] Verify deleted notice cannot be accessed via detail view (404 error) in src/app/components/ReportsPage/index.tsx
+- [X] T089 [US5] Verify delete button opens confirmation dialog in src/app/components/ReportsPage/index.tsx
+- [X] T090 [US5] Verify notice is deleted and removed from list after confirmation in src/app/components/ReportsPage/index.tsx
+- [X] T091 [US5] Verify "취소" button closes dialog without deletion in src/app/components/ReportsPage/index.tsx
+- [X] T092 [US5] Verify navigation to list view after successful deletion in src/app/components/ReportsPage/index.tsx
+- [X] T093 [US5] Verify error handling when notice deletion fails in src/app/components/ReportsPage/index.tsx
+- [X] T094 [US5] Verify deleted notice cannot be accessed via detail view (404 error) in src/app/components/ReportsPage/index.tsx
 
 **Checkpoint**: User Story 5 완료 - 공지사항 삭제 기능이 독립적으로 작동합니다
 

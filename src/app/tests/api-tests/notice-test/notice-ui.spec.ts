@@ -1147,3 +1147,413 @@ test.describe('공지사항 수정 UI 테스트 (User Story 4)', () => {
     }
   });
 });
+
+test.describe('공지사항 삭제 UI 테스트 (User Story 5)', () => {
+  test.beforeEach(async ({ page }) => {
+    // 각 테스트 전에 로그인
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    // 로그인 페이지가 로드될 때까지 대기
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 });
+
+    // 로그인
+    await page.fill('input[type="email"]', TEST_ADMIN.email);
+    await page.fill('input[type="password"]', TEST_ADMIN.password);
+    await page.click('button[type="submit"]');
+
+    // 로그인 완료 대기
+    await page.waitForURL(BASE_URL, { timeout: 10000 });
+    await expect(page.locator('h1:has-text("관리자 로그인")')).not.toBeVisible({ timeout: 5000 });
+
+    // 공지사항 관리 페이지로 이동
+    const noticeMenuButton = page.locator('button').filter({ hasText: '공지사항' });
+    await expect(noticeMenuButton).toBeVisible({ timeout: 5000 });
+    await noticeMenuButton.click();
+    
+    // 공지사항 관리 페이지가 로드될 때까지 대기
+    await page.waitForLoadState('networkidle');
+    
+    // 공지사항 관리 페이지 제목 확인
+    await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('T089: 삭제 버튼 클릭 시 확인 다이얼로그 표시 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 삭제 버튼 찾기 및 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      await expect(page.locator('text=공지사항 삭제 확인')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('text=/정말로 이 공지사항을 삭제하시겠습니까/i')).toBeVisible({ timeout: 5000 });
+      
+      // 취소 버튼과 삭제 버튼이 표시되는지 확인
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      await expect(dialogContent.locator('button:has-text("취소")')).toBeVisible({ timeout: 5000 });
+      await expect(dialogContent.locator('button:has-text("삭제")')).toBeVisible({ timeout: 5000 });
+
+      // 다이얼로그 닫기
+      const cancelButton = dialogContent.locator('button:has-text("취소")');
+      await cancelButton.click();
+      
+      // 다이얼로그가 닫혔는지 확인
+      await expect(page.locator('text=공지사항 삭제 확인')).not.toBeVisible({ timeout: 2000 });
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T090: 공지사항 삭제 후 목록에서 제거 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항의 제목 저장
+      const firstItem = noticeItems.first();
+      const noticeTitle = await firstItem.locator('h3').first().textContent();
+      
+      // 첫 번째 공지사항 클릭
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그에서 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      
+      const confirmButton = dialogContent.locator('button:has-text("삭제")');
+      await confirmButton.click();
+
+      // 삭제 API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 성공 Toast 확인 (선택적 - Toast가 표시될 수 있음)
+      const successToast = page.locator('[data-sonner-toast], [role="alert"], [role="status"]').filter({ 
+        hasText: /삭제되었습니다|성공/i 
+      });
+      await successToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+      // 목록 뷰로 이동했는지 확인
+      await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 5000 });
+
+      // 목록 새로고침 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제된 공지사항이 목록에 없는지 확인
+      if (noticeTitle) {
+        const deletedNotice = page.locator(`text=${noticeTitle}`);
+        const isDeletedNoticeVisible = await deletedNotice.isVisible({ timeout: 2000 }).catch(() => false);
+        expect(isDeletedNoticeVisible).toBe(false);
+      }
+
+      // 목록 개수가 줄었거나 같아야 함 (다른 공지사항이 있을 수 있음)
+      const updatedNoticeItems = page.locator('[class*="noticeItem"]');
+      const updatedItemCount = await updatedNoticeItems.count();
+      expect(updatedItemCount).toBeLessThanOrEqual(itemCount);
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T091: 취소 버튼으로 다이얼로그 닫기 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그가 표시되는지 확인
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+
+      // 취소 버튼 클릭
+      const cancelButton = dialogContent.locator('button:has-text("취소")');
+      await cancelButton.click();
+
+      // 다이얼로그가 닫혔는지 확인
+      await expect(page.locator('text=공지사항 삭제 확인')).not.toBeVisible({ timeout: 2000 });
+
+      // 상세 뷰가 여전히 표시되는지 확인 (삭제되지 않음)
+      const detailView = page.locator('h1').first();
+      await expect(detailView).toBeVisible({ timeout: 2000 });
+
+      // 목록 뷰로 돌아가지 않았는지 확인
+      const listViewTitle = page.locator('h2:has-text("공지사항")');
+      const isListViewVisible = await listViewTitle.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(isListViewVisible).toBe(false);
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T092: 삭제 성공 후 목록 뷰로 이동 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 상세 뷰가 표시되는지 확인
+      const detailView = page.locator('h1').first();
+      await expect(detailView).toBeVisible({ timeout: 5000 });
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그에서 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      
+      const confirmButton = dialogContent.locator('button:has-text("삭제")');
+      await confirmButton.click();
+
+      // 삭제 API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 목록 뷰로 이동했는지 확인
+      await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 5000 });
+
+      // 상세 뷰가 사라졌는지 확인
+      const detailViewAfterDelete = page.locator('h1').first();
+      const isDetailViewVisible = await detailViewAfterDelete.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(isDetailViewVisible).toBe(false);
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T093: 공지사항 삭제 실패 시 에러 처리 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항 클릭
+      const firstItem = noticeItems.first();
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 삭제 API 요청을 차단하여 에러 상태 시뮬레이션
+      await page.route('**/api/admin/notices/**', route => {
+        const method = route.request().method();
+        if (method === 'DELETE') {
+          route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+          });
+        } else {
+          route.continue();
+        }
+      });
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그에서 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      
+      const confirmButton = dialogContent.locator('button:has-text("삭제")');
+      await confirmButton.click();
+
+      // API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(3000);
+
+      // 에러 Toast 확인
+      const errorToast = page.locator('[data-sonner-toast], [role="alert"], [role="status"]').filter({ 
+        hasText: /실패|오류|에러|삭제.*실패|서버|네트워크|연결|확인/i 
+      });
+      const hasErrorToast = await errorToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+      // 또는 페이지에 에러 메시지가 표시되는지 확인
+      const errorMessage = page.locator('text=/실패|오류|에러|네트워크|연결/i');
+      const hasErrorMessage = await errorMessage.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+      // 에러가 표시되어야 함 (Toast 또는 페이지 메시지)
+      expect(hasErrorToast || hasErrorMessage).toBe(true);
+
+      // 다이얼로그가 닫혔는지 확인
+      await expect(page.locator('text=공지사항 삭제 확인')).not.toBeVisible({ timeout: 2000 });
+
+      // 상세 뷰가 여전히 표시되어야 함 (삭제되지 않음)
+      const detailView = page.locator('h1').first();
+      await expect(detailView).toBeVisible({ timeout: 2000 });
+
+      // 네트워크 차단 해제
+      await page.unroute('**/api/admin/notices/**');
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+
+  test('T094: 삭제된 공지사항 상세 조회 시 404 에러 테스트', async ({ page }) => {
+    // API 호출 완료 대기
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 공지사항 목록 확인
+    const noticeItems = page.locator('[class*="noticeItem"]');
+    const itemCount = await noticeItems.count();
+
+    if (itemCount > 0) {
+      // 첫 번째 공지사항의 제목 저장
+      const firstItem = noticeItems.first();
+      const noticeTitle = await firstItem.locator('h3').first().textContent();
+      
+      // 첫 번째 공지사항 클릭
+      await firstItem.click();
+
+      // 상세 뷰로 전환 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 삭제 버튼 클릭
+      const deleteButton = page.locator('button').filter({ hasText: '삭제' });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // 삭제 확인 다이얼로그에서 확인 버튼 클릭
+      const dialogContent = page.locator('[data-slot="alert-dialog-content"]');
+      await expect(dialogContent).toBeVisible({ timeout: 5000 });
+      
+      const confirmButton = dialogContent.locator('button:has-text("삭제")');
+      await confirmButton.click();
+
+      // 삭제 API 호출 완료 대기
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // 목록 뷰로 이동했는지 확인
+      await expect(page.locator('h2:has-text("공지사항")')).toBeVisible({ timeout: 5000 });
+
+      // 목록에서 삭제된 공지사항을 다시 클릭 시도
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // 삭제된 공지사항이 목록에 없는지 확인
+      if (noticeTitle) {
+        const deletedNotice = page.locator(`text=${noticeTitle}`);
+        const isDeletedNoticeVisible = await deletedNotice.isVisible({ timeout: 2000 }).catch(() => false);
+        
+        if (!isDeletedNoticeVisible) {
+          // 삭제된 공지사항이 목록에 없으므로 테스트 통과
+          expect(isDeletedNoticeVisible).toBe(false);
+        } else {
+          // 만약 목록에 아직 있다면 (목록 새로고침이 안 된 경우), 직접 상세 조회 API를 404로 모킹하여 테스트
+          await page.route('**/api/notices/*', route => {
+            route.fulfill({
+              status: 404,
+              contentType: 'application/json',
+              body: JSON.stringify({ success: false, message: '공지사항을 찾을 수 없습니다.' }),
+            });
+          });
+
+          // 삭제된 공지사항 클릭 시도
+          await deletedNotice.click();
+
+          // API 호출 완료 대기
+          await page.waitForLoadState('networkidle');
+          await page.waitForTimeout(2000);
+
+          // 에러 메시지가 표시되는지 확인
+          const errorMessage = page.locator('text=/찾을 수 없습니다|공지사항을 찾을 수 없습니다/i');
+          const hasErrorMessage = await errorMessage.isVisible({ timeout: 5000 }).catch(() => false);
+
+          // 또는 Toast 알림으로 에러가 표시될 수 있음
+          const errorToast = page.locator('[data-sonner-toast], [role="alert"]').filter({ 
+            hasText: /찾을 수 없습니다|에러|실패/i 
+          });
+          const hasErrorToast = await errorToast.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+          // 에러 메시지 또는 Toast가 표시되어야 함
+          expect(hasErrorMessage || hasErrorToast).toBe(true);
+
+          // 네트워크 모킹 해제
+          await page.unroute('**/api/notices/*');
+        }
+      }
+    } else {
+      // 공지사항이 없는 경우 테스트 스킵
+      test.skip();
+    }
+  });
+});

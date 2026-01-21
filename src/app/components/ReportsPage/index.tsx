@@ -2,11 +2,25 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
-import { getNotices, getNoticeById, createNotice, updateNotice } from '../../commons/apis/notice';
+import { getNotices, getNoticeById, createNotice, updateNotice, deleteNotice } from '../../commons/apis/notice';
 import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
 import { useDebounce } from '../../commons/hooks/use-debounce';
 import { handleApiErrorWithToast } from '../../commons/utils/error-handler';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '../../commons/components/alert-dialog';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from "./styles.module.css";
+
+// 페이지네이션 상수
+const NOTICES_PER_PAGE = 10;
 
 // UI용 Notice 인터페이스 (API 데이터 + UI 전용 필드)
 interface Notice {
@@ -69,13 +83,23 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<{ title?: string; content?: string }>({});
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Debounce search term to reduce API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // 검색어가 변경되면 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+    setOffset(0);
+  }, [debouncedSearchTerm]);
 
   // API에서 공지사항 목록 조회
   useEffect(() => {
@@ -84,10 +108,11 @@ export function ReportsPage() {
       setError(null);
 
       try {
+        const calculatedOffset = (currentPage - 1) * NOTICES_PER_PAGE;
         const response = await getNotices({
           search: debouncedSearchTerm || undefined,
-          limit: 100, // 충분히 큰 값으로 설정하여 모든 공지사항 조회
-          offset: 0,
+          limit: NOTICES_PER_PAGE,
+          offset: calculatedOffset,
         });
 
         if (response.success && response.data) {
@@ -118,7 +143,23 @@ export function ReportsPage() {
     };
 
     fetchNotices();
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, currentPage]);
+
+  // 페이지 변경 핸들러
+  const goToPage = (page: number) => {
+    const totalPages = Math.ceil(total / NOTICES_PER_PAGE);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setOffset((page - 1) * NOTICES_PER_PAGE);
+      // 페이지 변경 시 스크롤을 맨 위로 이동
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(total / NOTICES_PER_PAGE);
+  const startIndex = (currentPage - 1) * NOTICES_PER_PAGE;
+  const endIndex = Math.min(startIndex + NOTICES_PER_PAGE, total);
 
   const handleNoticeClick = async (notice: Notice) => {
     // 조회수 증가 (UI 전용)
@@ -194,10 +235,11 @@ export function ReportsPage() {
 
         if (response.success) {
           // 목록 새로고침
+          const calculatedOffset = (currentPage - 1) * NOTICES_PER_PAGE;
           const listResponse = await getNotices({
             search: debouncedSearchTerm || undefined,
-            limit: 100,
-            offset: 0,
+            limit: NOTICES_PER_PAGE,
+            offset: calculatedOffset,
           });
 
           if (listResponse.success && listResponse.data) {
@@ -240,10 +282,12 @@ export function ReportsPage() {
         });
 
         if (response.success && response.data) {
-          // 성공 시 목록 새로고침
+          // 성공 시 목록 새로고침 (새 공지사항이 추가되므로 첫 페이지로)
+          setCurrentPage(1);
+          setOffset(0);
           const listResponse = await getNotices({
             search: debouncedSearchTerm || undefined,
-            limit: 100,
+            limit: NOTICES_PER_PAGE,
             offset: 0,
           });
 
@@ -274,13 +318,65 @@ export function ReportsPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('정말 이 공지사항을 삭제하시겠습니까?')) {
-      // TODO: Phase 5에서 API 연동 예정
-      setNotices(notices.filter((notice) => notice.id !== id));
-      setView('list');
-      toast.success('공지사항이 삭제되었습니다.');
+  const handleDelete = () => {
+    // 삭제 확인 다이얼로그 열기
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedNotice) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await deleteNotice(selectedNotice.originalId);
+
+      if (response.success) {
+        // 삭제 후 현재 페이지의 마지막 항목이 삭제된 경우 이전 페이지로 이동
+        const currentPageItemCount = notices.length;
+        let newPage = currentPage;
+        if (currentPageItemCount === 1 && currentPage > 1) {
+          // 현재 페이지에 항목이 1개뿐이고 첫 페이지가 아니면 이전 페이지로
+          newPage = Math.max(1, currentPage - 1);
+          setCurrentPage(newPage);
+          setOffset((newPage - 1) * NOTICES_PER_PAGE);
+        }
+
+        // 목록 새로고침
+        const newOffset = (newPage - 1) * NOTICES_PER_PAGE;
+        const listResponse = await getNotices({
+          search: debouncedSearchTerm || undefined,
+          limit: NOTICES_PER_PAGE,
+          offset: newOffset,
+        });
+
+        if (listResponse.success && listResponse.data) {
+          const mappedNotices = listResponse.data.items.map(mapApiNoticeToUiNotice);
+          const sortedNotices = [...mappedNotices].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+          setNotices(sortedNotices);
+          setTotal(listResponse.data.total);
+        }
+
+        // 다이얼로그 닫기 및 목록 뷰로 이동
+        setShowDeleteDialog(false);
+        setSelectedNotice(null);
+        setView('list');
+        toast.success('공지사항이 삭제되었습니다.');
+      } else {
+        throw new Error('공지사항 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      handleApiErrorWithToast(err, '공지사항 삭제에 실패했습니다.');
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
   };
 
   const [formData, setFormData] = useState({
@@ -380,6 +476,100 @@ export function ReportsPage() {
               </div>
             )}
           </div>
+
+          {/* 페이지네이션 */}
+          {!loading && !error && totalPages > 1 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginTop: '24px',
+              padding: '16px',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                전체 {total}개 중 {startIndex + 1}-{endIndex}개 표시
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                    color: currentPage === 1 ? '#9ca3af' : '#374151',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <ChevronLeft size={16} />
+                  이전
+                </button>
+                
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // 현재 페이지 주변 2페이지씩만 표시
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 2 && page <= currentPage + 2)
+                    ) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => goToPage(page)}
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            backgroundColor: currentPage === page ? '#3b82f6' : 'white',
+                            color: currentPage === page ? 'white' : '#374151',
+                            cursor: 'pointer',
+                            minWidth: '40px',
+                          }}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (
+                      page === currentPage - 3 ||
+                      page === currentPage + 3
+                    ) {
+                      return (
+                        <span key={page} style={{ padding: '8px 4px', color: '#6b7280' }}>
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                    color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  다음
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -461,7 +651,7 @@ export function ReportsPage() {
                       수정
                     </button>
                     <button
-                      onClick={() => handleDelete(selectedNotice.id)}
+                      onClick={handleDelete}
                       className={styles.c_jiqtbf}
                     >
                       <Trash2 size={18} />
@@ -512,6 +702,38 @@ export function ReportsPage() {
             목록으로
           </button>
         </div>
+
+        {/* 삭제 확인 다이얼로그 */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>공지사항 삭제 확인</AlertDialogTitle>
+              <AlertDialogDescription>
+                정말로 이 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                {selectedNotice && (
+                  <div style={{ marginTop: '8px', fontWeight: '500' }}>
+                    제목: {selectedNotice.title}
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>
+                취소
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                style={{
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                }}
+              >
+                {isDeleting ? '삭제 중...' : '삭제'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
