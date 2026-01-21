@@ -101,6 +101,11 @@ export class InquirySocketClient {
   private joinedRooms: Set<string> = new Set(); // 입장한 방 목록 추적
   private isReauthenticating = false; // 재인증 중인지 체크
   private reconnectionTimer: NodeJS.Timeout | null = null; // 재연결 타이머
+  private messageHandlers: Set<MessageHandler> = new Set(); // 메시지 핸들러 저장
+  private readAlertHandlers: Set<ReadAlertHandler> = new Set(); // 읽음 알림 핸들러 저장
+  private connectHandlers: Set<ConnectHandler> = new Set(); // 연결 핸들러 저장
+  private disconnectHandlers: Set<DisconnectHandler> = new Set(); // 연결 해제 핸들러 저장
+  private errorHandlers: Set<ErrorHandler> = new Set(); // 에러 핸들러 저장
 
   constructor() {
     // 슬래시 중복 방지: URL 끝의 슬래시 제거
@@ -113,7 +118,15 @@ export class InquirySocketClient {
   }
 
   connect(): Socket {
+    // 이미 소켓이 존재하고 연결되어 있으면 재사용
     if (this.socket?.connected) {
+      console.log('[Socket.IO] 이미 연결된 소켓 재사용');
+      return this.socket;
+    }
+
+    // 소켓이 존재하지만 연결되지 않은 경우 (재연결 중일 수 있음)
+    if (this.socket && !this.socket.disconnected) {
+      console.log('[Socket.IO] 소켓이 존재하지만 연결되지 않음, 재연결 대기 중...');
       return this.socket;
     }
 
@@ -122,7 +135,7 @@ export class InquirySocketClient {
     const fullUrl = `${this.apiBaseUrl}${namespace}`;
     
     // 디버깅: 실제 접속 주소 확인
-    console.log('[Socket.IO] 디버깅 정보:');
+    console.log('[Socket.IO] 새 소켓 연결 시도:');
     console.log('  - API Base URL:', this.apiBaseUrl);
     console.log('  - Namespace:', namespace);
     console.log('  - Full URL:', fullUrl);
@@ -130,7 +143,15 @@ export class InquirySocketClient {
     console.log('  - 환경 변수 NEXT_PUBLIC_SOCKET_NAMESPACE:', process.env.NEXT_PUBLIC_SOCKET_NAMESPACE || '(기본값 사용)');
     console.log('  - 환경 변수 NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL || '(기본값 사용)');
     
-    // 토큰 없이도 연결 시도 (재인증 가능)
+    // 기존 소켓이 있으면 완전히 정리
+    if (this.socket) {
+      console.log('[Socket.IO] 기존 소켓 정리 중...');
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    
+    // 토큰 없이도 연결 시도 (재인증 가능) - 문서 스펙에 따라
     this.socket = io(fullUrl, {
       auth: session?.accessToken ? {
         token: session.accessToken,
@@ -154,10 +175,51 @@ export class InquirySocketClient {
         timestamp: new Date().toISOString(),
       });
       
-      // 토큰이 없거나 재인증이 필요한 경우 자동 재인증 시도
-      if (!session?.accessToken && !this.isReauthenticating) {
-        console.log('[Socket.IO] 토큰이 없어 재인증을 시도합니다.');
+      // 저장된 핸들러들을 소켓에 등록
+      this.messageHandlers.forEach((handler) => {
+        const wrappedHandler = (payload: ReceiveMessagePayload) => {
+          console.log('[Socket.IO] receive_message 이벤트 수신 (원본):', payload);
+          handler(payload);
+        };
+        this.socket?.on('receive_message', wrappedHandler);
+      });
+      
+      this.readAlertHandlers.forEach((handler) => {
+        this.socket?.on('read_alert', handler);
+      });
+      
+      this.disconnectHandlers.forEach((handler) => {
+        this.socket?.on('disconnect', handler);
+      });
+      
+      this.errorHandlers.forEach((handler) => {
+        this.socket?.on('connect_error', handler);
+      });
+      
+      this.connectHandlers.forEach((handler) => {
+        handler();
+      });
+      
+      // 문서 스펙에 따라: 토큰이 없거나 만료되면 5초 유예 후 연결이 종료됨
+      // 유예 시간 내에 authenticate 이벤트로 토큰을 다시 보내면 정상 인증됨
+      const currentSession = tokenStorage.get();
+      if (!currentSession?.accessToken && !this.isReauthenticating) {
+        console.log('[Socket.IO] 토큰이 없습니다. 5초 유예 시간 내에 재인증을 시도합니다.');
         this.attemptReauthentication();
+      } else if (currentSession?.accessToken && !this.isReauthenticating) {
+        // 토큰이 있으면 즉시 재인증 시도 (문서 스펙: 재로그인 직후 권장 흐름)
+        console.log('[Socket.IO] 토큰이 있습니다. 즉시 재인증을 시도합니다.');
+        this.authenticate(currentSession.accessToken)
+          .then(() => {
+            console.log('[Socket.IO] 연결 후 즉시 재인증 성공');
+          })
+          .catch((error) => {
+            console.error('[Socket.IO] 연결 후 재인증 실패:', error);
+            // 재인증 실패 시 자동 재시도
+            if (!this.isReauthenticating) {
+              this.attemptReauthentication();
+            }
+          });
       }
       
       // 성능 모니터링: 연결 시간 기록
@@ -175,6 +237,11 @@ export class InquirySocketClient {
       console.log('[Socket.IO] 연결 해제:', {
         reason,
         timestamp: new Date().toISOString(),
+      });
+      
+      // 저장된 disconnect 핸들러들 호출
+      this.disconnectHandlers.forEach((handler) => {
+        handler();
       });
       
       // 토큰 만료로 인한 연결 해제 시 재인증 시도
@@ -201,6 +268,11 @@ export class InquirySocketClient {
         timestamp: new Date().toISOString(),
       });
       this.isConnected = false;
+      
+      // 저장된 error 핸들러들 호출
+      this.errorHandlers.forEach((handler) => {
+        handler(error);
+      });
       
       // 인증 오류인 경우 재인증 시도
       if (error.message.includes('Authentication') || error.message.includes('Unauthorized')) {
@@ -245,22 +317,23 @@ export class InquirySocketClient {
     // 재인증 전에 입장했던 방 목록 백업 (재입장용)
     const roomsToRejoin = Array.from(this.joinedRooms);
 
-    // 5초 내에 토큰을 가져와서 재인증
+    // 5초 유예 시간 내에 토큰을 가져와서 재인증 (문서 스펙에 따라)
+    // 가능한 빨리 재인증 시도 (서버가 5초 유예를 주는 동안)
     this.reconnectionTimer = setTimeout(() => {
       const session = tokenStorage.get();
       
       if (!session?.accessToken) {
-        console.error('[Socket.IO] 재인증 실패: 유효한 토큰을 찾을 수 없습니다.');
+        console.error('[Socket.IO] 재인증 실패: 유효한 토큰을 찾을 수 없습니다. 5초 유예 시간이 지나면 연결이 종료됩니다.');
         this.isReauthenticating = false;
         
-        // 연결이 끊어지도록 강제
-        if (this.socket) {
-          this.socket.disconnect();
-        }
+        // 연결이 끊어지도록 강제 (5초 후 서버가 끊을 것임)
+        // 여기서는 그냥 대기
         return;
       }
 
-      // authenticate 이벤트로 토큰 재전송
+      console.log('[Socket.IO] authenticate 이벤트로 토큰 재전송 (5초 유예 시간 내)');
+      
+      // authenticate 이벤트로 토큰 재전송 (문서 스펙에 따라)
       this.authenticate(session.accessToken)
         .then(() => {
           console.log('[Socket.IO] 재인증 성공');
@@ -529,8 +602,11 @@ export class InquirySocketClient {
   }
 
   onReceiveMessage(handler: MessageHandler): void {
-    if (this.socket) {
-      // 디버깅을 위한 래퍼 추가
+    // 핸들러 저장
+    this.messageHandlers.add(handler);
+    
+    // 소켓이 이미 연결되어 있으면 즉시 등록
+    if (this.socket && this.isSocketConnected()) {
       const wrappedHandler = (payload: ReceiveMessagePayload) => {
         console.log('[Socket.IO] receive_message 이벤트 수신 (원본):', payload);
         handler(payload);
@@ -540,46 +616,109 @@ export class InquirySocketClient {
   }
 
   offReceiveMessage(handler?: MessageHandler): void {
-    if (this.socket) {
-      if (handler) {
-        this.socket.off('receive_message', handler);
-      } else {
+    if (handler) {
+      // 특정 핸들러 제거
+      this.messageHandlers.delete(handler);
+      // 소켓에서도 제거 (모든 receive_message 리스너 제거 후 다시 등록)
+      if (this.socket) {
+        this.socket.off('receive_message');
+        // 나머지 핸들러들 다시 등록
+        this.messageHandlers.forEach((h) => {
+          const wrappedHandler = (payload: ReceiveMessagePayload) => {
+            console.log('[Socket.IO] receive_message 이벤트 수신 (원본):', payload);
+            h(payload);
+          };
+          this.socket?.on('receive_message', wrappedHandler);
+        });
+      }
+    } else {
+      // 모든 핸들러 제거
+      this.messageHandlers.clear();
+      if (this.socket) {
         this.socket.off('receive_message');
       }
     }
   }
 
   onReadAlert(handler: ReadAlertHandler): void {
-    if (this.socket) {
+    // 핸들러 저장
+    this.readAlertHandlers.add(handler);
+    
+    // 소켓이 이미 연결되어 있으면 즉시 등록
+    if (this.socket && this.isSocketConnected()) {
       this.socket.on('read_alert', handler);
     }
   }
 
   offReadAlert(handler?: ReadAlertHandler): void {
-    if (this.socket) {
-      if (handler) {
+    if (handler) {
+      this.readAlertHandlers.delete(handler);
+      if (this.socket) {
         this.socket.off('read_alert', handler);
-      } else {
+      }
+    } else {
+      this.readAlertHandlers.clear();
+      if (this.socket) {
         this.socket.off('read_alert');
       }
     }
   }
 
   onConnect(handler: ConnectHandler): void {
-    if (this.socket) {
-      this.socket.on('connect', handler);
+    // 핸들러 저장
+    this.connectHandlers.add(handler);
+    
+    // 소켓이 이미 연결되어 있으면 즉시 호출
+    if (this.socket && this.isSocketConnected()) {
+      handler();
     }
   }
 
   onDisconnect(handler: DisconnectHandler): void {
+    // 핸들러 저장
+    this.disconnectHandlers.add(handler);
+    
+    // 소켓이 이미 연결되어 있으면 즉시 등록
     if (this.socket) {
       this.socket.on('disconnect', handler);
     }
   }
 
+  offDisconnect(handler?: DisconnectHandler): void {
+    if (handler) {
+      this.disconnectHandlers.delete(handler);
+      if (this.socket) {
+        this.socket.off('disconnect', handler);
+      }
+    } else {
+      this.disconnectHandlers.clear();
+      if (this.socket) {
+        this.socket.off('disconnect');
+      }
+    }
+  }
+
   onError(handler: ErrorHandler): void {
+    // 핸들러 저장
+    this.errorHandlers.add(handler);
+    
+    // 소켓이 이미 연결되어 있으면 즉시 등록
     if (this.socket) {
       this.socket.on('connect_error', handler);
+    }
+  }
+
+  offError(handler?: ErrorHandler): void {
+    if (handler) {
+      this.errorHandlers.delete(handler);
+      if (this.socket) {
+        this.socket.off('connect_error', handler);
+      }
+    } else {
+      this.errorHandlers.clear();
+      if (this.socket) {
+        this.socket.off('connect_error');
+      }
     }
   }
 
