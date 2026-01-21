@@ -123,7 +123,17 @@
 - [ ] T039 [US1] Update ProductsPage component to remove products state and pass to ProductList in src/app/components/ProductsPage/index.tsx
 - [ ] T040 [US1] Update ProductsPage to display total product count from API response in src/app/components/ProductsPage/index.tsx
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+### UI 테스트
+
+- [ ] T041 [US1] Run UI tests for product list display and verify all products are rendered correctly
+- [ ] T042 [US1] Run UI tests for search functionality and verify filtered results
+- [ ] T043 [US1] Run UI tests for category filter and verify filtered results
+- [ ] T044 [US1] Run UI tests for status filter and verify filtered results
+- [ ] T045 [US1] Run UI tests for empty state display when no products found
+- [ ] T046 [US1] Run UI tests for loading state display during API calls
+- [ ] T047 [US1] Run UI tests for error handling display on API failures
+
+**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. UI tests must pass before proceeding.
 
 ---
 
@@ -139,32 +149,41 @@
 
 ### 폼 데이터 매핑 및 API 연동
 
-- [ ] T041 [US2] Update ProductsPage formData state to match CreateProductRequest interface (name, price, description, thumbnailUrl, categoryId, isActive, productType, mediaTypes, maxMediaCount) in src/app/components/ProductsPage/index.tsx
-- [ ] T042 [US2] Remove discountPrice and stock fields from form (not in API) or map appropriately in src/app/components/ProductsPage/index.tsx
-- [ ] T043 [US2] Add productType field to form (TIME_CAPSULE, EASTER_EGG) in src/app/components/ProductsPage/index.tsx
-- [ ] T044 [US2] Add mediaTypes field to form (array of strings) in src/app/components/ProductsPage/index.tsx
-- [ ] T045 [US2] Add maxMediaCount field to form (number) in src/app/components/ProductsPage/index.tsx
-- [ ] T046 [US2] Map form status ('판매중'/'판매중지') to isActive boolean for API in src/app/components/ProductsPage/index.tsx
-- [ ] T047 [US2] Map form category string to categoryId UUID for API (if needed) in src/app/components/ProductsPage/index.tsx
-- [ ] T048 [US2] Replace handleSubmit to call createProduct API instead of local state update in src/app/components/ProductsPage/index.tsx
-- [ ] T049 [US2] Handle API response and add new product to list or refresh list in src/app/components/ProductsPage/index.tsx
-- [ ] T050 [US2] Show success toast notification after successful product creation in src/app/components/ProductsPage/index.tsx
-- [ ] T051 [US2] Show error toast notification on API failure in src/app/components/ProductsPage/index.tsx
+- [ ] T048 [US2] Update ProductsPage formData state to match CreateProductRequest interface (name, price, description, thumbnailUrl, categoryId, isActive, productType, mediaTypes, maxMediaCount) in src/app/components/ProductsPage/index.tsx
+- [ ] T049 [US2] Remove discountPrice and stock fields from form (not in API) or map appropriately in src/app/components/ProductsPage/index.tsx
+- [ ] T050 [US2] Add productType field to form (TIME_CAPSULE, EASTER_EGG) in src/app/components/ProductsPage/index.tsx
+- [ ] T051 [US2] Add mediaTypes field to form (array of strings) in src/app/components/ProductsPage/index.tsx
+- [ ] T052 [US2] Add maxMediaCount field to form (number) in src/app/components/ProductsPage/index.tsx
+- [ ] T053 [US2] Map form status ('판매중'/'판매중지') to isActive boolean for API in src/app/components/ProductsPage/index.tsx
+- [ ] T054 [US2] Map form category string to categoryId UUID for API (if needed) in src/app/components/ProductsPage/index.tsx
+- [ ] T055 [US2] Replace handleSubmit to call createProduct API instead of local state update in src/app/components/ProductsPage/index.tsx
+- [ ] T056 [US2] Handle API response and add new product to list or refresh list in src/app/components/ProductsPage/index.tsx
+- [ ] T057 [US2] Show success toast notification after successful product creation in src/app/components/ProductsPage/index.tsx
+- [ ] T058 [US2] Show error toast notification on API failure in src/app/components/ProductsPage/index.tsx
 
 ### 폼 검증
 
-- [ ] T052 [US2] Add client-side validation for required fields (name, price, productType, mediaTypes, maxMediaCount, isActive) in src/app/components/ProductsPage/index.tsx
-- [ ] T053 [US2] Display validation error messages for missing required fields in src/app/components/ProductsPage/index.tsx
-- [ ] T054 [US2] Validate price is a positive number in src/app/components/ProductsPage/index.tsx
+- [ ] T059 [US2] Add client-side validation for required fields (name, price, productType, mediaTypes, maxMediaCount, isActive) in src/app/components/ProductsPage/index.tsx
+- [ ] T060 [US2] Display validation error messages for missing required fields in src/app/components/ProductsPage/index.tsx
+- [ ] T061 [US2] Validate price is a positive number in src/app/components/ProductsPage/index.tsx
 
 ### 폼 리셋 및 UI 업데이트
 
-- [ ] T055 [US2] Reset form data after successful submission in src/app/components/ProductsPage/index.tsx
-- [ ] T056 [US2] Close form after successful submission in src/app/components/ProductsPage/index.tsx
-- [ ] T057 [US2] Add loading state during product creation API call in src/app/components/ProductsPage/index.tsx
-- [ ] T058 [US2] Disable submit button during API call to prevent duplicate submissions in src/app/components/ProductsPage/index.tsx
+- [ ] T062 [US2] Reset form data after successful submission in src/app/components/ProductsPage/index.tsx
+- [ ] T063 [US2] Close form after successful submission in src/app/components/ProductsPage/index.tsx
+- [ ] T064 [US2] Add loading state during product creation API call in src/app/components/ProductsPage/index.tsx
+- [ ] T065 [US2] Disable submit button during API call to prevent duplicate submissions in src/app/components/ProductsPage/index.tsx
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+### UI 테스트
+
+- [ ] T066 [US2] Run UI tests for product creation form display
+- [ ] T067 [US2] Run UI tests for form validation (required fields)
+- [ ] T068 [US2] Run UI tests for successful product creation flow
+- [ ] T069 [US2] Run UI tests for new product appearing in list after creation
+- [ ] T070 [US2] Run UI tests for form reset after successful submission
+- [ ] T071 [US2] Run UI tests for error handling on creation failure
+
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. UI tests must pass before proceeding.
 
 ---
 
@@ -180,16 +199,24 @@
 
 ### 상세 조회 UI 추가
 
-- [ ] T059 [US3] Add product detail view/modal component or page route in src/app/components/ProductsPage/index.tsx or create ProductDetail component
-- [ ] T060 [US3] Add click handler to ProductList rows to open product detail view in src/app/components/ProductList/index.tsx
-- [ ] T061 [US3] Implement getProductById API call when product is selected in src/app/components/ProductsPage/index.tsx or ProductDetail component
-- [ ] T062 [US3] Display product detail information (all fields from API response) in product detail view
-- [ ] T063 [US3] Map API Product fields to UI display format in product detail view
-- [ ] T064 [US3] Add loading state while fetching product detail
-- [ ] T065 [US3] Add error handling for product not found (404) with appropriate message
-- [ ] T066 [US3] Add error handling for API failures with toast notification
+- [ ] T072 [US3] Add product detail view/modal component or page route in src/app/components/ProductsPage/index.tsx or create ProductDetail component
+- [ ] T073 [US3] Add click handler to ProductList rows to open product detail view in src/app/components/ProductList/index.tsx
+- [ ] T074 [US3] Implement getProductById API call when product is selected in src/app/components/ProductsPage/index.tsx or ProductDetail component
+- [ ] T075 [US3] Display product detail information (all fields from API response) in product detail view
+- [ ] T076 [US3] Map API Product fields to UI display format in product detail view
+- [ ] T077 [US3] Add loading state while fetching product detail
+- [ ] T078 [US3] Add error handling for product not found (404) with appropriate message
+- [ ] T079 [US3] Add error handling for API failures with toast notification
 
-**Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently
+### UI 테스트
+
+- [ ] T080 [US3] Run UI tests for product detail view opening when product is clicked
+- [ ] T081 [US3] Run UI tests for product detail information display (all fields)
+- [ ] T082 [US3] Run UI tests for loading state while fetching product detail
+- [ ] T083 [US3] Run UI tests for error handling when product not found (404)
+- [ ] T084 [US3] Run UI tests for error handling on API failures
+
+**Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently. UI tests must pass before proceeding.
 
 ---
 
@@ -205,21 +232,31 @@
 
 ### 수정 폼 구현
 
-- [ ] T067 [US4] Add "수정" button to product detail view
-- [ ] T068 [US4] Create edit mode state in product detail view or ProductsPage component
-- [ ] T069 [US4] Load existing product data into edit form when edit button is clicked
-- [ ] T070 [US4] Map API Product fields to edit form fields (handle null values appropriately)
-- [ ] T071 [US4] Implement updateProduct API call with UpdateProductRequest in edit form submit handler
-- [ ] T072 [US4] Handle partial updates (only changed fields) in UpdateProductRequest
-- [ ] T073 [US4] Show success toast notification after successful product update
-- [ ] T074 [US4] Refresh product list and detail view after successful update
-- [ ] T075 [US4] Show error toast notification on API failure
-- [ ] T076 [US4] Add loading state during product update API call
-- [ ] T077 [US4] Add "취소" button to exit edit mode without saving
-- [ ] T078 [US4] Add client-side validation for required fields in edit form
-- [ ] T079 [US4] Display validation error messages for invalid inputs
+- [ ] T085 [US4] Add "수정" button to product detail view
+- [ ] T086 [US4] Create edit mode state in product detail view or ProductsPage component
+- [ ] T087 [US4] Load existing product data into edit form when edit button is clicked
+- [ ] T088 [US4] Map API Product fields to edit form fields (handle null values appropriately)
+- [ ] T089 [US4] Implement updateProduct API call with UpdateProductRequest in edit form submit handler
+- [ ] T090 [US4] Handle partial updates (only changed fields) in UpdateProductRequest
+- [ ] T091 [US4] Show success toast notification after successful product update
+- [ ] T092 [US4] Refresh product list and detail view after successful update
+- [ ] T093 [US4] Show error toast notification on API failure
+- [ ] T094 [US4] Add loading state during product update API call
+- [ ] T095 [US4] Add "취소" button to exit edit mode without saving
+- [ ] T096 [US4] Add client-side validation for required fields in edit form
+- [ ] T097 [US4] Display validation error messages for invalid inputs
 
-**Checkpoint**: At this point, User Stories 1, 2, 3, AND 4 should all work independently
+### UI 테스트
+
+- [ ] T098 [US4] Run UI tests for edit mode activation when edit button is clicked
+- [ ] T099 [US4] Run UI tests for existing product data loading into edit form
+- [ ] T100 [US4] Run UI tests for product update flow (form submission)
+- [ ] T101 [US4] Run UI tests for updated product data reflecting in list and detail view
+- [ ] T102 [US4] Run UI tests for form validation in edit mode
+- [ ] T103 [US4] Run UI tests for cancel button functionality (exit edit mode without saving)
+- [ ] T104 [US4] Run UI tests for error handling on update failure
+
+**Checkpoint**: At this point, User Stories 1, 2, 3, AND 4 should all work independently. UI tests must pass before proceeding.
 
 ---
 
@@ -235,18 +272,26 @@
 
 ### 삭제 기능 구현
 
-- [ ] T080 [US5] Add "삭제" button to product detail view
-- [ ] T081 [US5] Create delete confirmation dialog component using Radix UI AlertDialog
-- [ ] T082 [US5] Show confirmation dialog when delete button is clicked
-- [ ] T083 [US5] Implement deleteProduct API call when confirmation is confirmed
-- [ ] T084 [US5] Handle delete success: remove product from list or refresh list
-- [ ] T085 [US5] Show success toast notification after successful product deletion
-- [ ] T086 [US5] Show error toast notification on API failure
-- [ ] T087 [US5] Add loading state during product deletion API call
-- [ ] T088 [US5] Close product detail view after successful deletion
-- [ ] T089 [US5] Handle case where deleted product ID is used for detail view (show error or redirect)
+- [ ] T105 [US5] Add "삭제" button to product detail view
+- [ ] T106 [US5] Create delete confirmation dialog component using Radix UI AlertDialog
+- [ ] T107 [US5] Show confirmation dialog when delete button is clicked
+- [ ] T108 [US5] Implement deleteProduct API call when confirmation is confirmed
+- [ ] T109 [US5] Handle delete success: remove product from list or refresh list
+- [ ] T110 [US5] Show success toast notification after successful product deletion
+- [ ] T111 [US5] Show error toast notification on API failure
+- [ ] T112 [US5] Add loading state during product deletion API call
+- [ ] T113 [US5] Close product detail view after successful deletion
+- [ ] T114 [US5] Handle case where deleted product ID is used for detail view (show error or redirect)
 
-**Checkpoint**: At this point, all User Stories (1-5) should be fully functional
+### UI 테스트
+
+- [ ] T115 [US5] Run UI tests for delete confirmation dialog display
+- [ ] T116 [US5] Run UI tests for product deletion flow (confirmation → deletion)
+- [ ] T117 [US5] Run UI tests for deleted product removal from list
+- [ ] T118 [US5] Run UI tests for cancel button in delete confirmation dialog
+- [ ] T119 [US5] Run UI tests for error handling on deletion failure
+
+**Checkpoint**: At this point, all User Stories (1-5) should be fully functional. UI tests must pass before proceeding.
 
 ---
 
@@ -256,41 +301,51 @@
 
 ### 에러 처리 개선
 
-- [ ] T090 [P] Implement consistent error handling pattern across all API calls
-- [ ] T091 [P] Handle token expiration (401) with automatic redirect to login page
-- [ ] T092 [P] Handle network errors with user-friendly error messages
-- [ ] T093 [P] Add retry logic for failed API calls (optional)
+- [ ] T120 [P] Implement consistent error handling pattern across all API calls
+- [ ] T121 [P] Handle token expiration (401) with automatic redirect to login page
+- [ ] T122 [P] Handle network errors with user-friendly error messages
+- [ ] T123 [P] Add retry logic for failed API calls (optional)
 
 ### 로딩 상태 개선
 
-- [ ] T094 [P] Implement consistent loading spinner/indicator across all components
-- [ ] T095 [P] Add skeleton loading states for better UX
+- [ ] T124 [P] Implement consistent loading spinner/indicator across all components
+- [ ] T125 [P] Add skeleton loading states for better UX
 
 ### 성능 최적화
 
-- [ ] T096 [P] Implement proper debouncing for search input (if not done in US1)
-- [ ] T097 [P] Add pagination controls if needed (limit/offset from API response)
-- [ ] T098 [P] Optimize re-renders using React.memo or useMemo where appropriate
+- [ ] T126 [P] Implement proper debouncing for search input (if not done in US1)
+- [ ] T127 [P] Add pagination controls if needed (limit/offset from API response)
+- [ ] T128 [P] Optimize re-renders using React.memo or useMemo where appropriate
 
 ### UI/UX 개선
 
-- [ ] T099 [P] Ensure all API data fields are properly displayed in UI
-- [ ] T100 [P] Update ProductList component to handle all API Product fields correctly
-- [ ] T101 [P] Ensure date formatting is consistent (ISO 8601 → readable format)
-- [ ] T102 [P] Add proper empty states for all scenarios
-- [ ] T103 [P] Ensure responsive design works with new API data structure
+- [ ] T129 [P] Ensure all API data fields are properly displayed in UI
+- [ ] T130 [P] Update ProductList component to handle all API Product fields correctly
+- [ ] T131 [P] Ensure date formatting is consistent (ISO 8601 → readable format)
+- [ ] T132 [P] Add proper empty states for all scenarios
+- [ ] T133 [P] Ensure responsive design works with new API data structure
 
 ### 코드 품질
 
-- [ ] T104 [P] Remove unused code and hardcoded data
-- [ ] T105 [P] Add TypeScript type safety checks
-- [ ] T106 [P] Ensure all components follow consistent code style
-- [ ] T107 [P] Add JSDoc comments for API functions
+- [ ] T134 [P] Remove unused code and hardcoded data
+- [ ] T135 [P] Add TypeScript type safety checks
+- [ ] T136 [P] Ensure all components follow consistent code style
+- [ ] T137 [P] Add JSDoc comments for API functions
 
 ### 테스트
 
-- [ ] T108 [P] Verify all E2E tests still pass after UI changes
-- [ ] T109 [P] Add additional E2E tests for UI interactions if needed
+- [ ] T138 [P] Verify all E2E tests still pass after UI changes
+- [ ] T139 [P] Add additional E2E tests for UI interactions if needed
+
+### 최종 검증 및 푸시
+
+- [ ] T140 Run all UI tests for all user stories and verify all tests pass
+- [ ] T141 Run build command (`npm run build`) and verify build succeeds
+- [ ] T142 Run linting and verify no errors
+- [ ] T143 Commit all changes with appropriate commit message
+- [ ] T144 Push changes to remote repository (003-product-management branch)
+
+**Checkpoint**: All UI tests pass, build succeeds, and changes are pushed to remote repository
 
 ---
 
@@ -342,17 +397,17 @@
 
 ## Summary
 
-- **Total Tasks**: 109
+- **Total Tasks**: 144
 - **Tasks per Story**:
   - Setup: 4 tasks
   - Foundational: 8 tasks
   - E2E Tests: 7 tasks
-  - US1 (목록 조회): 21 tasks
-  - US2 (등록): 18 tasks
-  - US3 (상세 조회): 8 tasks
-  - US4 (수정): 13 tasks
-  - US5 (삭제): 10 tasks
-  - Polish: 20 tasks
+  - US1 (목록 조회): 28 tasks (21 implementation + 7 UI tests)
+  - US2 (등록): 24 tasks (18 implementation + 6 UI tests)
+  - US3 (상세 조회): 13 tasks (8 implementation + 5 UI tests)
+  - US4 (수정): 19 tasks (13 implementation + 6 UI tests)
+  - US5 (삭제): 15 tasks (10 implementation + 5 UI tests)
+  - Polish: 24 tasks (20 implementation + 4 final verification & push)
 
 - **Independent Test Criteria**:
   - US1: Can view product list, search, and filter independently
