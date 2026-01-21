@@ -85,17 +85,25 @@ export class InquirySocketClient {
       throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
     }
 
-    this.socket = io(`${this.apiBaseUrl}/admin-chat`, {
+    // Socket.IO 네임스페이스 연결
+    // 환경 변수로 네임스페이스를 설정할 수 있으며, 기본값은 '/admin-chat' 네임스페이스
+    // 스펙에 따라 /admin-chat 네임스페이스 사용
+    const namespace = process.env.NEXT_PUBLIC_SOCKET_NAMESPACE || '/admin-chat';
+    this.socket = io(`${this.apiBaseUrl}${namespace}`, {
       auth: {
         token: session.accessToken,
       },
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000,
     });
 
     this.socket.on('connect', () => {
       this.isConnected = true;
       const connectTime = Date.now();
-      console.log(`[Socket.IO] Connected to /admin-chat at ${new Date(connectTime).toISOString()}`);
+      console.log(`[Socket.IO] Connected to ${namespace} at ${new Date(connectTime).toISOString()}`);
       
       // 성능 모니터링: 연결 시간 기록
       if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
@@ -108,7 +116,7 @@ export class InquirySocketClient {
     this.socket.on('disconnect', (reason) => {
       this.isConnected = false;
       const disconnectTime = Date.now();
-      console.log(`[Socket.IO] Disconnected from /admin-chat at ${new Date(disconnectTime).toISOString()}, reason: ${reason}`);
+      console.log(`[Socket.IO] Disconnected from ${namespace} at ${new Date(disconnectTime).toISOString()}, reason: ${reason}`);
       
       // 성능 모니터링: 연결 해제 시간 기록
       if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
@@ -120,6 +128,14 @@ export class InquirySocketClient {
     this.socket.on('connect_error', (error) => {
       console.error('[Socket.IO] Connection error:', error);
       this.isConnected = false;
+      
+      // Invalid namespace 오류인 경우 더 명확한 메시지 제공
+      if (error.message.includes('Invalid namespace') || error.message.includes('Namespace not found')) {
+        console.error(`[Socket.IO] 네임스페이스 오류: ${namespace} 네임스페이스가 서버에서 지원되지 않습니다.`);
+        console.error(`[Socket.IO] 서버 URL: ${this.apiBaseUrl}`);
+        console.error(`[Socket.IO] 시도한 네임스페이스: ${namespace}`);
+        console.error(`[Socket.IO] NEXT_PUBLIC_SOCKET_NAMESPACE 환경 변수를 설정하여 다른 네임스페이스를 사용하거나 기본 네임스페이스(/admin-chat)를 사용해주세요.`);
+      }
       
       // 성능 모니터링: 연결 오류 기록
       if (typeof window !== 'undefined' && (window as any).__SOCKET_METRICS__) {
@@ -148,13 +164,53 @@ export class InquirySocketClient {
   }
 
   async joinRoom(roomId: string): Promise<JoinRoomResponse> {
+    // Socket이 없거나 연결되지 않은 경우 연결 시도
     if (!this.socket || !this.isSocketConnected()) {
       this.connect();
+      
+      // 연결이 완료될 때까지 대기
+      await new Promise<void>((resolve, reject) => {
+        if (!this.socket) {
+          reject(new Error('Socket 초기화 실패'));
+          return;
+        }
+
+        const connectTimeout = setTimeout(() => {
+          reject(new Error('Socket 연결 시간 초과'));
+        }, 20000);
+
+        const onConnect = () => {
+          clearTimeout(connectTimeout);
+          this.socket?.off('connect', onConnect);
+          this.socket?.off('connect_error', onError);
+          resolve();
+        };
+
+        const onError = (error: Error) => {
+          clearTimeout(connectTimeout);
+          this.socket?.off('connect', onConnect);
+          this.socket?.off('connect_error', onError);
+          reject(new Error(`Socket 연결 실패: ${error.message}`));
+        };
+
+        if (this.socket.connected) {
+          clearTimeout(connectTimeout);
+          resolve();
+        } else {
+          this.socket.on('connect', onConnect);
+          this.socket.on('connect_error', onError);
+        }
+      });
     }
 
     return new Promise((resolve, reject) => {
       if (!this.socket) {
         reject(new Error('Socket이 연결되지 않았습니다.'));
+        return;
+      }
+
+      if (!this.socket.connected) {
+        reject(new Error('Socket이 연결되지 않은 상태입니다.'));
         return;
       }
 
