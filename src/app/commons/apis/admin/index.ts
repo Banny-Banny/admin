@@ -96,3 +96,13 @@ export async function getAdminProfile(): Promise<AdminProfileResponse> {
 export async function logout(): Promise<LogoutResponse> {
   return apiClient.post<LogoutResponse>('/api/admin/auth/logout');
 }
+
+// ============================================================================
+// 주문 관리 API (re-export)
+// ============================================================================
+
+export {
+  fetchOrders,
+  fetchOrderDetail,
+  updateOrderStatus,
+} from './orders';

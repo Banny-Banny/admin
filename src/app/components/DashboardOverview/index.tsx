@@ -75,31 +75,14 @@ export function DashboardOverview() {
     );
   }
 
-  // 데이터가 없는 경우 (빈 상태)
-  if (!data || (data.signups == null && data.newInquiries == null && data.dau == null)) {
-    return (
-      <div className={styles.c_1j8i8bf}>
-        <div>
-          <h2 className={styles.c_1dlkxbt}>대시보드</h2>
-          <p className={styles.c_9ngaqo}>전체 통계 및 최근 활동을 확인하세요</p>
-        </div>
-        <div className={styles.c_dashboard_content}>
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-gray-600 text-lg">데이터가 없습니다</p>
-              <p className="text-gray-500 mt-2">서비스가 시작되면 통계가 표시됩니다</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 데이터가 없는 경우에도 DashboardContent를 렌더링하여 차트 섹션을 표시
+  const isEmpty = !data || (data.signups == null && data.newInquiries == null && data.dau == null);
 
-  return <DashboardContent summaryData={data} />;
+  return <DashboardContent summaryData={data} isEmpty={isEmpty} />;
 }
 
 // 대시보드 콘텐츠 컴포넌트 (차트 포함)
-function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType<typeof useDashboardSummary>['data']> }) {
+function DashboardContent({ summaryData, isEmpty = false }: { summaryData: ReturnType<typeof useDashboardSummary>['data']; isEmpty?: boolean }) {
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
   const { data: chartsData, isLoading: chartsLoading, error: chartsError } = useDashboardCharts({ period });
   const { data: trendsData, isLoading: trendsLoading, error: trendsError } = useUserTrends({ period: '90d' });
@@ -137,40 +120,50 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
 
       {/* 요약 지표 카드 */}
       <div className={styles.c_dashboard_content} data-testid="dashboard-summary">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="신규 가입"
-            value={(summaryData.signups ?? 0).toLocaleString()}
-            change="0%"
-            changeType="increase"
-            icon={UserPlus}
-            color="blue"
-          />
-          <StatCard
-            title="일일 활성 사용자"
-            value={(summaryData.dau ?? 0).toLocaleString()}
-            change="0%"
-            changeType="increase"
-            icon={Users}
-            color="green"
-          />
-          <StatCard
-            title="새 문의"
-            value={(summaryData.newInquiries ?? 0).toLocaleString()}
-            change="0%"
-            changeType="increase"
-            icon={MessageSquare}
-            color="purple"
-          />
-        </div>
+        {isEmpty ? (
+          <div className="flex items-center justify-center py-12 mb-8">
+            <div className="text-center">
+              <p className="text-gray-600 text-lg">데이터가 없습니다</p>
+              <p className="text-gray-500 mt-2">서비스가 시작되면 통계가 표시됩니다</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatCard
+              title="신규 가입"
+              value={(summaryData?.signups ?? 0).toLocaleString()}
+              change="0%"
+              changeType="increase"
+              icon={UserPlus}
+              color="blue"
+            />
+            <StatCard
+              title="일일 활성 사용자"
+              value={(summaryData?.dau ?? 0).toLocaleString()}
+              change="0%"
+              changeType="increase"
+              icon={Users}
+              color="green"
+            />
+            <StatCard
+              title="새 문의"
+              value={(summaryData?.newInquiries ?? 0).toLocaleString()}
+              change="0%"
+              changeType="increase"
+              icon={MessageSquare}
+              color="purple"
+            />
+          </div>
+        )}
 
         {/* 기간별 차트 */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">기간별 통계</h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-testid="period-buttons">
               <button
                 onClick={() => setPeriod('day')}
+                data-testid="period-day"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   period === 'day'
                     ? 'bg-blue-500 text-white'
@@ -181,6 +174,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
               </button>
               <button
                 onClick={() => setPeriod('week')}
+                data-testid="period-week"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   period === 'week'
                     ? 'bg-blue-500 text-white'
@@ -191,6 +185,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
               </button>
               <button
                 onClick={() => setPeriod('month')}
+                data-testid="period-month"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   period === 'month'
                     ? 'bg-blue-500 text-white'
@@ -203,12 +198,12 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
           </div>
 
           {chartsLoading ? (
-            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow">
+            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow" data-testid="chart-loading">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
               <p className="ml-4 text-gray-600">차트 데이터를 불러오는 중...</p>
             </div>
           ) : chartsError ? (
-            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow">
+            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow" data-testid="chart-error">
               <div className="text-center">
                 <p className="text-red-600 text-lg font-semibold">차트 데이터를 불러오는 중 오류가 발생했습니다</p>
                 <p className="text-gray-600 mt-2">
@@ -217,7 +212,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
               </div>
             </div>
           ) : hasChartsData ? (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6" data-testid="chart-canvas">
               <Line
                 data={{
                   labels: chartItems.map((item) => item.period),
@@ -263,7 +258,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow">
+            <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow" data-testid="chart-no-data">
               <div className="text-center">
                 <p className="text-gray-600 text-lg">차트 데이터가 없습니다</p>
                 <p className="text-gray-500 mt-2">선택한 기간에 데이터가 없습니다</p>
@@ -273,7 +268,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
         </div>
 
         {/* 사용자 가입/탈퇴 추이 차트 */}
-        <div className="mt-8">
+        <div className="mt-8" data-testid="user-trends-section">
           <h3 className="text-lg font-semibold mb-4">사용자 가입/탈퇴 추이 (최근 90일)</h3>
           {trendsLoading ? (
             <div className="flex items-center justify-center py-12 bg-white rounded-lg shadow">
@@ -293,11 +288,11 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
             <div className="bg-white rounded-lg shadow p-6">
               <Line
                 data={{
-                  labels: trendsData.dates,
+                  labels: trendsItems.map((item) => item.date),
                   datasets: [
                     {
                       label: '가입',
-                      data: trendsData.signups,
+                      data: trendsItems.map((item) => item.joined),
                       borderColor: 'rgb(16, 185, 129)',
                       backgroundColor: 'rgba(16, 185, 129, 0.1)',
                       fill: false,
@@ -305,7 +300,7 @@ function DashboardContent({ summaryData }: { summaryData: NonNullable<ReturnType
                     },
                     {
                       label: '탈퇴',
-                      data: trendsData.withdrawals,
+                      data: trendsItems.map((item) => item.withdrawn),
                       borderColor: 'rgb(239, 68, 68)',
                       backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       fill: false,
