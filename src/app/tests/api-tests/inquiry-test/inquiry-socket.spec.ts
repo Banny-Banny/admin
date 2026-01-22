@@ -64,9 +64,8 @@ async function getAuthAndRoomId(request: APIRequestContext) {
 // NOTE:
 // 이 Socket.IO E2E 테스트는 실서버에 연결하여 동일 admin 토큰/roomId를 사용합니다.
 // 실행 시 기존 운영/개발 환경의 문의하기 소켓/방 상태에 영향을 주거나(연결 끊김, 방 상태 변경 등)
-// UI에서 "문의하기가 사라짐"처럼 보이는 문제가 발생할 수 있어 전체 스킵합니다.
-// (안전한 환경: 로컬/스테이징 + 테스트 전용 계정/데이터 + 단일 워커 구성 후에만 활성화 권장)
-test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
+// UI에서 "문의하기가 사라짐"처럼 보이는 문제가 발생할 수 있습니다.
+test.describe('문의하기 Socket.IO E2E 테스트', () => {
   /**
    * IMPORTANT:
    * 이 스펙 테스트는 실서버에 "동일 adminAccessToken"으로 소켓을 연결합니다.
@@ -88,6 +87,10 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
   // 로그인하여 토큰 획득 및 테스트용 문의방 ID 가져오기
   test.beforeAll(async ({ request }) => {
     await getAuthAndRoomId(request);
+    // testRoomId가 없으면 테스트용 문의를 생성하거나 에러 발생
+    if (!testRoomId) {
+      console.warn('[테스트] 문의방이 없습니다. 테스트가 실패할 수 있습니다.');
+    }
   });
 
   test('Socket.IO 연결 테스트', async () => {
@@ -121,8 +124,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
 
   test('방 입장 (join_room) 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -131,25 +133,45 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
           token: adminAccessToken,
         },
         transports: ['websocket'],
+        timeout: 20000,
+        reconnection: false,
       });
+
+      let connected = false;
+      let joinRoomCalled = false;
 
       const timeout = setTimeout(() => {
         socket.disconnect();
-        reject(new Error('방 입장 시간 초과'));
-      }, 15000);
+        if (!connected) {
+          reject(new Error('Socket 연결 시간 초과: connect 이벤트가 발생하지 않았습니다.'));
+        } else if (!joinRoomCalled) {
+          reject(new Error('방 입장 시간 초과: join_room 콜백이 호출되지 않았습니다.'));
+        } else {
+          reject(new Error('방 입장 시간 초과'));
+        }
+      }, 20000);
 
       socket.on('connect', () => {
-        // 연결 후 재인증이 완료될 때까지 짧은 대기 (현재 로직: 토큰이 있으면 즉시 재인증 시도)
-        // 재인증이 완료되지 않아도 방 입장은 가능하지만, 안정성을 위해 짧은 대기
+        connected = true;
+        console.log('[테스트] Socket 연결 성공, 방 입장을 시도합니다.');
+        
+        // 연결 후 재인증이 완료될 때까지 대기
+        // 재인증이 완료되지 않아도 방 입장은 가능하지만, 안정성을 위해 대기
         setTimeout(() => {
+          joinRoomCalled = true;
+          console.log('[테스트] join_room 이벤트 전송 중...');
           socket.emit(
             'join_room',
             { roomId: testRoomId },
             (response: { success?: boolean; roomId?: string; error?: string }) => {
+              console.log('[테스트] join_room 콜백 수신:', response);
               clearTimeout(timeout);
-              if (response.error) {
+              if (response?.error) {
                 socket.disconnect();
-                reject(new Error(response.error));
+                reject(new Error(`방 입장 실패: ${response.error}`));
+              } else if (!response?.success) {
+                socket.disconnect();
+                reject(new Error('방 입장 실패: success=false'));
               } else {
                 expect(response.success).toBeTruthy();
                 expect(response.roomId).toBe(testRoomId);
@@ -158,21 +180,37 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
               }
             }
           );
-        }, 500); // 재인증 완료 대기
+          
+          // 콜백이 없는 경우를 대비해 추가 이벤트 리스너
+          socket.once('room_joined', (data: { roomId?: string }) => {
+            console.log('[테스트] room_joined 이벤트 수신:', data);
+            if (data?.roomId === testRoomId) {
+              clearTimeout(timeout);
+              socket.disconnect();
+              resolve();
+            }
+          });
+        }, 2000); // 재인증 완료 대기 시간
       });
 
       socket.on('connect_error', (error) => {
         clearTimeout(timeout);
         socket.disconnect();
-        reject(error);
+        reject(new Error(`Socket 연결 오류: ${error.message}`));
+      });
+
+      socket.on('disconnect', (reason) => {
+        if (!connected && reason === 'io server disconnect') {
+          clearTimeout(timeout);
+          reject(new Error(`서버에서 연결을 거부했습니다: ${reason}`));
+        }
       });
     });
   });
 
   test('메시지 전송 (send_message) 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -272,8 +310,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
 
   test('읽음 처리 (read_alert) 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -340,8 +377,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
 
   test('메시지 길이 제한 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -412,8 +448,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
 
   test('Socket.IO 연결 완료 대기 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -471,8 +506,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
 
   test('연결 상태 확인 후 방 입장 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -525,7 +559,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
     });
   });
 
-  test.skip('토큰 없이 연결 후 재인증(authenticate) 테스트', async () => {
+  test('토큰 없이 연결 후 재인증(authenticate) 테스트', async () => {
     return new Promise<void>((resolve, reject) => {
       // 토큰 없이 연결 시도
       const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
@@ -578,10 +612,9 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
     });
   });
 
-  test.skip('재인증 후 방 입장 테스트', async () => {
+  test('재인증 후 방 입장 테스트', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -649,10 +682,9 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
     });
   });
 
-  test.skip('재인증 후 방 입장 및 메시지 전송 테스트 (문서 스펙: 재로그인 직후 권장 흐름)', async () => {
+  test('재인증 후 방 입장 및 메시지 전송 테스트 (문서 스펙: 재로그인 직후 권장 흐름)', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -750,7 +782,7 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
     });
   });
 
-  test.skip('잘못된 토큰으로 재인증 실패 테스트', async () => {
+  test('잘못된 토큰으로 재인증 실패 테스트', async () => {
     return new Promise<void>((resolve, reject) => {
       const socket: Socket = io(`${API_BASE_URL}${SOCKET_NAMESPACE}`, {
         transports: ['websocket'],
@@ -809,10 +841,9 @@ test.describe.skip('문의하기 Socket.IO E2E 테스트', () => {
     });
   });
 
-  test.skip('토큰 갱신 시나리오 시뮬레이션 테스트 (재인증 후 방 재입장 및 메시지 전송)', async () => {
+  test('토큰 갱신 시나리오 시뮬레이션 테스트 (재인증 후 방 재입장 및 메시지 전송)', async () => {
     if (!testRoomId) {
-      test.skip();
-      return;
+      throw new Error('테스트용 문의방이 없습니다. 문의를 먼저 생성해주세요.');
     }
 
     return new Promise<void>(async (resolve, reject) => {
