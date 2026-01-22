@@ -1,0 +1,542 @@
+openapi: 3.0.3
+info:
+  title: 일반 사용자 관리 API
+  description: 관리자가 일반 사용자 목록을 조회하고, 사용자 정보를 수정하며, 사용자를 차단/해제하거나 탈퇴 처리하는 API 스펙
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: 로컬 개발 서버
+  - url: ${API_BASE_URL}
+    description: 프로덕션 서버
+
+paths:
+  /api/admin/users:
+    get:
+      summary: 사용자 목록 조회
+      description: 검색어, 상태 필터, 날짜 범위 필터, 페이지네이션을 지원하는 사용자 목록 조회 API
+      operationId: getUsers
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: 검색어(닉네임/이메일)
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+          example: kim
+        - name: status
+          in: query
+          description: 사용자 상태 필터
+          required: false
+          schema:
+            $ref: '#/components/schemas/UserStatus'
+          example: ALL
+        - name: startDate
+          in: query
+          description: 가입 시작일 (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: '2026-01-01'
+        - name: endDate
+          in: query
+          description: 가입 종료일 (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: '2026-01-31'
+        - name: limit
+          in: query
+          description: 페이지 크기
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: offset
+          in: query
+          description: 페이지 오프셋
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+      responses:
+        '200':
+          description: 사용자 목록 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUsersResponse'
+              examples:
+                success:
+                  value:
+                    users:
+                      - id: user-123
+                        nickname: 김바니
+                        email: user@example.com
+                        phoneNumber: '01012345678'
+                        profileImg: 'https://cdn.example.com/profile.png'
+                        isMarketingAgreed: true
+                        isPushAgreed: true
+                        status: ACTIVE
+                        createdAt: '2026-01-15T10:30:00Z'
+                        updatedAt: '2026-01-20T14:20:00Z'
+                    total: 150
+                    limit: 20
+                    offset: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/users/{id}:
+    get:
+      summary: 사용자 상세 정보 조회
+      description: 특정 사용자의 상세 정보를 조회합니다
+      operationId: getUserById
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: string
+          example: user-123
+      responses:
+        '200':
+          description: 사용자 상세 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                success:
+                  value:
+                    id: user-123
+                    nickname: 김바니
+                    email: user@example.com
+                    phoneNumber: '01012345678'
+                    profileImg: 'https://cdn.example.com/profile.png'
+                    isMarketingAgreed: true
+                    isPushAgreed: true
+                    status: ACTIVE
+                    createdAt: '2026-01-15T10:30:00Z'
+                    updatedAt: '2026-01-20T14:20:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: 사용자 정보 수정
+      description: 사용자의 정보(닉네임, 이메일, 전화번호, 프로필 이미지, 마케팅 동의, 푸시 알림 동의)를 수정합니다
+      operationId: updateUser
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: string
+          example: user-123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            examples:
+              updateNickname:
+                value:
+                  nickname: 김바니수정
+              updateEmail:
+                value:
+                  email: newemail@example.com
+              updateMultiple:
+                value:
+                  nickname: 김바니
+                  email: user@example.com
+                  phoneNumber: '01012345678'
+                  profileImg: 'https://cdn.example.com/profile.png'
+                  isMarketingAgreed: true
+                  isPushAgreed: true
+      responses:
+        '201':
+          description: 사용자 정보 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserResponse'
+              examples:
+                success:
+                  value:
+                    id: user-123
+                    nickname: 김바니
+                    email: user@example.com
+                    phoneNumber: '01012345678'
+                    profileImg: 'https://cdn.example.com/profile.png'
+                    isMarketingAgreed: true
+                    isPushAgreed: true
+                    message: 사용자 정보가 수정되었습니다
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/users/{id}/block:
+    post:
+      summary: 사용자 차단
+      description: 특정 사용자를 차단하여 서비스 이용을 제한합니다
+      operationId: blockUser
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: string
+          example: user-123
+      responses:
+        '201':
+          description: 사용자 차단 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 사용자가 차단되었습니다
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/users/{id}/unblock:
+    post:
+      summary: 사용자 차단 해제
+      description: 차단된 사용자의 차단을 해제하여 서비스 이용을 재개합니다
+      operationId: unblockUser
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: string
+          example: user-123
+      responses:
+        '201':
+          description: 사용자 차단 해제 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 사용자 차단이 해제되었습니다
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/users/{id}/deactivate:
+    post:
+      summary: 사용자 탈퇴 처리 (소프트 삭제)
+      description: 사용자를 탈퇴 처리합니다. 데이터는 완전히 삭제되지 않고 INACTIVE 상태로 변경됩니다
+      operationId: deactivateUser
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: string
+          example: user-123
+      responses:
+        '201':
+          description: 사용자 탈퇴 처리 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 사용자가 탈퇴 처리되었습니다
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 관리자 인증 토큰
+
+  schemas:
+    UserStatus:
+      type: string
+      enum:
+        - ALL
+        - ACTIVE
+        - INACTIVE
+        - BLOCKED
+      description: 사용자 상태
+      example: ACTIVE
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - status
+        - isMarketingAgreed
+        - isPushAgreed
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: 사용자 고유 식별자
+          example: user-123
+        nickname:
+          type: string
+          maxLength: 50
+          description: 사용자 닉네임
+          example: 김바니
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: 사용자 이메일
+          example: user@example.com
+        phoneNumber:
+          type: string
+          maxLength: 20
+          description: 사용자 전화번호
+          example: '01012345678'
+        profileImg:
+          type: string
+          format: uri
+          maxLength: 500
+          description: 프로필 이미지 URL
+          example: 'https://cdn.example.com/profile.png'
+        isMarketingAgreed:
+          type: boolean
+          description: 마케팅 동의 여부
+          example: true
+        isPushAgreed:
+          type: boolean
+          description: 푸시 알림 동의 여부
+          example: true
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: 가입일시
+          example: '2026-01-15T10:30:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정일시
+          example: '2026-01-20T14:20:00Z'
+
+    GetUsersResponse:
+      type: object
+      required:
+        - users
+        - total
+        - limit
+        - offset
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description: 사용자 목록
+        total:
+          type: integer
+          minimum: 0
+          description: 전체 사용자 수
+          example: 150
+        limit:
+          type: integer
+          minimum: 1
+          description: 페이지 크기
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: 현재 페이지 오프셋
+          example: 0
+
+    UpdateUserRequest:
+      type: object
+      description: 사용자 정보 수정 요청 (수정하려는 필드만 포함)
+      properties:
+        nickname:
+          type: string
+          maxLength: 50
+          description: 닉네임
+          example: 김바니
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: 이메일
+          example: user@example.com
+        phoneNumber:
+          type: string
+          maxLength: 20
+          description: 전화번호
+          example: '01012345678'
+        profileImg:
+          type: string
+          format: uri
+          maxLength: 500
+          description: 프로필 이미지 URL
+          example: 'https://cdn.example.com/profile.png'
+        isMarketingAgreed:
+          type: boolean
+          description: 마케팅 동의 여부
+          example: true
+        isPushAgreed:
+          type: boolean
+          description: 푸시 알림 동의 여부
+          example: true
+
+    UpdateUserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - isMarketingAgreed
+        - isPushAgreed
+      properties:
+        id:
+          type: string
+          description: 사용자 ID
+          example: user-123
+        nickname:
+          type: string
+          description: 닉네임
+          example: 김바니
+        email:
+          type: string
+          format: email
+          description: 이메일
+          example: user@example.com
+        phoneNumber:
+          type: string
+          description: 전화번호
+          example: '01012345678'
+        profileImg:
+          type: string
+          format: uri
+          description: 프로필 이미지 URL
+          example: 'https://cdn.example.com/profile.png'
+        isMarketingAgreed:
+          type: boolean
+          description: 마케팅 동의 여부
+          example: true
+        isPushAgreed:
+          type: boolean
+          description: 푸시 알림 동의 여부
+          example: true
+        message:
+          type: string
+          description: 성공 메시지
+          example: 사용자 정보가 수정되었습니다
+
+  responses:
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 잘못된 요청입니다
+
+    Unauthorized:
+      description: 인증 실패
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 인증이 필요합니다
+
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 사용자를 찾을 수 없습니다
+
+    InternalServerError:
+      description: 서버 오류
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 서버 오류가 발생했습니다
