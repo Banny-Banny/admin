@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const API_BASE_URL = process.env.API_BASE_URL || BASE_URL;
@@ -21,7 +21,7 @@ let superAdminToken: string | null = null;
 /**
  * 로그인 헬퍼 함수
  */
-async function login(page: any) {
+async function login(page: Page) {
   await page.goto(BASE_URL);
   await page.waitForLoadState('networkidle');
   
@@ -50,7 +50,7 @@ async function login(page: any) {
 /**
  * 사용자 목록 페이지로 이동하는 헬퍼 함수
  */
-async function navigateToUsersPage(page: any) {
+async function navigateToUsersPage(page: Page) {
   const sidebar = page.locator('aside');
   const isSidebarVisible = await sidebar.isVisible({ timeout: 3000 }).catch(() => false);
   
@@ -450,12 +450,14 @@ test.describe('사용자 관리 페이지 UI 테스트', () => {
       const searchInput = page.locator('input[placeholder*="닉네임 또는 이메일로 검색"]');
       await searchInput.fill('test');
       
-      // 로딩 메시지가 표시될 수 있음
+      // 로딩 메시지가 표시될 수 있음 (로딩이 빠를 수 있으므로 확인만 수행)
       const loadingMessage = page.locator('text=/로딩|불러오는 중/i');
-      const hasLoading = await loadingMessage.isVisible({ timeout: 1000 }).catch(() => false);
+      await loadingMessage.isVisible({ timeout: 1000 }).catch(() => {
+        // 로딩이 너무 빨리 끝나서 메시지를 볼 수 없는 경우도 정상
+      });
       
-      // 로딩 메시지가 있거나 없어도 테스트는 통과 (로딩이 빠를 수 있음)
-      expect(true).toBe(true);
+      // 검색 입력이 작동하는지 확인
+      await expect(searchInput).toHaveValue('test');
     });
   });
 
