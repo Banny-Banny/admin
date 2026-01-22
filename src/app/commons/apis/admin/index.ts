@@ -13,10 +13,25 @@ export interface CreateAdminRequest {
 }
 
 export interface CreateAdminResponse {
-  id?: string;
+  id: string;
   email: string;
   name: string;
+  createdAt: string;
   message?: string;
+}
+
+// 관리자 목록 조회
+export interface AdminListItem {
+  id: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface AdminListResponse {
+  admins: AdminListItem[];
 }
 
 // 관리자 로그인
@@ -95,4 +110,12 @@ export async function getAdminProfile(): Promise<AdminProfileResponse> {
  */
 export async function logout(): Promise<LogoutResponse> {
   return apiClient.post<LogoutResponse>('/api/admin/auth/logout');
+}
+
+/**
+ * 관리자 목록 조회
+ * @returns 관리자 목록
+ */
+export async function getAdminList(): Promise<AdminListResponse> {
+  return apiClient.get<AdminListResponse>('/api/admin/auth/admins');
 }
