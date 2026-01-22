@@ -1,5 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { Send, Bell, Users, TrendingUp, Filter, Search } from 'lucide-react';
+import { Send, Bell, Users, TrendingUp, Filter, Search, Edit, Trash2 } from 'lucide-react';
+import { useAuth } from '@/app/commons/hooks/use-auth';
+import { isSuperAdmin } from '@/app/commons/utils/admin-utils';
 import styles from "./styles.module.css";
 
 interface Message {
@@ -12,71 +16,36 @@ interface Message {
   sentAt: string;
   recipients: number;
   openRate: number;
+  // 추가된 필드
+  createdBy?: string;
+  createdByName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const STORAGE_KEY = 'marketing_messages';
 
-// 초기 메시지 데이터
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    title: '새해 특별 할인 이벤트',
-    content: '새해를 맞아 전 상품 20% 할인! 지금 바로 확인하세요.',
-    type: '광고',
-    target: '전체 회원',
-    status: '발송완료',
-    sentAt: '2026-01-15 10:00',
-    recipients: 1523,
-    openRate: 45.2,
-  },
-  {
-    id: 2,
-    title: '시스템 점검 안내',
-    content: '1월 20일 새벽 2시~4시 시스템 점검이 예정되어 있습니다.',
-    type: '안내',
-    target: '전체 회원',
-    status: '발송완료',
-    sentAt: '2026-01-14 15:30',
-    recipients: 1523,
-    openRate: 78.5,
-  },
-  {
-    id: 3,
-    title: '신규 기능 업데이트 알림',
-    content: '새로운 기능이 추가되었습니다. 지금 확인해보세요!',
-    type: '업데이트',
-    target: '활성 회원',
-    status: '발송완료',
-    sentAt: '2026-01-12 14:00',
-    recipients: 982,
-    openRate: 62.3,
-  },
-  {
-    id: 4,
-    title: '설 연휴 이벤트',
-    content: '설 연휴 특별 이벤트에 참여하세요!',
-    type: '이벤트',
-    target: '전체 회원',
-    status: '예약',
-    sentAt: '2026-01-25 09:00',
-    recipients: 1523,
-    openRate: 0,
-  },
-];
-
-// localStorage에서 메시지 불러오기
+// localStorage에서 메시지 불러오기 (하위 호환성 유지)
 const loadMessagesFromStorage = (): Message[] => {
-  if (typeof window === 'undefined') return initialMessages;
+  if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialMessages;
+      if (Array.isArray(parsed)) {
+        // 기존 메시지에 작성자 정보가 없으면 기본값 설정
+        return parsed.map((msg: Message) => ({
+          ...msg,
+          createdBy: msg.createdBy || 'unknown',
+          createdByName: msg.createdByName || '알 수 없음',
+          createdAt: msg.createdAt || msg.sentAt,
+        }));
+      }
     }
   } catch (error) {
     console.error('Failed to load messages from storage:', error);
   }
-  return initialMessages;
+  return [];
 };
 
 // localStorage에 메시지 저장하기
@@ -90,12 +59,20 @@ const saveMessagesToStorage = (messages: Message[]): void => {
 };
 
 export function MarketingPage() {
+  const { admin } = useAuth();
   const [activeTab, setActiveTab] = useState<'send' | 'history'>('send');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
   // localStorage에서 메시지 불러오기
-  const [messages, setMessages] = useState<Message[]>(() => loadMessagesFromStorage());
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // 컴포넌트 마운트 시 localStorage의 목업 데이터 제거
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
 
   // messages가 변경될 때마다 localStorage에 저장
   useEffect(() => {
@@ -112,8 +89,22 @@ export function MarketingPage() {
     scheduledTime: '',
   });
 
+  // 메시지 수정/삭제 권한 확인
+  const canEditMessage = (message: Message): boolean => {
+    if (!admin) return false;
+    // 슈퍼 어드민은 모든 메시지 수정 가능
+    if (isSuperAdmin(admin)) return true;
+    // 작성자만 자신의 메시지 수정 가능
+    return message.createdBy === admin.id;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!admin) {
+      alert('로그인이 필요합니다');
+      return;
+    }
     
     const now = new Date();
     const sentAt = formData.sendNow
@@ -123,7 +114,7 @@ export function MarketingPage() {
     const recipientCount = formData.target === '전체 회원' ? 1523 : formData.target === '활성 회원' ? 982 : 435;
 
     const newMessage: Message = {
-      id: messages.length + 1,
+      id: messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1,
       title: formData.title,
       content: formData.content,
       type: formData.type,
@@ -132,6 +123,10 @@ export function MarketingPage() {
       sentAt: sentAt,
       recipients: recipientCount,
       openRate: formData.sendNow ? Math.random() * 80 : 0,
+      // 작성자 정보 추가
+      createdBy: admin.id,
+      createdByName: admin.name,
+      createdAt: now.toISOString(),
     };
 
     setMessages([newMessage, ...messages]);
@@ -147,6 +142,30 @@ export function MarketingPage() {
     
     alert(formData.sendNow ? '메시지가 발송되었습니다!' : '메시지가 예약되었습니다!');
     setActiveTab('history');
+  };
+
+  const handleEdit = (message: Message) => {
+    if (!canEditMessage(message)) {
+      alert('이 메시지를 수정할 권한이 없습니다');
+      return;
+    }
+    // TODO: 메시지 수정 기능 구현
+    alert('메시지 수정 기능은 아직 구현되지 않았습니다');
+  };
+
+  const handleDelete = (messageId: number) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+    
+    if (!canEditMessage(message)) {
+      alert('이 메시지를 삭제할 권한이 없습니다');
+      return;
+    }
+
+    if (confirm('정말 이 메시지를 삭제하시겠습니까?')) {
+      setMessages(messages.filter(m => m.id !== messageId));
+      alert('메시지가 삭제되었습니다');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -478,7 +497,9 @@ export function MarketingPage() {
                   <th className={styles.c_wiarv4}>수신자</th>
                   <th className={styles.c_wiarv4}>오픈률</th>
                   <th className={styles.c_wiarv4}>상태</th>
+                  <th className={styles.c_wiarv4}>작성자</th>
                   <th className={styles.c_wiarv4}>발송일시</th>
+                  <th className={styles.c_947h7t}>작업</th>
                 </tr>
               </thead>
               <tbody className={styles.c_fyf4x}>
@@ -517,12 +538,35 @@ export function MarketingPage() {
                           {message.status}
                         </span>
                       </td>
+                      <td className={styles.c_tp85ye}>
+                        {message.createdByName || '알 수 없음'}
+                      </td>
                       <td className={styles.c_tp84h0}>{message.sentAt}</td>
+                      <td className={styles.c_1ouo88t}>
+                        {canEditMessage(message) && (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => handleEdit(message)}
+                              className={styles.c_vage5}
+                              title="수정"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(message.id)}
+                              className={styles.c_vage5}
+                              title="삭제"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className={styles.c_13nmcpi}>
+                    <td colSpan={9} className={styles.c_13nmcpi}>
                       발송 내역이 없습니다.
                     </td>
                   </tr>
