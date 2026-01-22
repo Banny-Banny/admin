@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Send, Bell, Users, TrendingUp, Filter, Search, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/app/commons/hooks/use-auth';
 import { isSuperAdmin } from '@/app/commons/utils/admin-utils';
+import { sendNotification, type NotificationTarget } from '@/app/commons/apis/notification';
+import { toast } from 'sonner';
 import styles from "./styles.module.css";
 
 interface Message {
@@ -26,6 +28,7 @@ interface Message {
 const STORAGE_KEY = 'marketing_messages';
 
 // localStorage에서 메시지 불러오기 (하위 호환성 유지)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const loadMessagesFromStorage = (): Message[] => {
   if (typeof window === 'undefined') return [];
   try {
@@ -79,10 +82,18 @@ export function MarketingPage() {
     saveMessagesToStorage(messages);
   }, [messages]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    content: string;
+    type: '광고' | '안내' | '이벤트' | '업데이트';
+    target: NotificationTarget;
+    sendNow: boolean;
+    scheduledDate: string;
+    scheduledTime: string;
+  }>({
     title: '',
     content: '',
-    type: '안내' as '광고' | '안내' | '이벤트' | '업데이트',
+    type: '안내',
     target: '전체 회원',
     sendNow: true,
     scheduledDate: '',
@@ -98,50 +109,105 @@ export function MarketingPage() {
     return message.createdBy === admin.id;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!admin) {
-      alert('로그인이 필요합니다');
+      toast.error('로그인이 필요합니다');
       return;
     }
+
+    if (isSending) {
+      return; // 이미 전송 중이면 중복 요청 방지
+    }
     
-    const now = new Date();
-    const sentAt = formData.sendNow
-      ? `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`
-      : `${formData.scheduledDate} ${formData.scheduledTime}`;
+    try {
+      setIsSending(true);
 
-    const recipientCount = formData.target === '전체 회원' ? 1523 : formData.target === '활성 회원' ? 982 : 435;
+      // 백엔드 API 호출
+      const response = await sendNotification({
+        title: formData.title,
+        content: formData.content,
+        type: formData.type,
+        target: formData.target,
+        sendNow: formData.sendNow,
+        scheduledDate: formData.sendNow ? undefined : formData.scheduledDate,
+        scheduledTime: formData.sendNow ? undefined : formData.scheduledTime,
+      });
 
-    const newMessage: Message = {
-      id: messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1,
-      title: formData.title,
-      content: formData.content,
-      type: formData.type,
-      target: formData.target,
-      status: formData.sendNow ? '발송완료' : '예약',
-      sentAt: sentAt,
-      recipients: recipientCount,
-      openRate: formData.sendNow ? Math.random() * 80 : 0,
-      // 작성자 정보 추가
-      createdBy: admin.id,
-      createdByName: admin.name,
-      createdAt: now.toISOString(),
-    };
+      console.log('✅ 알림 전송 성공:', response);
 
-    setMessages([newMessage, ...messages]);
-    setFormData({
-      title: '',
-      content: '',
-      type: '안내',
-      target: '전체 회원',
-      sendNow: true,
-      scheduledDate: '',
-      scheduledTime: '',
-    });
-    
-    alert(formData.sendNow ? '메시지가 발송되었습니다!' : '메시지가 예약되었습니다!');
-    setActiveTab('history');
+      const now = new Date();
+      const sentAt = formData.sendNow
+        ? `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`
+        : `${formData.scheduledDate} ${formData.scheduledTime}`;
+
+      // 성공 시 로컬 상태 업데이트 (백엔드 응답 데이터 사용)
+      const newMessage: Message = {
+        id: parseInt(response.id) || (messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1),
+        title: response.title,
+        content: response.content || formData.content,
+        type: response.type,
+        target: response.target,
+        status: response.status,
+        sentAt: response.sentAt || sentAt,
+        recipients: response.recipients || 0,
+        openRate: formData.sendNow ? Math.random() * 80 : 0,
+        // 작성자 정보 추가
+        createdBy: admin.id,
+        createdByName: admin.name,
+        createdAt: now.toISOString(),
+      };
+
+      setMessages([newMessage, ...messages]);
+      setFormData({
+        title: '',
+        content: '',
+        type: '안내',
+        target: '전체 회원',
+        sendNow: true,
+        scheduledDate: '',
+        scheduledTime: '',
+      });
+      
+      toast.success(formData.sendNow ? '메시지가 발송되었습니다!' : '메시지가 예약되었습니다!');
+      setActiveTab('history');
+    } catch (error: unknown) {
+      console.error('❌ 알림 전송 실패:', error);
+      const axiosError = error as { 
+        response?: { 
+          status?: number; 
+          data?: { 
+            message?: string;
+            errors?: Array<{ field: string; message: string }>;
+          } 
+        };
+        message?: string;
+      };
+
+      if (axiosError.response?.status === 400) {
+        const errorData = axiosError.response.data;
+        let errorMessage = errorData?.message || '알림 전송에 실패했습니다';
+        
+        if (errorData?.errors && errorData.errors.length > 0) {
+          const fieldErrors = errorData.errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          errorMessage = `입력값 오류: ${fieldErrors}`;
+        }
+        
+        toast.error(errorMessage);
+      } else if (axiosError.response?.status === 404) {
+        // API가 아직 구현되지 않은 경우
+        console.warn('⚠️ 알림 전송 API가 아직 구현되지 않았습니다. (404)');
+        toast.warning('알림 전송 API가 아직 구현되지 않았습니다. 백엔드 개발자에게 문의하세요.');
+      } else {
+        const errorMessage = axiosError.response?.data?.message || axiosError.message || '알림 전송에 실패했습니다';
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleEdit = (message: Message) => {
@@ -176,8 +242,13 @@ export function MarketingPage() {
   };
 
   const filteredMessages = messages.filter((message) => {
-    const matchesSearch = message.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.content.toLowerCase().includes(searchTerm.toLowerCase());
+    // 안전하게 문자열 변환 (undefined/null 체크)
+    const title = message.title || '';
+    const content = message.content || '';
+    const searchLower = searchTerm.toLowerCase();
+    
+    const matchesSearch = title.toLowerCase().includes(searchLower) ||
+                         content.toLowerCase().includes(searchLower);
     const matchesType = typeFilter === 'all' || message.type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -445,9 +516,13 @@ export function MarketingPage() {
               <button
                 type="submit"
                 className={styles.c_mk9nis}
+                disabled={isSending}
               >
                 <Send size={18} />
-                {formData.sendNow ? '즉시 발송' : '예약하기'}
+                {isSending 
+                  ? (formData.sendNow ? '발송 중...' : '예약 중...')
+                  : (formData.sendNow ? '즉시 발송' : '예약하기')
+                }
               </button>
             </div>
           </form>
