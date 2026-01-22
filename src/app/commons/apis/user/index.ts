@@ -5,7 +5,7 @@ import { apiClient } from '../../provider/api-provider/api-client';
 // ============================================================================
 
 // 유저 상태
-export type UserStatus = 'ALL' | 'ACTIVE' | 'INACTIVE';
+export type UserStatus = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 
 // 유저 리스트 조회 요청 파라미터
 export interface GetUsersParams {
@@ -23,6 +23,10 @@ export interface User {
   email: string;
   nickname?: string;
   name?: string;
+  phoneNumber?: string;
+  profileImg?: string;
+  isMarketingAgreed?: boolean;
+  isPushAgreed?: boolean;
   status: UserStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -98,6 +102,15 @@ export async function getUsers(
 }
 
 /**
+ * 유저 상세 정보 조회
+ * @param id 유저 ID
+ * @returns 유저 상세 정보
+ */
+export async function getUserById(id: string): Promise<User> {
+  return apiClient.get<User>(`/api/admin/users/${id}`);
+}
+
+/**
  * 유저 정보 수정
  * @param id 유저 ID
  * @param data 수정할 유저 정보
@@ -108,4 +121,31 @@ export async function updateUser(
   data: UpdateUserRequest
 ): Promise<UpdateUserResponse> {
   return apiClient.post<UpdateUserResponse>(`/api/admin/users/${id}`, data);
+}
+
+/**
+ * 유저 차단
+ * @param id 유저 ID
+ * @returns 성공 메시지
+ */
+export async function blockUser(id: string): Promise<{ message?: string }> {
+  return apiClient.post<{ message?: string }>(`/api/admin/users/${id}/block`);
+}
+
+/**
+ * 유저 차단 해제
+ * @param id 유저 ID
+ * @returns 성공 메시지
+ */
+export async function unblockUser(id: string): Promise<{ message?: string }> {
+  return apiClient.post<{ message?: string }>(`/api/admin/users/${id}/unblock`);
+}
+
+/**
+ * 유저 탈퇴 처리 (소프트 삭제)
+ * @param id 유저 ID
+ * @returns 성공 메시지
+ */
+export async function deactivateUser(id: string): Promise<{ message?: string }> {
+  return apiClient.post<{ message?: string }>(`/api/admin/users/${id}/deactivate`);
 }
