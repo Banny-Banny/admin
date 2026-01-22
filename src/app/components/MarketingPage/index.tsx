@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Bell, Users, TrendingUp, Filter, Search } from 'lucide-react';
 import styles from "./styles.module.css";
 
@@ -14,57 +14,93 @@ interface Message {
   openRate: number;
 }
 
+const STORAGE_KEY = 'marketing_messages';
+
+// 초기 메시지 데이터
+const initialMessages: Message[] = [
+  {
+    id: 1,
+    title: '새해 특별 할인 이벤트',
+    content: '새해를 맞아 전 상품 20% 할인! 지금 바로 확인하세요.',
+    type: '광고',
+    target: '전체 회원',
+    status: '발송완료',
+    sentAt: '2026-01-15 10:00',
+    recipients: 1523,
+    openRate: 45.2,
+  },
+  {
+    id: 2,
+    title: '시스템 점검 안내',
+    content: '1월 20일 새벽 2시~4시 시스템 점검이 예정되어 있습니다.',
+    type: '안내',
+    target: '전체 회원',
+    status: '발송완료',
+    sentAt: '2026-01-14 15:30',
+    recipients: 1523,
+    openRate: 78.5,
+  },
+  {
+    id: 3,
+    title: '신규 기능 업데이트 알림',
+    content: '새로운 기능이 추가되었습니다. 지금 확인해보세요!',
+    type: '업데이트',
+    target: '활성 회원',
+    status: '발송완료',
+    sentAt: '2026-01-12 14:00',
+    recipients: 982,
+    openRate: 62.3,
+  },
+  {
+    id: 4,
+    title: '설 연휴 이벤트',
+    content: '설 연휴 특별 이벤트에 참여하세요!',
+    type: '이벤트',
+    target: '전체 회원',
+    status: '예약',
+    sentAt: '2026-01-25 09:00',
+    recipients: 1523,
+    openRate: 0,
+  },
+];
+
+// localStorage에서 메시지 불러오기
+const loadMessagesFromStorage = (): Message[] => {
+  if (typeof window === 'undefined') return initialMessages;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialMessages;
+    }
+  } catch (error) {
+    console.error('Failed to load messages from storage:', error);
+  }
+  return initialMessages;
+};
+
+// localStorage에 메시지 저장하기
+const saveMessagesToStorage = (messages: Message[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch (error) {
+    console.error('Failed to save messages to storage:', error);
+  }
+};
+
 export function MarketingPage() {
   const [activeTab, setActiveTab] = useState<'send' | 'history'>('send');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      title: '새해 특별 할인 이벤트',
-      content: '새해를 맞아 전 상품 20% 할인! 지금 바로 확인하세요.',
-      type: '광고',
-      target: '전체 회원',
-      status: '발송완료',
-      sentAt: '2026-01-15 10:00',
-      recipients: 1523,
-      openRate: 45.2,
-    },
-    {
-      id: 2,
-      title: '시스템 점검 안내',
-      content: '1월 20일 새벽 2시~4시 시스템 점검이 예정되어 있습니다.',
-      type: '안내',
-      target: '전체 회원',
-      status: '발송완료',
-      sentAt: '2026-01-14 15:30',
-      recipients: 1523,
-      openRate: 78.5,
-    },
-    {
-      id: 3,
-      title: '신규 기능 업데이트 알림',
-      content: '새로운 기능이 추가되었습니다. 지금 확인해보세요!',
-      type: '업데이트',
-      target: '활성 회원',
-      status: '발송완료',
-      sentAt: '2026-01-12 14:00',
-      recipients: 982,
-      openRate: 62.3,
-    },
-    {
-      id: 4,
-      title: '설 연휴 이벤트',
-      content: '설 연휴 특별 이벤트에 참여하세요!',
-      type: '이벤트',
-      target: '전체 회원',
-      status: '예약',
-      sentAt: '2026-01-25 09:00',
-      recipients: 1523,
-      openRate: 0,
-    },
-  ]);
+  // localStorage에서 메시지 불러오기
+  const [messages, setMessages] = useState<Message[]>(() => loadMessagesFromStorage());
+
+  // messages가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    saveMessagesToStorage(messages);
+  }, [messages]);
 
   const [formData, setFormData] = useState({
     title: '',
