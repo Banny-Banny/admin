@@ -15,8 +15,8 @@ const SOCKET_NAMESPACE = process.env.NEXT_PUBLIC_SOCKET_NAMESPACE || '/admin-cha
 
 // 테스트용 관리자 계정 (.env 파일에서 읽어옴)
 const TEST_ADMIN = {
-  email: process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
-  password: process.env.SUPER_ADMIN_PASSWORD || 'password123',
+  email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.TEST_ADMIN_PASSWORD || 'password123',
 };
 
 let adminAccessToken: string;
