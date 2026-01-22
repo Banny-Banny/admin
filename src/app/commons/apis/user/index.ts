@@ -76,29 +76,60 @@ export async function getUsers(
 ): Promise<GetUsersResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.search) {
-    queryParams.append('search', params.search);
+  // 빈 문자열이 아닌 경우에만 파라미터 추가
+  if (params?.search && params.search.trim() !== '') {
+    queryParams.append('search', params.search.trim());
   }
   if (params?.status && params.status !== 'ALL') {
     queryParams.append('status', params.status);
   }
-  if (params?.startDate) {
-    queryParams.append('startDate', params.startDate);
+  if (params?.startDate && params.startDate.trim() !== '') {
+    queryParams.append('startDate', params.startDate.trim());
   }
-  if (params?.endDate) {
-    queryParams.append('endDate', params.endDate);
+  if (params?.endDate && params.endDate.trim() !== '') {
+    queryParams.append('endDate', params.endDate.trim());
   }
-  if (params?.limit !== undefined) {
+  if (params?.limit !== undefined && params.limit > 0) {
     queryParams.append('limit', params.limit.toString());
   }
-  if (params?.offset !== undefined) {
+  if (params?.offset !== undefined && params.offset >= 0) {
     queryParams.append('offset', params.offset.toString());
   }
 
   const queryString = queryParams.toString();
   const endpoint = `/api/admin/users${queryString ? `?${queryString}` : ''}`;
 
-  return apiClient.get<GetUsersResponse>(endpoint);
+  console.log('📡 getUsers API 호출:', {
+    endpoint,
+    params,
+    queryString,
+  });
+
+  try {
+    const response = await apiClient.get<{ success?: boolean; data?: { items?: User[]; total?: number; limit?: number; offset?: number } } | GetUsersResponse>(endpoint);
+    
+    // 백엔드 응답 형식에 따라 처리
+    // 형식 1: { success: true, data: { items: [], total, limit, offset } }
+    // 형식 2: { users: [], total, limit, offset }
+    if ('success' in response && response.success && response.data) {
+      return {
+        users: response.data.items || [],
+        total: response.data.total || 0,
+        limit: response.data.limit || 20,
+        offset: response.data.offset || 0,
+      };
+    }
+    
+    // 형식 2 또는 직접 GetUsersResponse 형식
+    return response as GetUsersResponse;
+  } catch (error) {
+    console.error('❌ getUsers API 에러:', {
+      endpoint,
+      params,
+      error,
+    });
+    throw error;
+  }
 }
 
 /**
