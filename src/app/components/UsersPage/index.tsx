@@ -254,6 +254,15 @@ export function UsersPage() {
   const loadUsers = useCallback(async () => {
     try {
       setIsLoadingUsers(true);
+      console.log('🔄 사용자 목록 조회 시작:', {
+        search: userSearchTerm || undefined,
+        status: userStatusFilter !== 'ALL' ? userStatusFilter : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        limit: pageSize,
+        offset: currentPage * pageSize,
+      });
+      
       const response = await getUsers({
         search: userSearchTerm || undefined,
         status: userStatusFilter !== 'ALL' ? userStatusFilter : undefined,
@@ -262,13 +271,72 @@ export function UsersPage() {
         limit: pageSize,
         offset: currentPage * pageSize,
       });
+      
+      console.log('✅ 사용자 목록 조회 성공:', {
+        usersCount: response?.users?.length || 0,
+        total: response?.total || 0,
+        response,
+      });
+      
       setUsers(response?.users || []);
       setTotalUsers(response?.total || 0);
     } catch (error: unknown) {
-      console.error('Failed to load users:', error);
-      toast.error('사용자 목록을 불러오는데 실패했습니다');
-      setUsers([]);
-      setTotalUsers(0);
+      console.error('❌ 사용자 목록 조회 실패:', error);
+      
+      // 404 에러는 백엔드 API가 아직 구현되지 않은 경우이므로
+      // 사용자에게 에러 메시지를 표시하지 않고 콘솔에만 로그
+      const axiosError = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      if (axiosError?.response?.status === 404) {
+        console.warn('⚠️ User list API not found (404). This endpoint may not be implemented yet.');
+        setUsers([]);
+        setTotalUsers(0);
+      } else if (axiosError?.message?.includes('ECONNREFUSED') || axiosError?.message?.includes('Network Error')) {
+        console.error('⚠️ 백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.');
+        toast.error('백엔드 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.');
+        setUsers([]);
+        setTotalUsers(0);
+      } else if (axiosError?.response?.status === 400) {
+        // 400 에러의 경우 더 자세한 정보 표시
+        const errorData = axiosError.response.data;
+        let errorMessage = errorData?.message || '사용자 목록을 불러오는데 실패했습니다';
+        
+        // 필드별 에러가 있는 경우 표시
+        if (errorData && typeof errorData === 'object' && 'errors' in errorData) {
+          const errors = (errorData as { errors?: Array<{ field: string; message: string }> }).errors;
+          if (errors && errors.length > 0) {
+            const fieldErrors = errors.map(e => `${e.field}: ${e.message}`).join(', ');
+            errorMessage = `입력값 오류: ${fieldErrors}`;
+            console.error('필드별 에러:', errors);
+          }
+        }
+        
+        console.error('400 에러 상세:', {
+          status: axiosError.response.status,
+          data: errorData,
+          requestParams: {
+            search: userSearchTerm || undefined,
+            status: userStatusFilter !== 'ALL' ? userStatusFilter : undefined,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            limit: pageSize,
+            offset: currentPage * pageSize,
+          },
+        });
+        
+        toast.error(errorMessage);
+        setUsers([]);
+        setTotalUsers(0);
+      } else {
+        const errorMessage = axiosError?.response?.data?.message || '사용자 목록을 불러오는데 실패했습니다';
+        console.error('에러 상세:', {
+          status: axiosError?.response?.status,
+          message: errorMessage,
+          error: axiosError,
+        });
+        toast.error(errorMessage);
+        setUsers([]);
+        setTotalUsers(0);
+      }
     } finally {
       setIsLoadingUsers(false);
     }
@@ -330,7 +398,41 @@ export function UsersPage() {
     if (!selectedUser) return;
 
     try {
-      await updateUser(selectedUser.id, data);
+      // 빈 문자열을 undefined로 변환하여 백엔드 검증 통과
+      const updateData: UpdateUserRequest = {};
+      
+      // 닉네임: 빈 문자열이면 undefined로 설정 (필드 제외)
+      if (data.nickname !== undefined && data.nickname.trim() !== '') {
+        updateData.nickname = data.nickname.trim();
+      }
+      
+      // 이메일: 빈 문자열이면 undefined로 설정
+      if (data.email !== undefined && data.email.trim() !== '') {
+        updateData.email = data.email.trim();
+      }
+      
+      // 전화번호: 빈 문자열이면 undefined로 설정
+      if (data.phoneNumber !== undefined && data.phoneNumber.trim() !== '') {
+        updateData.phoneNumber = data.phoneNumber.trim();
+      }
+      
+      // 프로필 이미지: 빈 문자열이면 undefined로 설정 (URI 형식 검증 회피)
+      if (data.profileImg !== undefined && data.profileImg.trim() !== '') {
+        updateData.profileImg = data.profileImg.trim();
+      }
+      
+      // boolean 값은 그대로 전송
+      if (data.isMarketingAgreed !== undefined) {
+        updateData.isMarketingAgreed = data.isMarketingAgreed;
+      }
+      if (data.isPushAgreed !== undefined) {
+        updateData.isPushAgreed = data.isPushAgreed;
+      }
+
+      console.log('📤 전송할 데이터:', updateData);
+      console.log('📥 원본 폼 데이터:', data);
+
+      await updateUser(selectedUser.id, updateData);
       toast.success('사용자 정보가 수정되었습니다');
       setIsEditingUser(false);
       await loadUsers(); // 목록 새로고침
@@ -338,10 +440,37 @@ export function UsersPage() {
       const updatedUser = await getUserById(selectedUser.id);
       setSelectedUser(updatedUser);
     } catch (error: unknown) {
-      console.error('Failed to update user:', error);
-      const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-      const errorMessage = axiosError.response?.data?.message || '사용자 정보 수정에 실패했습니다';
-      toast.error(errorMessage);
+      console.error('❌ 사용자 정보 수정 실패:', error);
+      const axiosError = error as { 
+        response?: { 
+          status?: number; 
+          data?: { 
+            message?: string;
+            errors?: Array<{ field: string; message: string }>;
+          } 
+        } 
+      };
+      
+      if (axiosError.response?.status === 400) {
+        const errorData = axiosError.response.data;
+        let errorMessage = errorData?.message || '사용자 정보 수정에 실패했습니다';
+        
+        // 필드별 에러 메시지가 있으면 표시
+        if (errorData?.errors && errorData.errors.length > 0) {
+          const fieldErrors = errorData.errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          errorMessage = `입력값 오류: ${fieldErrors}`;
+        }
+        
+        console.error('400 에러 상세:', {
+          status: axiosError.response.status,
+          data: errorData,
+        });
+        
+        toast.error(errorMessage);
+      } else {
+        const errorMessage = axiosError.response?.data?.message || '사용자 정보 수정에 실패했습니다';
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -693,7 +822,7 @@ export function UsersPage() {
                   <th className={styles.c_wiarv4}>전화번호</th>
                   <th className={styles.c_wiarv4}>상태</th>
                   <th className={styles.c_wiarv4}>가입일</th>
-                  <th className={styles.c_947h7t}>작업</th>
+                  <th className={styles.c_947h7t}>비고</th>
                 </tr>
               </thead>
               <tbody className={styles.c_fyf4x}>
@@ -817,7 +946,7 @@ export function UsersPage() {
           {(totalUsers || 0) > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', marginTop: '16px' }}>
               <div>
-                페이지 {currentPage + 1} / {Math.ceil((totalUsers || 0) / pageSize)} (전체 {totalUsers || 0}명)
+                {currentPage + 1} / {Math.ceil((totalUsers || 0) / pageSize)} (총 {totalUsers || 0}명)
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
