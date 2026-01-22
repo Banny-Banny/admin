@@ -9,8 +9,8 @@ const BASE_URL = process.env.BASE_URL || process.env.PLAYWRIGHT_TEST_BASE_URL ||
 
 // 테스트용 관리자 계정
 const TEST_ADMIN = {
-  email: process.env.TEST_ADMIN_EMAIL || process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
-  password: process.env.TEST_ADMIN_PASSWORD || process.env.SUPER_ADMIN_PASSWORD || 'password123',
+  email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.TEST_ADMIN_PASSWORD || 'password123',
 };
 
 test.describe('상품 목록 UI 테스트 (User Story 1)', () => {

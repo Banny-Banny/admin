@@ -11,17 +11,16 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BA
 
 // 테스트용 관리자 계정 (.env 파일에서 읽어옴)
 const TEST_ADMIN = {
-  email: process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
-  password: process.env.SUPER_ADMIN_PASSWORD || 'password123',
+  email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.TEST_ADMIN_PASSWORD || 'password123',
 };
 
 let adminAccessToken: string;
 
 // NOTE:
 // 이 API E2E 테스트는 실서버 데이터에 직접 영향을 줍니다(상태 변경/삭제/메시지 수정·삭제 등).
-// 실행 시 운영/개발 환경의 문의 데이터가 변경되거나 "문의가 사라짐"처럼 보이는 문제가 발생할 수 있어
-// 안전한 테스트 환경(스테이징/로컬 + 테스트 전용 데이터) 마련 전까지 전체 스킵합니다.
-test.describe.skip('문의하기 API E2E 테스트', () => {
+// 실행 시 운영/개발 환경의 문의 데이터가 변경되거나 "문의가 사라짐"처럼 보이는 문제가 발생할 수 있습니다.
+test.describe('문의하기 API E2E 테스트', () => {
   // 로그인하여 토큰 획득
   test.beforeAll(async ({ request }) => {
     // 환경 변수 확인 (디버깅용)
@@ -29,8 +28,8 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
       console.error('환경 변수가 설정되지 않았습니다:', {
         email: TEST_ADMIN.email,
         password: TEST_ADMIN.password ? '***' : undefined,
-        envEmail: process.env.SUPER_ADMIN_EMAIL,
-        envPassword: process.env.SUPER_ADMIN_PASSWORD ? '***' : undefined,
+        envEmail: process.env.TEST_ADMIN_EMAIL,
+        envPassword: process.env.TEST_ADMIN_PASSWORD ? '***' : undefined,
       });
     }
 
@@ -139,8 +138,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
     expect(listResponse.ok()).toBeTruthy();
     const listData = await listResponse.json();
 
+    // 문의가 없으면 테스트 스킵
     if (listData.data.items.length === 0) {
-      test.skip();
+      test.skip(true, '문의가 없어 테스트를 스킵합니다.');
       return;
     }
 
@@ -180,8 +180,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
     expect(listResponse.ok()).toBeTruthy();
     const listData = await listResponse.json();
 
+    // 문의가 없으면 테스트 스킵
     if (listData.data.items.length === 0) {
-      test.skip();
+      test.skip(true, '문의가 없어 테스트를 스킵합니다.');
       return;
     }
 
@@ -218,8 +219,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
     expect(listResponse.ok()).toBeTruthy();
     const listData = await listResponse.json();
 
+    // 문의가 없으면 테스트 스킵
     if (listData.data.items.length === 0) {
-      test.skip();
+      test.skip(true, '문의가 없어 테스트를 스킵합니다.');
       return;
     }
 
@@ -250,8 +252,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
     expect(listResponse.ok()).toBeTruthy();
     const listData = await listResponse.json();
 
+    // 문의가 없으면 테스트 스킵
     if (listData.data.items.length === 0) {
-      test.skip();
+      test.skip(true, '문의가 없어 테스트를 스킵합니다.');
       return;
     }
 
@@ -273,8 +276,12 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
         msg.senderType === 'ADMIN' && msg.senderAdminId
     );
 
+    // 관리자 메시지가 없으면 테스트용 메시지 생성
     if (!adminMessage) {
-      test.skip();
+      // Socket.IO를 사용하여 메시지 전송 (HTTP API가 없는 경우)
+      // 테스트를 위해 간단히 스킵하거나, Socket.IO로 메시지를 먼저 보내야 함
+      // 여기서는 테스트를 스킵
+      test.skip(true, '관리자 메시지가 없어 테스트를 스킵합니다. Socket.IO로 메시지를 먼저 전송해주세요.');
       return;
     }
 
@@ -309,8 +316,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
     expect(listResponse.ok()).toBeTruthy();
     const listData = await listResponse.json();
 
+    // 문의가 없으면 테스트 스킵
     if (listData.data.items.length === 0) {
-      test.skip();
+      test.skip(true, '문의가 없어 테스트를 스킵합니다.');
       return;
     }
 
@@ -332,8 +340,9 @@ test.describe.skip('문의하기 API E2E 테스트', () => {
         msg.senderType === 'ADMIN' && msg.senderAdminId
     );
 
+    // 관리자 메시지가 없으면 테스트 스킵
     if (!adminMessage) {
-      test.skip();
+      test.skip(true, '관리자 메시지가 없어 테스트를 스킵합니다. Socket.IO로 메시지를 먼저 전송해주세요.');
       return;
     }
 
