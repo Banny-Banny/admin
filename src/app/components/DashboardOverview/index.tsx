@@ -224,6 +224,7 @@ function DashboardContent({ summaryData, isEmpty = false }: { summaryData: Retur
                       backgroundColor: 'rgba(59, 130, 246, 0.1)',
                       fill: true,
                       tension: 0.4,
+                      yAxisID: 'y-signups',
                     },
                     {
                       label: '매출',
@@ -232,6 +233,7 @@ function DashboardContent({ summaryData, isEmpty = false }: { summaryData: Retur
                       backgroundColor: 'rgba(16, 185, 129, 0.1)',
                       fill: true,
                       tension: 0.4,
+                      yAxisID: 'y-revenue',
                     },
                   ],
                 }}
@@ -246,11 +248,58 @@ function DashboardContent({ summaryData, isEmpty = false }: { summaryData: Retur
                     tooltip: {
                       mode: 'index' as const,
                       intersect: false,
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.dataset.label || '';
+                          const value = context.parsed.y ?? 0;
+                          if (label === '매출') {
+                            return `${label}: ${value.toLocaleString()}원`;
+                          }
+                          return `${label}: ${value}명`;
+                        },
+                      },
                     },
                   },
                   scales: {
-                    y: {
+                    'y-signups': {
+                      type: 'linear' as const,
+                      display: true,
+                      position: 'left' as const,
                       beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: '가입자 수 (명)',
+                        color: 'rgb(59, 130, 246)',
+                      },
+                      ticks: {
+                        color: 'rgb(59, 130, 246)',
+                        callback: function(value) {
+                          return value + '명';
+                        },
+                      },
+                      grid: {
+                        drawOnChartArea: true,
+                      },
+                    },
+                    'y-revenue': {
+                      type: 'linear' as const,
+                      display: true,
+                      position: 'right' as const,
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: '매출 (원)',
+                        color: 'rgb(16, 185, 129)',
+                      },
+                      ticks: {
+                        color: 'rgb(16, 185, 129)',
+                        callback: function(value) {
+                          return Number(value ?? 0).toLocaleString() + '원';
+                        },
+                      },
+                      grid: {
+                        drawOnChartArea: false,
+                      },
                     },
                   },
                 }}

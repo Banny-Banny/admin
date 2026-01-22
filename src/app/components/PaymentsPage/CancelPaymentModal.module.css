@@ -1,0 +1,58 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.modalContent {
+  max-width: 600px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  @apply text-sm font-medium;
+}
+
+.required {
+  @apply text-destructive;
+}
+
+.inputError {
+  @apply border-destructive;
+}
+
+.errorMessage {
+  @apply text-sm text-destructive;
+}
+
+.amountInfo {
+  @apply flex items-center gap-2 text-sm text-muted-foreground;
+}
+
+.fullRefund {
+  @apply text-primary font-medium;
+}
+
+.partialRefund {
+  @apply text-orange-600 dark:text-orange-400;
+}
+
+.checkboxLabel {
+  @apply flex items-center gap-2 cursor-pointer;
+}
+
+.checkbox {
+  @apply w-4 h-4;
+}
+
+.refundAccountSection {
+  @apply border rounded-lg p-4 space-y-4 bg-muted/50;
+}
