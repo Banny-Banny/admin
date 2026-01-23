@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: Notification API
+  version: "1.0.0"
+  description: 관리자 알림 메시지 발송 API (프론트엔드 가정 스펙)
+paths:
+  /api/admin/notifications:
+    post:
+      summary: 알림 메시지 발송 또는 예약
+      description: 관리자 권한으로 유저에게 알림 메시지를 즉시 발송하거나 예약합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        "200":
+          description: 발송/예약 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendNotificationResponse'
+        "400":
+          description: 잘못된 요청 (필수 필드 누락, 유효하지 않은 enum 값)
+        "401":
+          description: 인증 실패
+        "403":
+          description: 권한 부족
+        "500":
+          description: 서버 오류
+
+components:
+  schemas:
+    SendNotificationRequest:
+      type: object
+      required:
+        - title
+        - content
+        - type
+        - target
+        - sendNow
+      properties:
+        title:
+          type: string
+          description: 메시지 제목 (필수, 공백-only 불가)
+          maxLength: 200
+        content:
+          type: string
+          description: 메시지 내용 (필수, 공백-only 불가)
+          maxLength: 2000
+        type:
+          type: string
+          description: 메시지 유형
+          enum: ["광고", "안내", "이벤트", "업데이트"]
+        target:
+          type: string
+          description: 발송 대상 그룹
+          enum: ["전체 회원", "활성 회원", "휴면 회원", "VIP 회원"]
+        sendNow:
+          type: boolean
+          description: true=즉시 발송, false=예약 발송
+          default: true
+        scheduledDate:
+          type: string
+          format: date
+          description: 예약 발송 날짜 (sendNow=false일 때 필수)
+        scheduledTime:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+          description: 예약 발송 시간 (HH:mm, sendNow=false일 때 필수)
+
+    SendNotificationResponse:
+      type: object
+      required:
+        - id
+        - status
+        - sentAt
+      properties:
+        id:
+          type: string
+          description: 메시지 ID
+        status:
+          type: string
+          enum: ["발송완료", "발송대기", "예약"]
+        sentAt:
+          type: string
+          description: 발송 또는 예약 시각 (YYYY-MM-DD HH:mm)
+        recipients:
+          type: integer
+          description: 수신자 수
+        message:
+          type: string
+          description: 결과 메시지

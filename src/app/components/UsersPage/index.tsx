@@ -1,25 +1,60 @@
 import { Search, Filter, MoreVertical, Mail, X, UserPlus, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styles from "./styles.module.css";
+import { getUsers, type User, type UserStatus, type GetUsersResponse } from '../../commons/apis/user';
+import { createAdmin, getAdmins, type AdminListItem } from '../../commons/apis/admin';
+
+// UI에서 사용하는 유저 타입 (API 타입 + 추가 필드)
+interface UserWithUI extends User {
+  platform?: string; // 플랫폼 정보 (API에 없을 수 있음)
+  lastLogin?: string; // 마지막 접속 (API에 없을 수 있음)
+}
+
+// UI 상태 타입
+type UIStatus = '정상' | '비회원' | '탈퇴';
+
+// 상태 매핑 함수
+const mapApiStatusToUI = (status: UserStatus): UIStatus => {
+  switch (status) {
+    case 'ACTIVE':
+      return '정상';
+    case 'INACTIVE':
+      return '비회원';
+    default:
+      return '정상';
+  }
+};
+
+const mapUIStatusToAPI = (status: string): UserStatus | undefined => {
+  switch (status) {
+    case '정상':
+      return 'ACTIVE';
+    case '비회원':
+    case '탈퇴':
+      return 'INACTIVE';
+    default:
+      return undefined;
+  }
+};
 
 export function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showAdminForm, setShowAdminForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [admins, setAdmins] = useState([
-    {
-      id: 1,
-      name: '관리자',
-      nickname: 'admin',
-      email: 'admin@example.com',
-      role: '최고관리자',
-      joinDate: '2025-01-01',
-      lastLogin: '2026-01-18 09:00',
-    },
-  ]);
+  const [admins, setAdmins] = useState<Array<{
+    id: string | number;
+    name: string;
+    nickname: string;
+    email: string;
+    role: string;
+    joinDate: string;
+    lastLogin: string;
+  }>>([]);
 
   const [adminFormData, setAdminFormData] = useState({
     name: '',
@@ -28,135 +63,226 @@ export function UsersPage() {
     password: '',
   });
 
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      name: '김철수', 
-      nickname: '철수왕',
-      email: 'kim@example.com', 
-      platform: '카카오', 
-      status: '정상', 
-      joinDate: '2025-03-15',
-      lastLogin: '2026-01-17 14:23'
-    },
-    { 
-      id: 2, 
-      name: '이영희', 
-      nickname: '영희짱',
-      email: 'lee@example.com', 
-      platform: '네이버', 
-      status: '정상', 
-      joinDate: '2025-05-20',
-      lastLogin: '2026-01-17 10:15'
-    },
-    { 
-      id: 3, 
-      name: '박민수', 
-      nickname: '민수123',
-      email: 'park@example.com', 
-      platform: '구글', 
-      status: '정상', 
-      joinDate: '2025-07-10',
-      lastLogin: '2026-01-16 18:30'
-    },
-    { 
-      id: 4, 
-      name: '정수진', 
-      nickname: '수진이',
-      email: 'jung@example.com', 
-      platform: '일반', 
-      status: '탈퇴', 
-      joinDate: '2025-09-05',
-      lastLogin: '2025-12-20 09:45'
-    },
-    { 
-      id: 5, 
-      name: '최동욱', 
-      nickname: '동욱오빠',
-      email: 'choi@example.com', 
-      platform: '카카오', 
-      status: '정상', 
-      joinDate: '2025-11-22',
-      lastLogin: '2026-01-17 08:12'
-    },
-    { 
-      id: 6, 
-      name: '강지혜', 
-      nickname: '지혜로운',
-      email: 'kang@example.com', 
-      platform: '네이버', 
-      status: '비회원', 
-      joinDate: '2026-01-08',
-      lastLogin: '2026-01-10 15:20'
-    },
-    { 
-      id: 7, 
-      name: '윤서준', 
-      nickname: '서준킹',
-      email: 'yoon@example.com', 
-      platform: '구글', 
-      status: '정상', 
-      joinDate: '2025-04-12',
-      lastLogin: '2026-01-17 11:30'
-    },
-    { 
-      id: 8, 
-      name: '임하은', 
-      nickname: '하은공주',
-      email: 'lim@example.com', 
-      platform: '일반', 
-      status: '정상', 
-      joinDate: '2025-08-25',
-      lastLogin: '2026-01-16 20:45'
-    },
-  ]);
+  const [users, setUsers] = useState<UserWithUI[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  const handleStatusChange = (userId: number, newStatus: string) => {
+  // 검색어 debounce 처리
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms 지연
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // 유저 목록 조회 함수
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const apiStatus = mapUIStatusToAPI(statusFilter);
+      const response = await getUsers({
+        search: debouncedSearchTerm || undefined,
+        status: apiStatus,
+        limit: 100, // 충분히 큰 값으로 설정
+        offset: 0,
+      });
+      
+      // 실제 API 응답 구조에 맞게 처리
+      // 응답이 { success: true, data: { items: [...], total: ... } } 형태일 수 있음
+      let usersList: User[] = [];
+      let total = 0;
+      
+      // 응답을 unknown으로 처리하여 타입 안전하게 처리
+      const responseUnknown = response as unknown;
+      
+      // 기대하는 구조: { users: [...], total: ... }
+      if (
+        typeof responseUnknown === 'object' &&
+        responseUnknown !== null &&
+        'users' in responseUnknown &&
+        Array.isArray((responseUnknown as GetUsersResponse).users)
+      ) {
+        const typedResponse = responseUnknown as GetUsersResponse;
+        usersList = typedResponse.users;
+        total = typedResponse.total || 0;
+      }
+      // 실제 API 구조: { success: true, data: { items: [...], total: ... } }
+      else if (
+        typeof responseUnknown === 'object' &&
+        responseUnknown !== null &&
+        'data' in responseUnknown &&
+        typeof (responseUnknown as { data: unknown }).data === 'object' &&
+        (responseUnknown as { data: unknown }).data !== null
+      ) {
+        const dataObj = (responseUnknown as { data: { items?: User[]; total?: number } }).data;
+        if (Array.isArray(dataObj.items)) {
+          usersList = dataObj.items;
+          total = dataObj.total || 0;
+        }
+      }
+      // 배열로 직접 반환되는 경우
+      else if (Array.isArray(responseUnknown)) {
+        usersList = responseUnknown;
+        total = responseUnknown.length;
+      }
+      
+      // API 응답을 UI 타입으로 변환
+      const usersWithUI: UserWithUI[] = usersList.map((user) => ({
+        ...user,
+        platform: '일반', // API에 플랫폼 정보가 없으면 기본값
+        lastLogin: user.updatedAt || user.createdAt || '-',
+      }));
+      
+      setUsers(usersWithUI);
+      setTotalUsers(total);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '유저 목록을 불러오는데 실패했습니다.';
+      setError(errorMessage);
+      console.error('Failed to fetch users:', err);
+      // 에러 발생 시 빈 배열로 설정
+      setUsers([]);
+      setTotalUsers(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [debouncedSearchTerm, statusFilter]);
+
+  // 관리자 목록 조회 함수
+  const fetchAdmins = useCallback(async () => {
+    try {
+      const response = await getAdmins({
+        status: 'ALL',
+        limit: 100,
+        offset: 0,
+      });
+      
+      // API 응답 구조에 맞게 처리
+      let adminsList: AdminListItem[] = [];
+      
+      const responseUnknown = response as unknown;
+      
+      // 응답이 { admins: [...] } 형태인 경우
+      if (
+        typeof responseUnknown === 'object' &&
+        responseUnknown !== null &&
+        'admins' in responseUnknown &&
+        Array.isArray((responseUnknown as { admins: AdminListItem[] }).admins)
+      ) {
+        adminsList = (responseUnknown as { admins: AdminListItem[] }).admins;
+      }
+      // 응답이 { items: [...] } 형태인 경우
+      else if (
+        typeof responseUnknown === 'object' &&
+        responseUnknown !== null &&
+        'items' in responseUnknown &&
+        Array.isArray((responseUnknown as { items: AdminListItem[] }).items)
+      ) {
+        adminsList = (responseUnknown as { items: AdminListItem[] }).items;
+      }
+      // 응답이 { success: true, data: { items: [...] } } 형태인 경우
+      else if (
+        typeof responseUnknown === 'object' &&
+        responseUnknown !== null &&
+        'data' in responseUnknown &&
+        typeof (responseUnknown as { data: unknown }).data === 'object' &&
+        (responseUnknown as { data: unknown }).data !== null
+      ) {
+        const dataObj = (responseUnknown as { data: { items?: AdminListItem[]; admins?: AdminListItem[] } }).data;
+        if (Array.isArray(dataObj.items)) {
+          adminsList = dataObj.items;
+        } else if (Array.isArray(dataObj.admins)) {
+          adminsList = dataObj.admins;
+        }
+      }
+      // 배열로 직접 반환되는 경우
+      else if (Array.isArray(responseUnknown)) {
+        adminsList = responseUnknown;
+      }
+      
+      // API 응답을 UI 타입으로 변환
+      const adminsWithUI = adminsList.map((admin) => ({
+        id: admin.id,
+        name: admin.name,
+        nickname: admin.email.split('@')[0],
+        email: admin.email,
+        role: admin.role === 'SUPER_ADMIN' ? '최고관리자' : 
+              admin.role === 'ADMIN' ? '일반관리자' : 
+              '일반관리자',
+        joinDate: admin.createdAt 
+          ? new Date(admin.createdAt).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        lastLogin: admin.lastLogin || '-',
+      }));
+      
+      setAdmins(adminsWithUI);
+    } catch (err) {
+      console.error('Failed to fetch admins:', err);
+      // 에러 발생 시 빈 배열로 설정
+      setAdmins([]);
+    }
+  }, []);
+
+  // 초기 로드 및 필터 변경 시 데이터 조회
+  useEffect(() => {
+    fetchUsers();
+    fetchAdmins();
+  }, [fetchUsers, fetchAdmins]);
+
+  const handleStatusChange = async (userId: string, newStatus: UIStatus) => {
+    // TODO: 유저 상태 변경 API가 있으면 여기서 호출
+    // 현재는 로컬 상태만 업데이트
     setUsers(users.map(user => 
-      user.id === userId ? { ...user, status: newStatus } : user
+      user.id === userId ? { ...user, status: mapUIStatusToAPI(newStatus) || 'ACTIVE' } : user
     ));
     setOpenDropdown(null);
   };
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
+  const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newAdmin = {
-      id: admins.length + 1,
-      name: adminFormData.name,
-      nickname: adminFormData.email.split('@')[0],
-      email: adminFormData.email,
-      role: adminFormData.role,
-      joinDate: new Date().toISOString().split('T')[0],
-      lastLogin: '-',
-    };
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await createAdmin({
+        email: adminFormData.email,
+        name: adminFormData.name,
+        password: adminFormData.password,
+      });
 
-    setAdmins([...admins, newAdmin]);
-    setAdminFormData({
-      name: '',
-      email: '',
-      role: '일반관리자',
-      password: '',
-    });
-    setShowAdminForm(false);
-    alert('관리자가 추가되었습니다!');
+      // 관리자 추가 성공 후 목록 다시 불러오기
+      await fetchAdmins();
+      
+      setAdminFormData({
+        name: '',
+        email: '',
+        role: '일반관리자',
+        password: '',
+      });
+      setShowAdminForm(false);
+      alert('관리자가 추가되었습니다!');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '관리자 추가에 실패했습니다.';
+      setError(errorMessage);
+      alert(errorMessage);
+      console.error('Failed to create admin:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteAdmin = (adminId: number) => {
+  const handleDeleteAdmin = (adminId: string | number) => {
     if (confirm('정말 이 관리자를 삭제하시겠습니까?')) {
       setAdmins(admins.filter(admin => admin.id !== adminId));
     }
   };
 
+  // 클라이언트 사이드 필터링 (플랫폼 필터만, 검색과 상태는 API에서 처리)
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     const matchesPlatform = platformFilter === 'all' || user.platform === platformFilter;
-    
-    return matchesSearch && matchesStatus && matchesPlatform;
+    return matchesPlatform;
   });
 
   const getPlatformIcon = (platform: string) => {
@@ -169,8 +295,9 @@ export function UsersPage() {
     return icons[platform] || '•';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status: UserStatus) => {
+    const uiStatus = mapApiStatusToUI(status);
+    switch (uiStatus) {
       case '정상':
         return styles.statusActive;
       case '비회원':
@@ -187,7 +314,7 @@ export function UsersPage() {
       <div className={styles.c_xc8ak4}>
         <div>
           <h2 className={styles.c_1dlkxbt}>사용자 관리</h2>
-          <p className={styles.c_9ngaqo}>전체 {users.length}명의 사용자</p>
+          <p className={styles.c_9ngaqo}>전체 {totalUsers}명의 사용자</p>
         </div>
         <button 
           onClick={() => setShowAdminForm(!showAdminForm)}
@@ -413,90 +540,109 @@ export function UsersPage() {
               </tr>
             </thead>
             <tbody className={styles.c_fyf4x}>
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <tr key={user.id} className={styles.c_x2lcqj}>
-                    <td className={styles.c_g43mv3}>
-                      <div className={styles.c_2ca09x}>
-                        <div className={styles.c_1oa1gq1}>
-                          {user.name.charAt(0)}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className={styles.c_13nmcpi}>
+                    로딩 중...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={8} className={styles.c_13nmcpi}>
+                    {error}
+                  </td>
+                </tr>
+              ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => {
+                  const uiStatus = mapApiStatusToUI(user.status);
+                  const joinDate = user.createdAt 
+                    ? new Date(user.createdAt).toISOString().split('T')[0]
+                    : '-';
+                  
+                  return (
+                    <tr key={user.id} className={styles.c_x2lcqj}>
+                      <td className={styles.c_g43mv3}>
+                        <div className={styles.c_2ca09x}>
+                          <div className={styles.c_1oa1gq1}>
+                            {(user.name || user.nickname || user.email).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className={styles.c_1my21gc}>{user.name || user.nickname || '이름 없음'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className={styles.c_1my21gc}>{user.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={styles.c_g43mv3}>
-                      <p className={styles.c_ibg3d3}>{user.nickname}</p>
-                    </td>
-                    <td className={styles.c_g43mv3}>
-                      <p className={styles.c_r4fgsq}>
-                        <Mail size={14} />
-                        {user.email}
-                      </p>
-                    </td>
-                    <td className={styles.c_g43mv3}>
-                      <span className={styles.c_a0rzae}>
-                        <span>{getPlatformIcon(user.platform)}</span>
-                        {user.platform}
-                      </span>
-                    </td>
-                    <td className={styles.c_g43mv3}>
-                      <span className={`${styles.tagBase} ${getStatusColor(user.status)}`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className={styles.c_tp84h0}>{user.joinDate}</td>
-                    <td className={styles.c_tp84h0}>{user.lastLogin}</td>
-                    <td className={styles.c_1ouo88t}>
-                      <div className={styles.c_1pv0ki4}>
-                        <button 
-                          onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
-                          className={styles.c_1us4dfh}
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                        
-                        {openDropdown === user.id && (
-                          <>
-                            <div 
-                              className={styles.c_1dqnb4u} 
-                              onClick={() => setOpenDropdown(null)}
-                            />
-                            <div className={styles.c_1fggrtu}>
-                              <div className={styles.c_2c5x}>
-                                <div className={styles.c_a3mzhn}>
-                                  상태 변경
+                      </td>
+                      <td className={styles.c_g43mv3}>
+                        <p className={styles.c_ibg3d3}>{user.nickname || '-'}</p>
+                      </td>
+                      <td className={styles.c_g43mv3}>
+                        <p className={styles.c_r4fgsq}>
+                          <Mail size={14} />
+                          {user.email}
+                        </p>
+                      </td>
+                      <td className={styles.c_g43mv3}>
+                        <span className={styles.c_a0rzae}>
+                          <span>{getPlatformIcon(user.platform || '일반')}</span>
+                          {user.platform || '일반'}
+                        </span>
+                      </td>
+                      <td className={styles.c_g43mv3}>
+                        <span className={`${styles.tagBase} ${getStatusColor(user.status)}`}>
+                          {uiStatus}
+                        </span>
+                      </td>
+                      <td className={styles.c_tp84h0}>{joinDate}</td>
+                      <td className={styles.c_tp84h0}>{user.lastLogin || '-'}</td>
+                      <td className={styles.c_1ouo88t}>
+                        <div className={styles.c_1pv0ki4}>
+                          <button 
+                            onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
+                            className={styles.c_1us4dfh}
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          
+                          {openDropdown === user.id && (
+                            <>
+                              <div 
+                                className={styles.c_1dqnb4u} 
+                                onClick={() => setOpenDropdown(null)}
+                              />
+                              <div className={styles.c_1fggrtu}>
+                                <div className={styles.c_2c5x}>
+                                  <div className={styles.c_a3mzhn}>
+                                    상태 변경
+                                  </div>
+                                  <button
+                                    onClick={() => handleStatusChange(user.id, '정상')}
+                                    className={styles.c_1wsrq34}
+                                  >
+                                    <span className={styles.c_ivher9}></span>
+                                    정상
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusChange(user.id, '비회원')}
+                                    className={styles.c_1wsrq34}
+                                  >
+                                    <span className={styles.c_1hog15u}></span>
+                                    비회원
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusChange(user.id, '탈퇴')}
+                                    className={styles.c_1wsrq34}
+                                  >
+                                    <span className={styles.c_7wsy93}></span>
+                                    탈퇴
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleStatusChange(user.id, '정상')}
-                                  className={styles.c_1wsrq34}
-                                >
-                                  <span className={styles.c_ivher9}></span>
-                                  정상
-                                </button>
-                                <button
-                                  onClick={() => handleStatusChange(user.id, '비회원')}
-                                  className={styles.c_1wsrq34}
-                                >
-                                  <span className={styles.c_1hog15u}></span>
-                                  비회원
-                                </button>
-                                <button
-                                  onClick={() => handleStatusChange(user.id, '탈퇴')}
-                                  className={styles.c_1wsrq34}
-                                >
-                                  <span className={styles.c_7wsy93}></span>
-                                  탈퇴
-                                </button>
                               </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={8} className={styles.c_13nmcpi}>
