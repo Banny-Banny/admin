@@ -57,7 +57,8 @@ export interface CreateProductRequest {
   name: string;
   price: number;
   description?: string;
-  thumbnailUrl?: string;
+  thumbnail?: File;  // 파일 객체 추가
+  thumbnailUrl?: string;  // URL도 여전히 지원 (호환성)
   categoryId?: string;
   isActive: boolean;
   productType: ProductType;
@@ -70,7 +71,8 @@ export interface UpdateProductRequest {
   name?: string;
   price?: number;
   description?: string | null;
-  thumbnailUrl?: string | null;
+  thumbnail?: File;  // 파일 객체 추가
+  thumbnailUrl?: string | null;  // URL도 여전히 지원 (호환성)
   categoryId?: string | null;
   isActive?: boolean;
   productType?: ProductType;
@@ -201,7 +203,47 @@ export async function getProductById(id: string): Promise<ProductDetailResponse>
 export async function createProduct(
   data: CreateProductRequest
 ): Promise<ProductDetailResponse> {
-  return apiClient.post<ProductDetailResponse>('/api/admin/products', data);
+  const formData = new FormData();
+  
+  formData.append('name', data.name);
+  formData.append('price', data.price.toString());
+  formData.append('productType', data.productType);
+  formData.append('isActive', data.isActive.toString());
+  
+  // mediaTypes 배열의 각 요소를 개별적으로 append
+  // 백엔드가 FormData에서 배열을 올바르게 파싱할 수 있도록
+  data.mediaTypes.forEach((type) => {
+    formData.append('mediaTypes', type);
+  });
+  
+  // maxMediaCount는 number 또는 object일 수 있음
+  if (typeof data.maxMediaCount === 'number') {
+    formData.append('maxMediaCount', data.maxMediaCount.toString());
+  } else {
+    formData.append('maxMediaCount', JSON.stringify(data.maxMediaCount));
+  }
+  
+  // 선택적 필드들
+  if (data.description) {
+    formData.append('description', data.description);
+  }
+  
+  // 파일 업로드 우선, 없으면 URL 사용
+  if (data.thumbnail) {
+    formData.append('thumbnail', data.thumbnail);
+  } else if (data.thumbnailUrl) {
+    formData.append('thumbnailUrl', data.thumbnailUrl);
+  }
+  
+  if (data.categoryId) {
+    formData.append('categoryId', data.categoryId);
+  }
+  
+  return apiClient.post<ProductDetailResponse>('/api/admin/products', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /**
@@ -240,7 +282,57 @@ export async function updateProduct(
   id: string,
   data: UpdateProductRequest
 ): Promise<ProductDetailResponse> {
-  return apiClient.patch<ProductDetailResponse>(`/api/admin/products/${id}`, data);
+  const formData = new FormData();
+  
+  // 필드가 존재하는 경우에만 추가
+  if (data.name !== undefined) {
+    formData.append('name', data.name);
+  }
+  if (data.price !== undefined) {
+    formData.append('price', data.price.toString());
+  }
+  if (data.description !== undefined) {
+    formData.append('description', data.description || '');
+  }
+  if (data.productType !== undefined) {
+    formData.append('productType', data.productType);
+  }
+  if (data.isActive !== undefined) {
+    formData.append('isActive', data.isActive.toString());
+  }
+  
+  // mediaTypes 배열의 각 요소를 개별적으로 append
+  if (data.mediaTypes !== undefined) {
+    data.mediaTypes.forEach((type) => {
+      formData.append('mediaTypes', type);
+    });
+  }
+  
+  // maxMediaCount는 number 또는 object일 수 있음
+  if (data.maxMediaCount !== undefined) {
+    if (typeof data.maxMediaCount === 'number') {
+      formData.append('maxMediaCount', data.maxMediaCount.toString());
+    } else {
+      formData.append('maxMediaCount', JSON.stringify(data.maxMediaCount));
+    }
+  }
+  
+  // 파일 업로드 우선, 없으면 URL 사용
+  if (data.thumbnail) {
+    formData.append('thumbnail', data.thumbnail);
+  } else if (data.thumbnailUrl !== undefined) {
+    formData.append('thumbnailUrl', data.thumbnailUrl || '');
+  }
+  
+  if (data.categoryId !== undefined) {
+    formData.append('categoryId', data.categoryId || '');
+  }
+  
+  return apiClient.patch<ProductDetailResponse>(`/api/admin/products/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /**

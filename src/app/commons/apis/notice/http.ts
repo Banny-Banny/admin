@@ -108,7 +108,31 @@ export async function getNoticeById(id: string): Promise<NoticeDetailResponse> {
 export async function createNotice(
   data: CreateNoticeRequest
 ): Promise<CreateNoticeResponse> {
-  return apiClient.post<CreateNoticeResponse>('/api/admin/notices', data);
+  const formData = new FormData();
+  
+  formData.append('title', data.title);
+  formData.append('content', data.content);
+  
+  // 선택적 필드들
+  // 파일 업로드 우선, 없으면 URL 사용
+  if (data.image) {
+    formData.append('image', data.image);
+  } else if (data.imageUrl !== undefined) {
+    formData.append('imageUrl', data.imageUrl);
+  }
+  
+  if (data.isPinned !== undefined) {
+    formData.append('isPinned', data.isPinned.toString());
+  }
+  if (data.isVisible !== undefined) {
+    formData.append('isVisible', data.isVisible.toString());
+  }
+  
+  return apiClient.post<CreateNoticeResponse>('/api/admin/notices', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /**
@@ -144,7 +168,35 @@ export async function updateNotice(
   id: string,
   data: UpdateNoticeRequest
 ): Promise<{ success: boolean }> {
-  return apiClient.patch<{ success: boolean }>(`/api/admin/notices/${id}`, data);
+  const formData = new FormData();
+  
+  // 필드가 존재하는 경우에만 추가
+  if (data.title !== undefined) {
+    formData.append('title', data.title);
+  }
+  if (data.content !== undefined) {
+    formData.append('content', data.content);
+  }
+  
+  // 파일 업로드 우선, 없으면 URL 사용
+  if (data.image) {
+    formData.append('image', data.image);
+  } else if (data.imageUrl !== undefined) {
+    formData.append('imageUrl', data.imageUrl || '');
+  }
+  
+  if (data.isPinned !== undefined) {
+    formData.append('isPinned', data.isPinned.toString());
+  }
+  if (data.isVisible !== undefined) {
+    formData.append('isVisible', data.isVisible.toString());
+  }
+  
+  return apiClient.patch<{ success: boolean }>(`/api/admin/notices/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /**

@@ -20,6 +20,7 @@ export interface NoticeListItem {
   title: string;
   imageUrl: string | null;
   isPinned: boolean;
+  isVisible: boolean;
   createdAt: string;
 }
 
@@ -44,7 +45,8 @@ export interface NoticeDetailResponse {
 export interface CreateNoticeRequest {
   title: string;
   content: string;
-  imageUrl?: string;
+  image?: File;  // 파일 객체 추가
+  imageUrl?: string;  // URL도 여전히 지원 (호환성)
   isPinned?: boolean;
   isVisible?: boolean;
 }
@@ -59,7 +61,8 @@ export interface CreateNoticeResponse {
 export interface UpdateNoticeRequest {
   title?: string;
   content?: string;
-  imageUrl?: string;
+  image?: File;  // 파일 객체 추가
+  imageUrl?: string;  // URL도 여전히 지원 (호환성)
   isPinned?: boolean;
   isVisible?: boolean;
 }

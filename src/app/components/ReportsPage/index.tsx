@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Calendar, User, ArrowLeft, Trash2, Edit } from 'lucide-react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { getNotices, getNoticeById, createNotice, updateNotice, deleteNotice } from '../../commons/apis/notice';
 import type { NoticeListItem, Notice as ApiNotice } from '../../commons/apis/notice';
@@ -28,10 +29,12 @@ interface Notice {
   originalId: string; // API의 원본 UUID (상세 조회용)
   title: string;
   content: string; // 목록에서는 표시하지 않지만, 상세 뷰를 위해 저장
+  imageUrl: string | null; // 이미지 URL
   author: string; // UI 전용 필드 (API에 없음)
   createdAt: string;
   views: number; // UI 전용 필드 (API에 없음)
   isPinned: boolean;
+  isVisible: boolean;
 }
 
 /**
@@ -51,10 +54,12 @@ function mapApiNoticeToUiNotice(apiNotice: NoticeListItem): Notice {
     originalId: apiNotice.id,
     title: apiNotice.title,
     content: '',
+    imageUrl: apiNotice.imageUrl,
     author: '관리자',
     createdAt: apiNotice.createdAt.split('T')[0],
     views: 0,
     isPinned: apiNotice.isPinned,
+    isVisible: apiNotice.isVisible,
   };
 }
 
@@ -75,10 +80,12 @@ function mapApiNoticeDetailToUiNotice(apiNotice: ApiNotice): Notice {
     originalId: apiNotice.id,
     title: apiNotice.title,
     content: apiNotice.content,
+    imageUrl: apiNotice.imageUrl,
     author: '관리자',
     createdAt: apiNotice.createdAt.split('T')[0],
     views: 0,
     isPinned: apiNotice.isPinned,
+    isVisible: apiNotice.isVisible,
   };
 }
 
@@ -269,7 +276,8 @@ export function ReportsPage() {
         const response = await updateNotice(editingNoticeId, {
           title: formData.title.trim(),
           content: formData.content.trim(),
-          imageUrl: formData.imageUrl.trim() || undefined,
+          image: formData.imageFile || undefined,
+          imageUrl: !formData.imageFile ? (formData.imageUrl.trim() || undefined) : undefined,
           isPinned: formData.isPinned,
           isVisible: formData.isVisible,
         });
@@ -306,7 +314,7 @@ export function ReportsPage() {
 
           // 수정 모드 종료 및 상세 뷰로 이동
           setEditingNoticeId(null);
-          setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+          setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
           setView('detail');
           toast.success('공지사항이 수정되었습니다.');
         } else {
@@ -317,7 +325,8 @@ export function ReportsPage() {
         const response = await createNotice({
           title: formData.title.trim(),
           content: formData.content.trim(),
-          imageUrl: formData.imageUrl.trim() || undefined,
+          image: formData.imageFile || undefined,
+          imageUrl: !formData.imageFile ? (formData.imageUrl.trim() || undefined) : undefined,
           isPinned: formData.isPinned,
           isVisible: formData.isVisible,
         });
@@ -343,7 +352,7 @@ export function ReportsPage() {
           }
 
           // 폼 초기화 및 목록으로 이동
-          setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+          setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
           setView('list');
           toast.success('공지사항이 등록되었습니다.');
         } else {
@@ -440,6 +449,7 @@ export function ReportsPage() {
     title: '',
     content: '',
     imageUrl: '',
+    imageFile: null as File | null,
     isPinned: false,
     isVisible: true,
   });
@@ -494,13 +504,73 @@ export function ReportsPage() {
                   className={`${styles.noticeItem} ${
                     notice.isPinned ? styles.noticePinned : ''
                   }`}
+                  style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}
                 >
-                  <div className={styles.c_oi2yba}>
+                  {/* 이미지 썸네일 */}
+                  {notice.imageUrl ? (
+                    <div style={{
+                      flexShrink: 0,
+                      width: '120px',
+                      height: '80px',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      backgroundColor: '#f3f4f6',
+                      position: 'relative',
+                    }}>
+                      <Image
+                        src={notice.imageUrl}
+                        alt={notice.title}
+                        width={120}
+                        height={80}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                        unoptimized
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 숨김 처리
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{
+                      flexShrink: 0,
+                      width: '120px',
+                      height: '80px',
+                      borderRadius: '6px',
+                      backgroundColor: '#f3f4f6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#9ca3af',
+                      fontSize: '0.75rem',
+                    }}>
+                      이미지 없음
+                    </div>
+                  )}
+                  
+                  <div className={styles.c_oi2yba} style={{ flex: 1 }}>
                     <div className={styles.c_1dzu82l}>
                       <div className={styles.c_5znanq}>
                         {notice.isPinned && (
                           <span className={styles.c_zxbkcz}>
                             공지
+                          </span>
+                        )}
+                        {!notice.isVisible && (
+                          <span style={{
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: '500',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            borderRadius: '4px',
+                            marginRight: '8px',
+                          }}>
+                            비공개
                           </span>
                         )}
                         <h3 className={styles.c_1riaao0}>
@@ -687,6 +757,7 @@ export function ReportsPage() {
                               title: noticeDetail.title,
                               content: noticeDetail.content,
                               imageUrl: noticeDetail.imageUrl || '',
+                              imageFile: null,
                               isPinned: noticeDetail.isPinned,
                               isVisible: noticeDetail.isVisible,
                             });
@@ -747,6 +818,44 @@ export function ReportsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 이미지 표시 */}
+              {selectedNotice.imageUrl ? (
+                <div className={styles.c_2c63} style={{ marginTop: '24px' }}>
+                  <div className={styles.c_tgp36g}>
+                    <div style={{ 
+                      position: 'relative', 
+                      width: '100%', 
+                      maxHeight: '600px', 
+                      borderRadius: '8px', 
+                      overflow: 'hidden',
+                      backgroundColor: '#f9fafb'
+                    }}>
+                      <Image 
+                        src={selectedNotice.imageUrl} 
+                        alt={selectedNotice.title}
+                        width={1200}
+                        height={600}
+                        style={{ 
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: '600px',
+                          objectFit: 'contain',
+                        }}
+                        unoptimized
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 에러 메시지 표시
+                          const target = e.target as HTMLImageElement;
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div style="padding: 40px; text-align: center; color: #9ca3af;">이미지를 불러올 수 없습니다</div>';
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : (
             <div className={styles.c_g9tmm}>
@@ -811,7 +920,7 @@ export function ReportsPage() {
           onClick={() => {
             setView('detail');
             setEditingNoticeId(null);
-            setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+            setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
             setFormErrors({});
           }}
           className={styles.c_1repdhl}
@@ -904,16 +1013,72 @@ export function ReportsPage() {
 
             <div>
               <label className={styles.c_a41skz}>
-                이미지 URL
+                이미지 (선택)
               </label>
-              <input
-                type="url"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="이미지 URL을 입력하세요 (선택사항)"
-                className={styles.c_1gzwh21}
-                disabled={submitLoading}
-              />
+              
+              {!formData.imageFile ? (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({
+                        ...formData,
+                        imageFile: file,
+                        imageUrl: '', // 파일 선택 시 URL 초기화
+                      });
+                    }
+                  }}
+                  className={styles.c_1gzwh21}
+                  disabled={submitLoading}
+                />
+              ) : (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  padding: '8px 12px', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151' }}>
+                    📎 {formData.imageFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, imageFile: null })}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.875rem',
+                      color: '#dc2626',
+                      backgroundColor: 'white',
+                      border: '1px solid #dc2626',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+              
+              {/* 또는 URL 입력 */}
+              <div style={{ marginTop: '8px' }}>
+                <label className={styles.c_a41skz} style={{ fontSize: '0.875rem' }}>
+                  또는 URL 입력
+                </label>
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="이미지 URL을 입력하세요 (선택사항)"
+                  className={styles.c_1gzwh21}
+                  disabled={submitLoading || !!formData.imageFile}
+                />
+              </div>
             </div>
 
             <div className={styles.c_sm9r4r}>
@@ -922,7 +1087,7 @@ export function ReportsPage() {
                 onClick={() => {
                   setView('detail');
                   setEditingNoticeId(null);
-                  setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+                  setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
                   setFormErrors({});
                 }}
                 className={styles.c_8zbzmp}
@@ -951,7 +1116,7 @@ export function ReportsPage() {
         <button
           onClick={() => {
             setView('list');
-            setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+            setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
             setFormErrors({});
           }}
           className={styles.c_1repdhl}
@@ -1044,16 +1209,72 @@ export function ReportsPage() {
 
             <div>
               <label className={styles.c_a41skz}>
-                이미지 URL
+                이미지 (선택)
               </label>
-              <input
-                type="url"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="이미지 URL을 입력하세요 (선택사항)"
-                className={styles.c_1gzwh21}
-                disabled={submitLoading}
-              />
+              
+              {!formData.imageFile ? (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({
+                        ...formData,
+                        imageFile: file,
+                        imageUrl: '', // 파일 선택 시 URL 초기화
+                      });
+                    }
+                  }}
+                  className={styles.c_1gzwh21}
+                  disabled={submitLoading}
+                />
+              ) : (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  padding: '8px 12px', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151' }}>
+                    📎 {formData.imageFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, imageFile: null })}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.875rem',
+                      color: '#dc2626',
+                      backgroundColor: 'white',
+                      border: '1px solid #dc2626',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+              
+              {/* 또는 URL 입력 */}
+              <div style={{ marginTop: '8px' }}>
+                <label className={styles.c_a41skz} style={{ fontSize: '0.875rem' }}>
+                  또는 URL 입력
+                </label>
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="이미지 URL을 입력하세요 (선택사항)"
+                  className={styles.c_1gzwh21}
+                  disabled={submitLoading || !!formData.imageFile}
+                />
+              </div>
             </div>
 
             <div className={styles.c_sm9r4r}>
@@ -1061,7 +1282,7 @@ export function ReportsPage() {
                 type="button"
                 onClick={() => {
                   setView('list');
-                  setFormData({ title: '', content: '', imageUrl: '', isPinned: false, isVisible: true });
+                  setFormData({ title: '', content: '', imageUrl: '', imageFile: null, isPinned: false, isVisible: true });
                   setFormErrors({});
                 }}
                 className={styles.c_8zbzmp}
