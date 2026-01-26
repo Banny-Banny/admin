@@ -40,6 +40,7 @@ export function ProductsPage() {
     status: '판매중',
     description: '',
     thumbnailUrl: '',
+    thumbnailFile: null as File | null,
     productType: ProductType.TIME_CAPSULE,
     mediaTypes: [] as string[],
     maxMediaCount: '',
@@ -58,6 +59,7 @@ export function ProductsPage() {
     status: '판매중',
     description: '',
     thumbnailUrl: '',
+    thumbnailFile: null as File | null,
     productType: ProductType.TIME_CAPSULE,
     mediaTypes: [] as string[],
     maxMediaCount: '',
@@ -112,7 +114,8 @@ export function ProductsPage() {
         name: formData.name.trim(),
         price: parseFloat(formData.price),
         description: formData.description.trim() || undefined,
-        thumbnailUrl: formData.thumbnailUrl.trim() || undefined,
+        thumbnail: formData.thumbnailFile || undefined,
+        thumbnailUrl: !formData.thumbnailFile ? (formData.thumbnailUrl.trim() || undefined) : undefined,
         categoryId: formData.categoryId || undefined,
         isActive: formData.status === '판매중',
         productType: formData.productType,
@@ -132,6 +135,7 @@ export function ProductsPage() {
           status: '판매중',
           description: '',
           thumbnailUrl: '',
+          thumbnailFile: null,
           productType: ProductType.TIME_CAPSULE,
           mediaTypes: [],
           maxMediaCount: '',
@@ -268,6 +272,7 @@ export function ProductsPage() {
       status: productDetail.isActive ? '판매중' : '판매중지',
       description: productDetail.description || '',
       thumbnailUrl: productDetail.thumbnailUrl || '',
+      thumbnailFile: null,
       productType: productDetail.productType,
       mediaTypes: productDetail.mediaTypes || [],
       maxMediaCount: typeof productDetail.maxMediaCount === 'number' 
@@ -288,6 +293,7 @@ export function ProductsPage() {
       status: '판매중',
       description: '',
       thumbnailUrl: '',
+      thumbnailFile: null,
       productType: ProductType.TIME_CAPSULE,
       mediaTypes: [],
       maxMediaCount: '',
@@ -355,7 +361,10 @@ export function ProductsPage() {
       if (editFormData.description !== (productDetail.description || '')) {
         updateData.description = editFormData.description.trim() || null;
       }
-      if (editFormData.thumbnailUrl !== (productDetail.thumbnailUrl || '')) {
+      // 파일 업로드 우선, 없으면 URL 사용
+      if (editFormData.thumbnailFile) {
+        updateData.thumbnail = editFormData.thumbnailFile;
+      } else if (editFormData.thumbnailUrl !== (productDetail.thumbnailUrl || '')) {
         updateData.thumbnailUrl = editFormData.thumbnailUrl.trim() || null;
       }
       if (editFormData.categoryId !== (productDetail.categoryId || '')) {
@@ -625,7 +634,7 @@ export function ProductsPage() {
                   미디어 타입 <span className={styles.c_uurwux}>*</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {['TEXT', 'IMAGE', 'VIDEO', 'AUDIO'].map((type) => (
+                  {['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'MUSIC'].map((type) => (
                     <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <input
                         type="checkbox"
@@ -713,19 +722,76 @@ export function ProductsPage() {
               )}
             </div>
 
-            {/* 썸네일 URL */}
+            {/* 썸네일 이미지 */}
             <div>
               <label className={styles.c_a41skz}>
-                썸네일 URL (선택)
+                썸네일 이미지 (선택)
               </label>
-              <input
-                type="url"
-                name="thumbnailUrl"
-                value={formData.thumbnailUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className={styles.c_mbvevs}
-              />
+              
+              {!formData.thumbnailFile ? (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({
+                        ...formData,
+                        thumbnailFile: file,
+                        thumbnailUrl: '', // 파일 선택 시 URL 초기화
+                      });
+                    }
+                  }}
+                  className={styles.c_mbvevs}
+                />
+              ) : (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  padding: '8px 12px', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151' }}>
+                    📎 {formData.thumbnailFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, thumbnailFile: null })}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.875rem',
+                      color: '#dc2626',
+                      backgroundColor: 'white',
+                      border: '1px solid #dc2626',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+              
+              {/* 또는 URL 입력 */}
+              <div style={{ marginTop: '8px' }}>
+                <label className={styles.c_a41skz} style={{ fontSize: '0.875rem' }}>
+                  또는 URL 입력
+                </label>
+                <input
+                  type="url"
+                  name="thumbnailUrl"
+                  value={formData.thumbnailUrl}
+                  onChange={handleChange}
+                  placeholder="https://example.com/image.jpg"
+                  className={styles.c_mbvevs}
+                  disabled={!!formData.thumbnailFile}
+                />
+              </div>
+              
               {validationErrors.thumbnailUrl && (
                 <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
                   {validationErrors.thumbnailUrl}
@@ -1033,7 +1099,7 @@ export function ProductsPage() {
                   미디어 타입 <span className={styles.c_uurwux}>*</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {['TEXT', 'IMAGE', 'VIDEO', 'AUDIO'].map((type) => (
+                  {['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'MUSIC'].map((type) => (
                     <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <input
                         type="checkbox"
@@ -1071,19 +1137,76 @@ export function ProductsPage() {
                 )}
               </div>
 
-              {/* 썸네일 URL */}
+              {/* 썸네일 이미지 */}
               <div>
                 <label className={styles.c_a41skz}>
-                  썸네일 URL (선택)
+                  썸네일 이미지 (선택)
                 </label>
-                <input
-                  type="url"
-                  name="thumbnailUrl"
-                  value={editFormData.thumbnailUrl}
-                  onChange={handleEditFormChange}
-                  placeholder="https://example.com/image.jpg"
-                  className={styles.c_mbvevs}
-                />
+                
+                {!editFormData.thumbnailFile ? (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setEditFormData({
+                          ...editFormData,
+                          thumbnailFile: file,
+                          thumbnailUrl: '', // 파일 선택 시 URL 초기화
+                        });
+                      }
+                    }}
+                    className={styles.c_mbvevs}
+                  />
+                ) : (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    padding: '8px 12px', 
+                    border: '1px solid #d1d5db', 
+                    borderRadius: '6px',
+                    backgroundColor: '#f9fafb'
+                  }}>
+                    <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151' }}>
+                      📎 {editFormData.thumbnailFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditFormData({ ...editFormData, thumbnailFile: null })}
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '0.875rem',
+                        color: '#dc2626',
+                        backgroundColor: 'white',
+                        border: '1px solid #dc2626',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+                
+                {/* 또는 URL 입력 */}
+                <div style={{ marginTop: '8px' }}>
+                  <label className={styles.c_a41skz} style={{ fontSize: '0.875rem' }}>
+                    또는 URL 입력
+                  </label>
+                  <input
+                    type="url"
+                    name="thumbnailUrl"
+                    value={editFormData.thumbnailUrl}
+                    onChange={handleEditFormChange}
+                    placeholder="https://example.com/image.jpg"
+                    className={styles.c_mbvevs}
+                    disabled={!!editFormData.thumbnailFile}
+                  />
+                </div>
+                
                 {editValidationErrors.thumbnailUrl && (
                   <p className={styles.c_d8pr7p} style={{ color: 'red' }}>
                     {editValidationErrors.thumbnailUrl}

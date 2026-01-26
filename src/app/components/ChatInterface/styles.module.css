@@ -2,6 +2,7 @@
 @reference "../../globals.css";
 .c_1er3iqn {
   @apply bg-white rounded-lg shadow flex flex-col h-[calc(100vh-12rem)];
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {
@@ -84,14 +85,19 @@
 
 .c_1rg4z9e {
   @apply font-medium text-gray-900;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
 
 .c_1g2rryz {
-  @apply flex-1 overflow-y-auto p-4 space-y-4;
+  @apply flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4;
 }
 
 .messageRow {
   @apply flex;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .messageRowAdmin {
@@ -104,6 +110,9 @@
 
 .messageBubble {
   @apply max-w-[70%] rounded-lg p-3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
 
 .messageBubbleAdmin {
@@ -127,7 +136,10 @@
 }
 
 .c_ketwm6 {
-  @apply text-sm whitespace-pre-wrap;
+  @apply text-sm whitespace-pre-wrap break-words;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .c_cnx530 {
@@ -148,6 +160,9 @@
 
 .c_199bjjd {
   @apply w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
 
 .c_ybeyki {
@@ -188,6 +203,9 @@
 
 .editTextarea {
   @apply w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
 
 .editActions {

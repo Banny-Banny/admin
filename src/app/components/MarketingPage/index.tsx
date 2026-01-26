@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Send, Bell, Users, TrendingUp, Filter, Search } from 'lucide-react';
 import styles from "./styles.module.css";
+import {
+  sendNotification,
+} from '../../commons/apis/notification';
+import {
+  NotificationType,
+  TargetType,
+  SendNotificationRequest,
+} from '../../commons/apis/notification/types';
+
+type UiMessageType = '광고' | '안내' | '이벤트' | '업데이트';
+type UiMessageTarget = '전체 회원' | '활성 회원' | '휴면 회원' | 'VIP 회원';
 
 interface Message {
   id: number;
   title: string;
   content: string;
-  type: '광고' | '안내' | '이벤트' | '업데이트';
+  type: UiMessageType;
   target: string;
   status: '발송완료' | '발송대기' | '예약';
   sentAt: string;
@@ -19,98 +30,123 @@ export function MarketingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      title: '새해 특별 할인 이벤트',
-      content: '새해를 맞아 전 상품 20% 할인! 지금 바로 확인하세요.',
-      type: '광고',
-      target: '전체 회원',
-      status: '발송완료',
-      sentAt: '2026-01-15 10:00',
-      recipients: 1523,
-      openRate: 45.2,
-    },
-    {
-      id: 2,
-      title: '시스템 점검 안내',
-      content: '1월 20일 새벽 2시~4시 시스템 점검이 예정되어 있습니다.',
-      type: '안내',
-      target: '전체 회원',
-      status: '발송완료',
-      sentAt: '2026-01-14 15:30',
-      recipients: 1523,
-      openRate: 78.5,
-    },
-    {
-      id: 3,
-      title: '신규 기능 업데이트 알림',
-      content: '새로운 기능이 추가되었습니다. 지금 확인해보세요!',
-      type: '업데이트',
-      target: '활성 회원',
-      status: '발송완료',
-      sentAt: '2026-01-12 14:00',
-      recipients: 982,
-      openRate: 62.3,
-    },
-    {
-      id: 4,
-      title: '설 연휴 이벤트',
-      content: '설 연휴 특별 이벤트에 참여하세요!',
-      type: '이벤트',
-      target: '전체 회원',
-      status: '예약',
-      sentAt: '2026-01-25 09:00',
-      recipients: 1523,
-      openRate: 0,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    type: '안내' as '광고' | '안내' | '이벤트' | '업데이트',
-    target: '전체 회원',
+    type: '안내' as UiMessageType,
+    target: '전체 회원' as UiMessageTarget,
     sendNow: true,
     scheduledDate: '',
     scheduledTime: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isFormValid = useMemo(() => {
+    const hasTitle = formData.title.trim().length > 0;
+    const hasContent = formData.content.trim().length > 0;
+    const hasType = !!formData.type;
+    const hasTarget = !!formData.target;
+    const hasSchedule =
+      formData.sendNow || (formData.scheduledDate && formData.scheduledTime);
+    return hasTitle && hasContent && hasType && hasTarget && !!hasSchedule;
+  }, [formData]);
+
+  const notificationTypeMap: Record<UiMessageType, NotificationType> = {
+    광고: 'MARKETING',
+    이벤트: 'MARKETING',
+    안내: 'SYSTEM',
+    업데이트: 'SYSTEM',
+  };
+
+  const targetTypeMap: Record<UiMessageTarget, TargetType> = {
+    '전체 회원': 'ALL',
+    '활성 회원': 'USER',
+    '휴면 회원': 'USER',
+    'VIP 회원': 'USER',
+  };
+
+  const getRecipientCount = (target: UiMessageTarget) => {
+    switch (target) {
+      case '전체 회원':
+        return 1523;
+      case '활성 회원':
+        return 982;
+      case '휴면 회원':
+        return 435;
+      case 'VIP 회원':
+        return 106;
+      default:
+        return 0;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFormValid) {
+      alert('제목과 내용, 유형, 대상을 모두 입력해야 합니다.');
+      return;
+    }
+    if (!formData.sendNow && (!formData.scheduledDate || !formData.scheduledTime)) {
+      alert('예약 발송 시 날짜와 시간을 모두 설정해주세요.');
+      return;
+    }
     
-    const now = new Date();
-    const sentAt = formData.sendNow
-      ? `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`
-      : `${formData.scheduledDate} ${formData.scheduledTime}`;
+    setIsSubmitting(true);
+    try {
+      const payload: SendNotificationRequest = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        // 서버 스펙에 맞는 코드로 변환
+        type: notificationTypeMap[formData.type],
+        targetType: targetTypeMap[formData.target],
+        sendNow: formData.sendNow,
+        scheduledDate: formData.sendNow ? undefined : formData.scheduledDate,
+        scheduledTime: formData.sendNow ? undefined : formData.scheduledTime,
+      };
 
-    const recipientCount = formData.target === '전체 회원' ? 1523 : formData.target === '활성 회원' ? 982 : 435;
+      const response = await sendNotification(payload);
 
-    const newMessage: Message = {
-      id: messages.length + 1,
-      title: formData.title,
-      content: formData.content,
-      type: formData.type,
-      target: formData.target,
-      status: formData.sendNow ? '발송완료' : '예약',
-      sentAt: sentAt,
-      recipients: recipientCount,
-      openRate: formData.sendNow ? Math.random() * 80 : 0,
-    };
+      const now = new Date();
+      const sentAt = formData.sendNow
+        ? `${now.toISOString().split('T')[0]} ${now.toTimeString().slice(0, 5)}`
+        : `${formData.scheduledDate} ${formData.scheduledTime}`;
 
-    setMessages([newMessage, ...messages]);
-    setFormData({
-      title: '',
-      content: '',
-      type: '안내',
-      target: '전체 회원',
-      sendNow: true,
-      scheduledDate: '',
-      scheduledTime: '',
-    });
-    
-    alert(formData.sendNow ? '메시지가 발송되었습니다!' : '메시지가 예약되었습니다!');
-    setActiveTab('history');
+      const recipientCount = getRecipientCount(formData.target);
+
+      const newMessage: Message = {
+        id: messages.length + 1,
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        type: formData.type,
+        target: formData.target,
+        status: response?.status ?? (formData.sendNow ? '발송완료' : '예약'),
+        sentAt: response?.sentAt ?? sentAt,
+        recipients: response?.recipients ?? recipientCount,
+        openRate: formData.sendNow ? Math.random() * 80 : 0,
+      };
+
+      setMessages([newMessage, ...messages]);
+      setFormData({
+        title: '',
+        content: '',
+        type: '안내',
+        target: '전체 회원' as UiMessageTarget,
+        sendNow: true,
+        scheduledDate: '',
+        scheduledTime: '',
+      });
+      
+      alert(formData.sendNow ? '메시지가 발송되었습니다!' : '메시지가 예약되었습니다!');
+      setActiveTab('history');
+    } catch (error) {
+      console.error('Failed to send notification', error);
+      alert('메시지 발송에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -390,9 +426,19 @@ export function MarketingPage() {
               <button
                 type="submit"
                 className={styles.c_mk9nis}
+                disabled={
+                  !isFormValid ||
+                  isSubmitting ||
+                  (!formData.sendNow &&
+                    (!formData.scheduledDate || !formData.scheduledTime))
+                }
               >
                 <Send size={18} />
-                {formData.sendNow ? '즉시 발송' : '예약하기'}
+                {isSubmitting
+                  ? '발송 중...'
+                  : formData.sendNow
+                  ? '즉시 발송'
+                  : '예약하기'}
               </button>
             </div>
           </form>

@@ -57,6 +57,35 @@ export interface LogoutResponse {
   message?: string;
 }
 
+// 관리자 목록 조회 파라미터
+export interface GetAdminsParams {
+  search?: string; // 검색어(이메일/이름)
+  status?: 'ALL' | 'ACTIVE' | 'INACTIVE'; // 상태 필터
+  limit?: number; // 페이지 크기
+  offset?: number; // 페이지 오프셋
+}
+
+// 관리자 목록 항목
+export interface AdminListItem {
+  id: string | number;
+  email: string;
+  name: string;
+  role?: AdminRole;
+  status?: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+  updatedAt?: string;
+  lastLogin?: string;
+}
+
+// 관리자 목록 조회 응답
+export interface GetAdminsResponse {
+  admins?: AdminListItem[];
+  items?: AdminListItem[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+}
+
 // ============================================================================
 // API 함수
 // ============================================================================
@@ -95,6 +124,35 @@ export async function getAdminProfile(): Promise<AdminProfileResponse> {
  */
 export async function logout(): Promise<LogoutResponse> {
   return apiClient.post<LogoutResponse>('/api/admin/auth/logout');
+}
+
+/**
+ * 관리자 목록 조회
+ * @param params 조회 파라미터 (검색어, 상태, 페이지네이션)
+ * @returns 관리자 목록 및 페이지네이션 정보
+ */
+export async function getAdmins(
+  params?: GetAdminsParams
+): Promise<GetAdminsResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (params?.search) {
+    queryParams.append('search', params.search);
+  }
+  if (params?.status && params.status !== 'ALL') {
+    queryParams.append('status', params.status);
+  }
+  if (params?.limit !== undefined) {
+    queryParams.append('limit', params.limit.toString());
+  }
+  if (params?.offset !== undefined) {
+    queryParams.append('offset', params.offset.toString());
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/admin${queryString ? `?${queryString}` : ''}`;
+
+  return apiClient.get<GetAdminsResponse>(endpoint);
 }
 
 // ============================================================================

@@ -10,8 +10,8 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BA
 
 // 테스트용 관리자 계정 (.env 파일에서 읽어옴)
 const TEST_ADMIN = {
-  email: process.env.SUPER_ADMIN_EMAIL || 'admin@example.com',
-  password: process.env.SUPER_ADMIN_PASSWORD || 'password123',
+  email: process.env.TEST_ADMIN_EMAIL || 'admin@example.com',
+  password: process.env.TEST_ADMIN_PASSWORD || 'password123',
 };
 
 let adminAccessToken: string;
@@ -25,8 +25,8 @@ test.describe('상품 관리 API E2E 테스트', () => {
       console.error('환경 변수가 설정되지 않았습니다:', {
         email: TEST_ADMIN.email,
         password: TEST_ADMIN.password ? '***' : undefined,
-        envEmail: process.env.SUPER_ADMIN_EMAIL,
-        envPassword: process.env.SUPER_ADMIN_PASSWORD ? '***' : undefined,
+        envEmail: process.env.TEST_ADMIN_EMAIL,
+        envPassword: process.env.TEST_ADMIN_PASSWORD ? '***' : undefined,
       });
     }
 
