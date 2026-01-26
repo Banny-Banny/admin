@@ -1,0 +1,66 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.tableContainer {
+  @apply rounded-lg border overflow-hidden;
+}
+
+.emptyCell {
+  @apply text-center py-12;
+}
+
+.emptyTitle {
+  @apply text-lg font-semibold mb-2;
+}
+
+.emptyMessage {
+  @apply text-sm text-muted-foreground;
+}
+
+.logId {
+  @apply font-mono text-sm;
+}
+
+.amount {
+  @apply font-medium;
+}
+
+.statusBadge {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.statusReady {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+
+.statusPaid {
+  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.statusCanceled {
+  @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200;
+}
+
+.statusFailed {
+  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.failureReason {
+  @apply text-sm text-muted-foreground max-w-xs truncate;
+}
+
+.secondaryText {
+  @apply text-xs text-muted-foreground;
+}
+
+.actionButtons {
+  @apply flex gap-2;
+}
+
+.cancelButton {
+  @apply px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors;
+}
+
+.reissueButton {
+  @apply px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors;
+}

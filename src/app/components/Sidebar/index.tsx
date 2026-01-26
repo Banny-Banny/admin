@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   FileText,
   Bell,
+  CreditCard,
 } from "lucide-react";
 import styles from "./styles.module.css";
 
@@ -28,6 +29,7 @@ export function Sidebar({
       icon: LayoutDashboard,
     },
     { id: "orders", label: "주문 관리", icon: ShoppingCart },
+    { id: "payments", label: "결제 관리", icon: CreditCard },
     { id: "inquiries", label: "문의하기", icon: FileText },
     { id: "users", label: "사용자 관리", icon: Users },
     { id: "analytics", label: "분석", icon: BarChart3 },

@@ -1,0 +1,18 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.filtersContainer {
+  @apply mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border;
+}
+
+.filtersGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.filterItem {
+  @apply flex flex-col gap-2;
+}
+
+.filterLabel {
+  @apply text-sm font-medium;
+}

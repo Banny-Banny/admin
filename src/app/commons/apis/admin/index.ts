@@ -164,3 +164,13 @@ export {
   fetchOrderDetail,
   updateOrderStatus,
 } from './orders';
+
+// ============================================================================
+// 결제 관리 API (re-export)
+// ============================================================================
+
+export {
+  cancelPayment,
+  getPaymentLogs,
+  reissueReceipt,
+} from './payments';

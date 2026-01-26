@@ -1,0 +1,42 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.pageContainer {
+  @apply p-6 w-full;
+}
+
+.header {
+  @apply mb-6;
+}
+
+.title {
+  @apply text-2xl font-bold mb-2;
+}
+
+.description {
+  @apply text-muted-foreground;
+}
+
+.loadingContainer {
+  @apply flex items-center justify-center py-12;
+}
+
+.spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-primary;
+}
+
+.loadingText {
+  @apply ml-4 text-muted-foreground;
+}
+
+.errorContainer {
+  @apply p-6 bg-destructive/10 border border-destructive/20 rounded-lg;
+}
+
+.errorTitle {
+  @apply text-lg font-semibold text-destructive mb-2;
+}
+
+.errorMessage {
+  @apply text-sm text-muted-foreground;
+}
