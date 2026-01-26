@@ -53,6 +53,14 @@
   @apply text-xs text-muted-foreground;
 }
 
+.actionButtons {
+  @apply flex gap-2;
+}
+
 .cancelButton {
   @apply px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors;
+}
+
+.reissueButton {
+  @apply px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors;
 }

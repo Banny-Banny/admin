@@ -15,12 +15,14 @@ interface PaymentLogsTableProps {
   logs: PaymentLog[];
   showEmptyMessage?: boolean;
   onCancelPayment?: (paymentId: string, amount: number) => void;
+  onReissueReceipt?: (orderId: string) => void;
 }
 
 export function PaymentLogsTable({ 
   logs, 
   showEmptyMessage = false,
   onCancelPayment,
+  onReissueReceipt,
 }: PaymentLogsTableProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('ko-KR', {
@@ -72,13 +74,13 @@ export function PaymentLogsTable({
             <TableHead>상태</TableHead>
             <TableHead>결제 시간</TableHead>
             <TableHead>실패 사유</TableHead>
-            {onCancelPayment && <TableHead>액션</TableHead>}
+            {(onCancelPayment || onReissueReceipt) && <TableHead>액션</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {logs.length === 0 || showEmptyMessage ? (
             <TableRow>
-              <TableCell colSpan={onCancelPayment ? 8 : 7} className={styles.emptyCell} data-testid="empty-cell">
+              <TableCell colSpan={(onCancelPayment || onReissueReceipt) ? 8 : 7} className={styles.emptyCell} data-testid="empty-cell">
                 {showEmptyMessage ? (
                   <>
                     <div className={styles.emptyTitle}>결제 로그가 없습니다</div>
@@ -116,16 +118,26 @@ export function PaymentLogsTable({
                 <TableCell className={styles.failureReason}>
                   {log.fail_message || '-'}
                 </TableCell>
-                {onCancelPayment && (
+                {(onCancelPayment || onReissueReceipt) && (
                   <TableCell>
-                    {log.status === 'PAID' && (
-                      <button
-                        onClick={() => onCancelPayment(log.payment_id, log.amount)}
-                        className={styles.cancelButton}
-                      >
-                        취소
-                      </button>
-                    )}
+                    <div className={styles.actionButtons}>
+                      {onCancelPayment && log.status === 'PAID' && (
+                        <button
+                          onClick={() => onCancelPayment(log.payment_id, log.amount)}
+                          className={styles.cancelButton}
+                        >
+                          취소
+                        </button>
+                      )}
+                      {onReissueReceipt && log.order_id && log.status === 'PAID' && (
+                        <button
+                          onClick={() => onReissueReceipt(log.order_id!)}
+                          className={styles.reissueButton}
+                        >
+                          영수증 재발급
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                 )}
               </TableRow>

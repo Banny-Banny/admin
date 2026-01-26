@@ -86,6 +86,7 @@ export interface PaymentLog {
 export interface PaymentLogsFilters {
   status?: 'READY' | 'PAID' | 'CANCELED' | 'FAILED' | 'ALL';
   userId?: string;
+  userSearch?: string; // 닉네임 또는 이메일 통합 검색
   startDate?: string; // ISO 8601
   endDate?: string; // ISO 8601
   limit?: number; // 기본값: 20

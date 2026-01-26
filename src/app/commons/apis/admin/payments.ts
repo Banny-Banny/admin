@@ -49,6 +49,9 @@ export async function getPaymentLogs(
   if (filters.userId && filters.userId.trim() !== '') {
     queryParams.append('userId', filters.userId.trim());
   }
+  if (filters.userSearch && filters.userSearch.trim() !== '') {
+    queryParams.append('userSearch', filters.userSearch.trim());
+  }
   if (filters.startDate && filters.startDate.trim() !== '') {
     queryParams.append('startDate', filters.startDate.trim());
   }

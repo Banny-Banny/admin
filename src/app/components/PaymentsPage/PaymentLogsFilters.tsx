@@ -40,8 +40,8 @@ export function PaymentLogsFilters({ filters, onFiltersChange }: PaymentLogsFilt
     const newFilters = { ...localFilters, [key]: normalizedValue };
     setLocalFilters(newFilters);
 
-    // debounce: userId 입력 시 500ms 대기 후 API 호출
-    if (key === 'userId' && debounceTimerRef.current) {
+    // debounce: userId, userSearch 입력 시 500ms 대기 후 API 호출
+    if ((key === 'userId' || key === 'userSearch') && debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
@@ -51,6 +51,10 @@ export function PaymentLogsFilters({ filters, onFiltersChange }: PaymentLogsFilt
         if (!normalizedValue || isValidUUID(normalizedValue)) {
           onFiltersChange(newFilters);
         }
+      }, 500);
+    } else if (key === 'userSearch') {
+      debounceTimerRef.current = setTimeout(() => {
+        onFiltersChange(newFilters);
       }, 500);
     } else {
       onFiltersChange(newFilters);
@@ -116,6 +120,17 @@ export function PaymentLogsFilters({ filters, onFiltersChange }: PaymentLogsFilt
             placeholder="사용자 ID 입력"
             value={localFilters.userId || ''}
             onChange={(e) => handleFilterChange('userId', e.target.value)}
+          />
+        </div>
+
+        {/* 사용자 검색 필터 (닉네임/이메일) */}
+        <div className={styles.filterItem}>
+          <label className={styles.filterLabel}>사용자 검색</label>
+          <Input
+            type="text"
+            placeholder="닉네임 또는 이메일"
+            value={localFilters.userSearch || ''}
+            onChange={(e) => handleFilterChange('userSearch', e.target.value)}
           />
         </div>
 

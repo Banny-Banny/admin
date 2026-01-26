@@ -39,11 +39,10 @@ export function PaymentsPage() {
     setIsCancelModalOpen(true);
   };
 
-  // 영수증 재발급은 주문 관리 페이지에서 사용됩니다
-  // const handleReissueReceipt = (orderId: string) => {
-  //   setSelectedOrderId(orderId);
-  //   setIsReceiptModalOpen(true);
-  // };
+  const handleReissueReceipt = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsReceiptModalOpen(true);
+  };
 
   const paginationMeta = useMemo(() => {
     if (!data) {
@@ -102,6 +101,7 @@ export function PaymentsPage() {
             logs={data?.items || []}
             showEmptyMessage={!data || !data.items || data.items.length === 0}
             onCancelPayment={handleCancelPayment}
+            onReissueReceipt={handleReissueReceipt}
           />
           {data && data.items.length > 0 && (
             <Pagination meta={paginationMeta} onPageChange={handlePageChange} />
