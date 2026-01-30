@@ -195,17 +195,17 @@ export interface GetInquiriesParams {
 
 export interface Inquiry {
   id: string;
-  roomId: string;
-  customer: {
+  user: {
     id: string;
-    name: string;
-    email: string;
+    nickname: string;
+    email: string | null;
   };
-  subject: string;
-  message: string;
   status: InquiryStatus;
+  isResolved: boolean;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadCount: number;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface GetInquiriesResponse {
@@ -247,6 +247,18 @@ export interface GetInquiryDetailResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+// 실제 API 응답 구조
+export interface GetInquiryDetailApiResponse {
+  success: boolean;
+  data: {
+    inquiry: Inquiry;
+    messages: Message[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
 }
 
 export interface UpdateInquiryStatusRequest {
@@ -333,7 +345,21 @@ export async function getInquiryDetail(
   const queryString = queryParams.toString();
   const endpoint = `/api/admin/inquiries/${id}${queryString ? `?${queryString}` : ''}`;
 
-  return apiClient.get<GetInquiryDetailResponse>(endpoint);
+  const response = await apiClient.get<GetInquiryDetailApiResponse | GetInquiryDetailResponse>(endpoint);
+  
+  // 실제 API 응답 구조에 맞게 변환
+  if ('data' in response && response.data?.inquiry) {
+    return {
+      inquiry: response.data.inquiry,
+      messages: response.data.messages,
+      total: response.data.total,
+      limit: response.data.limit,
+      offset: response.data.offset,
+    };
+  }
+  
+  // 기존 구조도 지원
+  return response as GetInquiryDetailResponse;
 }
 
 /**

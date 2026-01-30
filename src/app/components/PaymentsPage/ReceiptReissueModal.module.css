@@ -1,0 +1,34 @@
+@reference "tailwindcss";
+@reference "../../globals.css";
+
+.modalContent {
+  max-width: 500px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  @apply text-sm font-medium;
+}
+
+.required {
+  @apply text-destructive;
+}
+
+.inputError {
+  @apply border-destructive;
+}
+
+.errorMessage {
+  @apply text-sm text-destructive;
+}

@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { tokenStorage } from '../../utils/token-storage';
+import { getInquirySocketClient } from '../../apis/inquiry/socket';
 
 // API 클라이언트 설정
 const API_BASE_URL = 
@@ -85,6 +86,16 @@ export class ApiClient {
                 refreshToken: response.data.refreshToken || session.refreshToken,
               };
               tokenStorage.set(newSession);
+
+              // 토큰 갱신 후 소켓 재인증
+              try {
+                const socketClient = getInquirySocketClient();
+                await socketClient.updateToken(newSession.accessToken);
+                console.log('[ApiClient] 토큰 갱신 후 소켓 재인증 완료');
+              } catch (socketError) {
+                console.error('[ApiClient] 소켓 재인증 실패:', socketError);
+                // 소켓 오류는 치명적이지 않으므로 무시
+              }
 
               // 대기 중인 요청 처리
               this.processQueue(null);

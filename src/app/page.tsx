@@ -11,6 +11,8 @@ import { ProductsPage } from './components/ProductsPage';
 import { ReportsPage } from './components/ReportsPage';
 import { MarketingPage } from './components/MarketingPage';
 import { LoginPage } from './components/LoginPage';
+import OrdersPage from './components/Orders';
+import { PaymentsPage } from './components/PaymentsPage';
 import { useAuth } from './commons/hooks/use-auth';
 
 export default function App() {
@@ -51,6 +53,10 @@ export default function App() {
         return <AnalyticsPage />;
       case 'products':
         return <ProductsPage />;
+      case 'orders':
+        return <OrdersPage />;
+      case 'payments':
+        return <PaymentsPage />;
       case 'reports':
         return <ReportsPage />;
       case 'marketing':

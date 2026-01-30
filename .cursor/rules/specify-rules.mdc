@@ -3,6 +3,14 @@
 Auto-generated from all feature plans. Last updated: 2026-01-19
 
 ## Active Technologies
+- TypeScript 5, JavaScript (ES2020+) (003-product-management)
+- N/A (백엔드 API를 통해 데이터 관리) (003-product-management)
+- TypeScript 5 + Next.js 16 (App Router), React 19, Axios (003-admin-dashboard)
+- N/A (프론트엔드 기능, 백엔드 API에 의존) (003-admin-dashboard)
+- TypeScript 5, Next.js 16 (App Router), React 19 + Axios, React Query, Radix UI, Tailwind CSS 4 + CSS Modules (004-admin-order-management)
+- N/A (프런트엔드 클라이언트) (004-admin-order-management)
+- TypeScript 5 + Next.js 16 (App Router), React 19, Axios 1.7.9, @tanstack/react-query 5.90.19 (005-payment-receipt-management)
+- N/A (백엔드 API 사용) (005-payment-receipt-management)
 - TypeScript 5, React 19.2.3, Next.js 16.1.3 (001-notification-send)
 - 백엔드 API를 통한 데이터 저장 (프론트엔드에서는 로컬 상태 관리만) (001-notification-send)
 
@@ -25,9 +33,14 @@ npm test && npm run lint
 TypeScript 5.x, JavaScript (ES2020+): Follow standard conventions
 
 ## Recent Changes
+- 005-payment-receipt-management: Added TypeScript 5 + Next.js 16 (App Router), React 19, Axios 1.7.9, @tanstack/react-query 5.90.19
+- 004-admin-order-management: Added TypeScript 5, Next.js 16 (App Router), React 19 + Axios, React Query, Radix UI, Tailwind CSS 4 + CSS Modules
+- 003-product-management: Added TypeScript 5, JavaScript (ES2020+)
+- 005-notice-management: Added TypeScript 5, JavaScript (ES2020+)
+- 004-admin-order-management: Added TypeScript 5, Next.js 16 (App Router), React 19 + Axios, React Query, Radix UI, Tailwind CSS 4 + CSS Modules
+- 003-product-management: Added TypeScript 5, JavaScript (ES2020+)
 - 001-notification-send: Added TypeScript 5, React 19.2.3, Next.js 16.1.3
 
-- 001-admin-auth: Added TypeScript 5.x, JavaScript (ES2020+) + Next.js 16.1.3, React 19.2.3, Axios 1.7.9, React Hook Form 7.71.1
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

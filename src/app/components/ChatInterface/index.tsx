@@ -98,11 +98,11 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
             }))
           );
 
-          // 3. 방 입장
-          await socketClient.joinRoom(inquiry.roomId);
+          // 3. 방 입장 (inquiry.id를 roomId로 사용)
+          await socketClient.joinRoom(inquiry.id);
 
           // 4. 읽음 알림 전송
-          socketClient.sendReadAlert(inquiry.roomId);
+          socketClient.sendReadAlert(inquiry.id);
 
           setIsLoading(false);
           // 초기 메시지 로드 후 스크롤
@@ -121,12 +121,50 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
 
     // 메시지 수신 핸들러
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
-      if (isMounted && payload.roomId === inquiry.roomId) {
+      console.log('[ChatInterface] receive_message 이벤트 수신:', {
+        payload,
+        isMounted,
+        currentRoomId: inquiry.id,
+        matchesRoom: payload.roomId === inquiry.id,
+      });
+
+      if (isMounted && payload.roomId === inquiry.id) {
         setMessages((prev) => {
-          // 중복 메시지 방지
+          // 중복 메시지 방지 (실제 ID로 이미 존재하는 경우)
           if (prev.some((msg) => msg.id === payload.id)) {
+            console.log('[ChatInterface] 중복 메시지 무시:', payload.id);
             return prev;
           }
+          
+          // 임시 메시지가 있는 경우 교체 (내가 보낸 메시지인 경우)
+          // 같은 내용이고 ADMIN이 보낸 메시지면 임시 메시지를 실제 메시지로 교체
+          const tempMessageIndex = prev.findIndex(
+            (msg) => 
+              msg.id.startsWith('temp-') && 
+              msg.senderType === 'ADMIN' &&
+              msg.content === payload.content &&
+              payload.senderType === 'ADMIN'
+          );
+          
+          if (tempMessageIndex !== -1) {
+            console.log('[ChatInterface] 임시 메시지를 실제 메시지로 교체:', {
+              tempId: prev[tempMessageIndex].id,
+              actualId: payload.id,
+            });
+            
+            // 임시 메시지를 실제 메시지로 교체
+            const newMessages = [...prev];
+            newMessages[tempMessageIndex] = {
+              id: payload.id,
+              senderType: payload.senderType,
+              content: payload.content,
+              createdAt: payload.createdAt,
+            };
+            return newMessages;
+          }
+          
+          // 새 메시지 추가
+          console.log('[ChatInterface] 새 메시지 추가:', payload);
           return [
             ...prev,
             {
@@ -138,27 +176,50 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
           ];
         });
         setTimeout(scrollToBottom, 100);
+      } else {
+        console.log('[ChatInterface] 메시지 무시됨 (조건 불일치)');
       }
     };
 
     // 읽음 알림 핸들러
     const handleReadAlert = (payload: ReadAlertPayload) => {
-      if (isMounted && payload.roomId === inquiry.roomId) {
+      if (isMounted && payload.roomId === inquiry.id) {
         // 읽음 알림 처리 (필요시 UI 업데이트)
-        console.log('Read alert received:', payload);
+      }
+    };
+
+    // 연결 해제 핸들러 (재인증 후 방 재입장 처리)
+    const handleReconnect = () => {
+      console.log('[ChatInterface] Socket 재연결 감지');
+      if (isMounted) {
+        // 재연결 후 방에 다시 입장
+        socketClient.joinRoom(inquiry.id)
+          .then(() => {
+            console.log('[ChatInterface] 방 재입장 성공');
+            socketClient.sendReadAlert(inquiry.id);
+          })
+          .catch((error) => {
+            console.error('[ChatInterface] 방 재입장 실패:', error);
+          });
+      }
+    };
+
+    // 연결 에러 핸들러
+    const handleError = (error: Error) => {
+      console.error('Socket.IO connection error:', error);
+      
+      // 인증 오류인 경우에는 자동으로 재인증이 시도됨
+      if (error.message.includes('Authentication') || error.message.includes('Unauthorized')) {
+        toast.warning('연결이 끊겼습니다. 재연결을 시도합니다...');
+      } else {
+        toast.error('연결 오류가 발생했습니다.');
       }
     };
 
     // Socket 이벤트 리스너 등록
     socketClient.onReceiveMessage(handleReceiveMessage);
     socketClient.onReadAlert(handleReadAlert);
-
-    // 연결 에러 핸들러
-    const handleError = (error: Error) => {
-      console.error('Socket.IO connection error:', error);
-      toast.error('연결 오류가 발생했습니다.');
-    };
-
+    socketClient.onConnect(handleReconnect);
     socketClient.onError(handleError);
 
     // 정리 함수
@@ -166,16 +227,16 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       isMounted = false;
       
       // 방 나가기
-      socketClient.leaveRoom(inquiry.roomId);
+      socketClient.leaveRoom(inquiry.id);
       
       // 이벤트 리스너 제거
       socketClient.offReceiveMessage(handleReceiveMessage);
       socketClient.offReadAlert(handleReadAlert);
       
-      // Socket 연결 종료
-      socketClient.disconnect();
+      // Socket 연결은 유지 (싱글톤이므로 앱 전체에서 재사용)
+      // socketClient.disconnect();
     };
-  }, [inquiry.id, inquiry.roomId]);
+  }, [inquiry.id]);
 
   // 새 메시지가 추가될 때마다 스크롤
   useEffect(() => {
@@ -204,15 +265,59 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
     try {
       const socketClient = socketClientRef.current;
       
+      console.log('[ChatInterface] 메시지 전송 시작:', {
+        roomId: inquiry.id,
+        content: messageContent,
+      });
+      
+      // Socket 연결 확인 및 방 입장 확인
       if (!socketClient.isSocketConnected()) {
+        console.log('[ChatInterface] 소켓 연결되지 않음, 연결 시도');
         socketClient.connect();
-        await socketClient.joinRoom(inquiry.roomId);
+        await socketClient.joinRoom(inquiry.id);
+      } else {
+        // 이미 연결되어 있지만 방에 입장하지 않은 경우
+        try {
+          console.log('[ChatInterface] 방 입장 확인');
+          await socketClient.joinRoom(inquiry.id);
+        } catch (joinError) {
+          // 방 입장 실패 시 무시 (이미 입장했을 수 있음)
+          console.warn('[ChatInterface] 방 입장 확인 실패 (이미 입장했을 수 있음):', joinError);
+        }
       }
 
-      socketClient.sendMessage(inquiry.roomId, messageContent);
+      // 메시지 전송 (Promise 반환)
+      console.log('[ChatInterface] sendMessage 호출');
+      
+      // 임시 메시지 ID 생성 (서버 응답으로 실제 ID를 받으면 업데이트됨)
+      const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Optimistic Update: 메시지 전송 성공 후 즉시 로컬 상태에 추가
+      const optimisticMessage: ChatMessage = {
+        id: tempMessageId,
+        senderType: 'ADMIN',
+        content: messageContent,
+        createdAt: new Date().toISOString(),
+      };
+      
+      // 전송 전에 임시 메시지 추가 (즉시 화면에 표시)
+      setMessages((prev) => [...prev, optimisticMessage]);
       setNewMessage('');
+      
+      try {
+        await socketClient.sendMessage(inquiry.id, messageContent);
+        console.log('[ChatInterface] sendMessage 완료');
+        
+        // 서버로부터 receive_message를 받으면 실제 메시지로 교체됨
+        // (중복 체크 로직에서 temp ID는 실제 ID로 교체됨)
+      } catch (sendError) {
+        // 전송 실패 시 임시 메시지 제거
+        console.error('[ChatInterface] 메시지 전송 실패, 임시 메시지 제거');
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempMessageId));
+        throw sendError;
+      }
     } catch (error) {
-      console.error('메시지 전송 실패:', error);
+      console.error('[ChatInterface] 메시지 전송 실패:', error);
       if (error instanceof Error) {
         if (error.message.includes('네트워크') || error.message.includes('Network')) {
           toast.error('네트워크 오류가 발생했습니다.');
@@ -358,7 +463,7 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
   // 닫기 핸들러
   const handleClose = () => {
     const socketClient = socketClientRef.current;
-    socketClient.leaveRoom(inquiry.roomId);
+    socketClient.leaveRoom(inquiry.id);
     socketClient.disconnect();
     onClose();
   };
@@ -369,16 +474,18 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
       <div className={styles.c_1hlwyim}>
         <div className={styles.c_2ca09x}>
           <div className={styles.c_1oa1gq1}>
-            {inquiry.customer.name.charAt(0)}
+            {inquiry.user.nickname.charAt(0)}
           </div>
           <div>
             <div className={styles.headerTitleRow}>
-              <h3 className={styles.c_we5pmo}>{inquiry.customer.name}</h3>
+              <h3 className={styles.c_we5pmo}>{inquiry.user.nickname}</h3>
               <span className={`${styles.statusBadge} ${getStatusColor(currentStatus)}`}>
                 {getStatusLabel(currentStatus)}
               </span>
             </div>
-            <p className={styles.c_ibg1vp}>{inquiry.customer.email}</p>
+            {inquiry.user.email && (
+              <p className={styles.c_ibg1vp}>{inquiry.user.email}</p>
+            )}
           </div>
         </div>
         <div className={styles.headerActions}>
@@ -407,11 +514,13 @@ export function ChatInterface({ inquiry, onClose, onStatusChange }: ChatInterfac
         </div>
       </div>
 
-      {/* Subject */}
-      <div className={styles.c_1e5xuuz}>
-        <p className={styles.c_ibg2me}>문의 제목</p>
-        <p className={styles.c_1rg4z9e}>{inquiry.subject}</p>
-      </div>
+      {/* Last Message Preview */}
+      {inquiry.lastMessagePreview && (
+        <div className={styles.c_1e5xuuz}>
+          <p className={styles.c_ibg2me}>최근 메시지</p>
+          <p className={styles.c_1rg4z9e}>{inquiry.lastMessagePreview}</p>
+        </div>
+      )}
 
       {/* Messages */}
       <div className={styles.c_1g2rryz} ref={messagesContainerRef}>

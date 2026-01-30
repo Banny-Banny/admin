@@ -76,12 +76,11 @@ export function RecentInquiries({
 
     const searchLower = debouncedSearchTerm.toLowerCase();
     return inquiries.filter((inquiry) => {
-      const matchesCustomer = inquiry.customer.name.toLowerCase().includes(searchLower) ||
-                            inquiry.customer.email.toLowerCase().includes(searchLower);
-      const matchesSubject = inquiry.subject.toLowerCase().includes(searchLower);
-      const matchesContent = inquiry.message.toLowerCase().includes(searchLower);
+      const matchesUser = inquiry.user.nickname.toLowerCase().includes(searchLower) ||
+                         (inquiry.user.email && inquiry.user.email.toLowerCase().includes(searchLower));
+      const matchesContent = inquiry.lastMessagePreview.toLowerCase().includes(searchLower);
       
-      return matchesCustomer || matchesSubject || matchesContent;
+      return matchesUser || matchesContent;
     });
   }, [inquiries, debouncedSearchTerm]);
 
@@ -306,25 +305,35 @@ export function RecentInquiries({
                 onClick={() => onSelectInquiry(inquiry)}
               >
                 <div className={styles.c_oi2yba}>
-                  <div className={styles.c_1dzu82l}>
-                    <div className={styles.c_6gox1x}>
-                      <h4 className={styles.c_we5pmo}>{inquiry.subject}</h4>
-                      <span className={`${styles.tagBase} ${getStatusColor(inquiry.status)}`}>
-                        {getStatusLabel(inquiry.status)}
-                      </span>
-                    </div>
-                    <p className={styles.c_z9fcgj}>{inquiry.message}</p>
-                    <div className={styles.c_1l53ve4}>
-                      <div className={styles.c_2ca09v}>
-                        <MessageSquare size={14} />
-                        <span>{inquiry.customer.name}</span>
+                    <div className={styles.c_1dzu82l}>
+                      <div className={styles.c_6gox1x}>
+                        <h4 className={styles.c_we5pmo}>{inquiry.user.nickname}</h4>
+                        <span className={`${styles.tagBase} ${getStatusColor(inquiry.status)}`}>
+                          {getStatusLabel(inquiry.status)}
+                        </span>
                       </div>
-                      <span>•</span>
-                      <span>{inquiry.customer.email}</span>
-                      <span>•</span>
-                      <span>{formatDate(inquiry.createdAt)}</span>
+                      <p className={styles.c_z9fcgj}>{inquiry.lastMessagePreview}</p>
+                      <div className={styles.c_1l53ve4}>
+                        <div className={styles.c_2ca09v}>
+                          <MessageSquare size={14} />
+                          <span>{inquiry.user.nickname}</span>
+                        </div>
+                        {inquiry.user.email && (
+                          <>
+                            <span>•</span>
+                            <span>{inquiry.user.email}</span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span>{formatDate(inquiry.lastMessageAt)}</span>
+                        {inquiry.unreadCount > 0 && (
+                          <>
+                            <span>•</span>
+                            <span className={styles.c_2i067q}>읽지 않음 ({inquiry.unreadCount})</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   <div className={styles.c_2ca09w}>
                     {getStatusIcon(inquiry.status)}
                     <div onClick={(e) => e.stopPropagation()}>

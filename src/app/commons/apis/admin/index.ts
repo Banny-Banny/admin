@@ -154,3 +154,23 @@ export async function getAdmins(
 
   return apiClient.get<GetAdminsResponse>(endpoint);
 }
+
+// ============================================================================
+// 주문 관리 API (re-export)
+// ============================================================================
+
+export {
+  fetchOrders,
+  fetchOrderDetail,
+  updateOrderStatus,
+} from './orders';
+
+// ============================================================================
+// 결제 관리 API (re-export)
+// ============================================================================
+
+export {
+  cancelPayment,
+  getPaymentLogs,
+  reissueReceipt,
+} from './payments';

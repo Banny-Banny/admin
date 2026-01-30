@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Admin Dashboard Order Management API
+  version: "1.0.0"
+paths:
+  /api/admin/dashboard/orders:
+    get:
+      summary: List orders with filters
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PENDING, PENDING_PAYMENT, PAID, CANCELED, FAILED, ALL]
+          description: Default ALL
+        - in: query
+          name: paymentStatus
+          schema:
+            type: string
+            enum: [READY, PAID, CANCELED, FAILED, ALL]
+          description: Default ALL
+        - in: query
+          name: userId
+          schema:
+            type: string
+          description: UUID 형식만 허용 (예: 123e4567-e89b-12d3-a456-426614174000)
+        - in: query
+          name: userSearch
+          schema:
+            type: string
+          description: 닉네임 또는 이메일로 검색 (예: 초롱, user@example.com)
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: Orders with pagination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+  /api/admin/dashboard/orders/{id}:
+    get:
+      summary: Get order detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderItemResponse"
+  /api/admin/dashboard/orders/{id}/status:
+    patch:
+      summary: Update order status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [PENDING, PENDING_PAYMENT, PAID, CANCELED, FAILED]
+              required: [status]
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderItemResponse"
+components:
+  schemas:
+    OrderListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderItem"
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+          required: [items, total, limit, offset]
+      required: [success, data]
+    OrderItemResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/OrderItem"
+      required: [success, data]
+    OrderItem:
+      type: object
+      properties:
+        order_id:
+          type: string
+        order_status:
+          type: string
+          enum: [PENDING, PENDING_PAYMENT, PAID, CANCELED, FAILED]
+        total_amount:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        product:
+          $ref: "#/components/schemas/Product"
+        payment:
+          oneOf:
+            - $ref: "#/components/schemas/Payment"
+            - type: "null"
+        user:
+          $ref: "#/components/schemas/User"
+      required: [order_id, order_status, total_amount, created_at, product, payment, user]
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        product_type:
+          type: string
+      required: [id, name, product_type]
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [READY, PAID, CANCELED, FAILED, PENDING_PAYMENT]
+        amount:
+          type: number
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        method:
+          type: string
+      required: [id, status, amount, method]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+        phone_number:
+          type: string
+      required: [id, nickname, email, phone_number]

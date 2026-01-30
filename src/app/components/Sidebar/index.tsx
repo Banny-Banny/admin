@@ -6,6 +6,7 @@ import {
   Package,
   ShoppingCart,
   FileText,
+  CreditCard,
 } from "lucide-react";
 import { MessageIcon } from "../../commons/components/icons/MessageIcon";
 import styles from "./styles.module.css";
@@ -27,7 +28,9 @@ export function Sidebar({
       label: "대시보드",
       icon: LayoutDashboard,
     },
-    { id: "inquiries", label: "문의하기", icon: ShoppingCart },
+    { id: "orders", label: "주문 관리", icon: ShoppingCart },
+    { id: "payments", label: "결제 관리", icon: CreditCard },
+    { id: "inquiries", label: "문의하기", icon: FileText },
     { id: "users", label: "사용자 관리", icon: Users },
     { id: "analytics", label: "분석", icon: BarChart3 },
     { id: "products", label: "상품", icon: Package },
