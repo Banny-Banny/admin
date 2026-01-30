@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Send, Bell, Users, TrendingUp, Filter, Search } from 'lucide-react';
+import { Send, Users, TrendingUp, Filter, Search } from 'lucide-react';
+import { MessageIcon } from '../../commons/components/icons/MessageIcon';
 import styles from "./styles.module.css";
 import {
   sendNotification,
@@ -266,7 +267,7 @@ export function MarketingPage() {
             }`}
           >
             <div className={styles.c_2ca09w}>
-              <Bell size={18} />
+              <MessageIcon size={18} />
               발송 내역
             </div>
           </button>

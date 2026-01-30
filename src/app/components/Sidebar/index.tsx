@@ -6,9 +6,9 @@ import {
   Package,
   ShoppingCart,
   FileText,
-  Bell,
   CreditCard,
 } from "lucide-react";
+import { MessageIcon } from "../../commons/components/icons/MessageIcon";
 import styles from "./styles.module.css";
 
 interface SidebarProps {
@@ -34,8 +34,8 @@ export function Sidebar({
     { id: "users", label: "사용자 관리", icon: Users },
     { id: "analytics", label: "분석", icon: BarChart3 },
     { id: "products", label: "상품", icon: Package },
-    { id: "reports", label: "공지사항", icon: Bell },
-    { id: "marketing", label: "알림/마케팅", icon: Bell },
+    { id: "reports", label: "운영 공지", icon: FileText },
+    { id: "marketing", label: "유저 알림 발송", icon: MessageIcon },
     { id: "settings", label: "설정", icon: Settings },
   ];
 
